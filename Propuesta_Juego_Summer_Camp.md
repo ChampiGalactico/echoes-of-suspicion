@@ -1,10 +1,6 @@
 # Propuesta de juego — Summer Camp (borrador para equipo)
 *Temática del evento: Videojuegos + IA*
 
-> Nota inicial importante: usar a Claude/Claude Code como apoyo de desarrollo NO cuenta como la "IA" de la temática del evento — eso es una herramienta, como Unreal o Git. La IA que califica para la temática debe estar **dentro del juego** (mecánica, personaje, sistema, tema narrativo). Las dos cosas conviven, pero hay que presentarlas por separado en la propuesta.
-
----
-
 ## 1. Concepto en una frase
 
 Un juego cooperativo de **puzzles y exploración** (LAN, 2 jugadores para esta primera versión), donde dos personas firman para ser sujetos de prueba en un experimento psicológico dirigido por una IA, con la finalidad declarada de analizar la naturaleza del egoísmo y la confianza humana — para desarrollar técnicas que debiliten la confianza y la cohesión entre personas (útil en contexto militar-académico para interrogatorios, contrainteligencia, control de grupos). El experimento resulta ser una simulación mental compartida: deben cooperar si quieren terminarlo con "éxito". **Desde el inicio de la simulación saben las reglas**: si ambos sobreviven, cada uno cobra su pago; si solo uno sobrevive, se lleva el pago de los dos; y si alguno muere ahí dentro, muere también en la vida real.
