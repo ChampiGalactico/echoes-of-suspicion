@@ -1,4 +1,4 @@
-# Propuesta técnica de juego — Summer Camp
+# Propuesta técnica — Echoes of Suspicion
 *Documento complementario: biomas, criaturas, tipos de sala y puzzles.*
 *Ver también: `Propuesta_Juego_Summer_Camp.md` (concepto, mecánicas, historia, sistema de vida/voluntad, finales).*
 
@@ -30,23 +30,29 @@ En algún punto del Laberinto 1 (preferiblemente en el bioma "Aislamiento", ver 
 
 ---
 
-## 3. Biomas — Laberinto 1 (instalación clínica que se va agrietando)
+## 3. Biomas — dependen del arquetipo del personaje-Guía
 
-| Bioma | Estética | Tono de color | Función de diseño |
-|---|---|---|---|
-| **Control** | Blanco, frío, ordenado, señalética con neón cian | Frío / neón sutil | Fachada pulcra del experimento. Salas de puzzle y exploración tranquila. |
-| **Aislamiento** | Monocromático, gris, sin neón, pasillos angostos | Monocromático triste | Soledad del Corredor. Aquí va la regla especial de "sin luz". |
-| **Fricción** | Neón rojo/naranja parpadeante mezclado con zonas oscuras | Neón cálido inestable | Tensión en aumento — salas mixtas de puzzle + sigilo, previo al falso final. |
+**Cambio importante de diseño:** los biomas ya no son un set fijo compartido por todos los personajes. En su lugar, **cada personaje jugable trae sus propios 3 biomas + 9 puzzles**, basados en su arquetipo de personalidad, historia y profesión — el "laberinto" es la psiquis del personaje que ejerce de Guía en ese acto (ver sección 5.5 del documento conceptual).
 
----
+### Regla general de diseño por personaje
+Cada personaje debe traer:
+- **3 biomas visualmente distintos entre sí**, cada uno reflejando una faceta o tensión del arquetipo de ese personaje.
+- **3 puzzles por bioma** (9 en total por acto), diseñados para conectar temáticamente con el bioma en el que están.
+- **Progresión de tensión creciente** entre los 3 biomas: el primero más tranquilo/exploratorio, el último con más presencia de sigilo y criaturas.
+- **Un easter egg opcional por bioma**, sin mecánica, solo hallazgo de sabor/humor/referencia.
 
-## 4. Biomas — Laberinto 2 (la misma instalación, deteriorándose y mostrando su verdadera cara)
+### Referencia estética general (aplicable a cualquier personaje)
+Aunque cada personaje tiene su propio mundo, todos los biomas comparten una base estética coherente con la premisa: mezcla de estética clínica-industrial con elementos deteriorados o distorsionados por la mente del personaje. La paleta y ambiente concretos de cada bioma son responsabilidad del diseño de cada personaje.
 
-| Bioma | Estética | Tono de color | Función de diseño |
-|---|---|---|---|
-| **Óxido** | Versión agrietada del bioma "Control": blanco clínico dañado, neón cian fallando/parpadeando | Frío decadente | Comunica visualmente que la fachada profesional se está cayendo. |
-| **Codicia** | Neón saturado (magenta, verde ácido), casi mareante | Neón excesivo | Alegoría visual a la codicia — el Corredor podría quedarse con todo. Aquí vive el monstruo reactivo a la luz (ver sección 5). |
-| **Vacío** | El más monocromático y triste de todo el juego, casi sin color | Monocromático extremo | Contraste máximo antes del clímax de la decisión: salir solo con la llave/tarjeta encontrada en la salida, o volver por el compañero. |
+### Los 3 biomas "genéricos" que ya estaban en el documento
+Los biomas previamente definidos (Control, Aislamiento, Fricción, Óxido, Codicia, Vacío) quedan como **referencias de mood y estructura**, no como el set canónico del juego. Sirven como plantilla de tipos de tensión que se pueden replicar en los biomas específicos de cada personaje (uno "clínico y controlado", uno "monocromático y de aislamiento", uno "cargado y de tensión creciente"), adaptados temáticamente a cada arquetipo.
+
+### Biomas fijos (independientes del personaje)
+Solo hay **dos biomas fijos que no dependen del personaje**:
+- **Bioma del mini-puzzle final del Acto 1** (falso final): un espacio dedicado al reencuentro y al mini-puzzle físico compartido que lleva a la "puerta final" falsa.
+- **Bioma del mini-puzzle final del Acto 2** (final real, solo si ambos cooperan): un espacio dedicado al mini-puzzle físico compartido que lleva a la salida real.
+
+Estos dos biomas se diseñan una sola vez y funcionan igual para todas las combinaciones de personajes.
 
 ---
 
@@ -92,9 +98,9 @@ Ninguna criatura del laberinto está ahí por voluntad propia — son **híbrido
 - Moverse: caminar, correr, agacharse/moverse sigilosamente (cada uno con distinto radio de ruido, modificado por superficie y bioma).
 - Alternar perspectiva primera/tercera persona en cualquier momento.
 - Encender/apagar la linterna a voluntad (afecta ruido no, pero sí detección del monstruo de luz en Laberinto 2, y consumo de batería si se decide implementar eso como límite adicional — a definir).
-- Recoger materiales y objetos del entorno (van automáticamente al bolsillo "Enviar" de su maleta).
-- Presionar un botón para enviar de una sola vez todo el contenido del bolsillo "Enviar" al Guía — esto dispara una animación corta de vulnerabilidad (inmovilidad) y emite un sonido de transmisión detectable por los monstruos.
-- Recibir y usar objetos que llegan al bolsillo "Recibido" de su maleta (equipar arma, activar señuelo, usar objeto de utilidad).
+- Recoger materiales y objetos del entorno (los lleva cargando consigo — sin límite de espacio por el momento).
+- Llegar al **punto fijo de envío/recepción de cada bioma** (que debe descubrir explorando) para iniciar una transmisión que envía todos los materiales acumulados al Guía y recibe los objetos crafteados. La animación se puede cancelar en cualquier momento, pero el sonido de transmisión se emite igual y las criaturas lo escuchan.
+- Recibir y usar los objetos que llegan durante la transmisión (equipar arma, activar señuelo, usar objeto de utilidad).
 - Hablar por el altavoz físico (voz real, sin opción de silenciarse salvo el volumen físico real del jugador).
 - Interactuar con mecanismos/paneles de puzzle y describírselos al Guía.
 - Entrar y salir libremente de salas de exploración pura (espacio seguro).
@@ -117,7 +123,7 @@ Ninguna criatura del laberinto está ahí por voluntad propia — son **híbrido
 - Investigar documentos, notas y mecanismos dentro de su propio cuarto.
 - Craftear objetos usando los materiales que le envía el Corredor: objetos de recuperación de su propia vida, o herramientas/armas/utilidades para el Corredor.
 - Elegir a quién beneficia cada objeto crafteado (a sí mismo o al Corredor) — esta elección es la base mecánica de la posibilidad de traición.
-- Enviar objetos crafteados al Corredor mediante su aparato receptor/emisor ("el Receptor"), que llegan directo al bolsillo "Recibido" de la maleta del Corredor.
+- Enviar objetos crafteados al Corredor mediante su aparato receptor/emisor ("el Receptor"), que llegan al Corredor durante su próxima transmisión en el punto fijo de envío del bioma en el que esté.
 - Iluminar temporalmente una zona del mapa para el Corredor (cuesta voluntad).
 - Marcar peligros directamente en el HUD del Corredor (cuesta voluntad).
 - Hablar por el altavoz hacia el Corredor (voz real).
@@ -138,7 +144,18 @@ Ninguna criatura del laberinto está ahí por voluntad propia — son **híbrido
 
 ---
 
-## 8. Diseño detallado — Apertura, Laberinto 1 + Sala del Guía 1
+## 8. Diseño detallado — Apertura + plantilla de referencia de un acto
+
+> **Importante — cambio de estructura:** el diseño detallado que sigue (secuencia de 9 salas + 3 puzzles + easter egg) originalmente fue concebido como el Laberinto 1 canónico. Con la introducción de los personajes jugables (ver sección 5.5 del documento conceptual), este diseño **queda como plantilla de referencia** para el equipo — muestra la densidad, ritmo y tipos de sala esperados en cada acto — pero el contenido concreto (biomas, temas, puzzles específicos) debe re-diseñarse para cada personaje según su arquetipo.
+>
+> Lo que sigue siendo canónico y aplica a todos los personajes:
+> - La apertura del juego (Escena 0 + despertar paralelo) — sección 8.0.
+> - La densidad esperada por bioma (2-3 puzzles obligatorios + 1 opcional + 1 easter egg).
+> - Los tipos de sala (exploración segura, puzzle compartido, sigilo, mixta, bifurcación).
+> - La regla especial de "linterna apagada" (puede vivir en uno de los biomas de cualquier personaje).
+> - El principio de que ambos jugadores están siempre activos en simultáneo, sin espera pasiva.
+>
+> Lo que cambia según el personaje: la estética, la ambientación, los temas de los puzzles (aunque su estructura mecánica sea similar), y los objetos/notas específicas del cuarto del Guía.
 
 ### 8.0 Apertura del juego (cinemática + despertar paralelo)
 
@@ -215,14 +232,15 @@ Toda esta secuencia usa exclusivamente sistemas ya definidos (AI Perception, tri
 
 ## 9. Pendiente por definir (documento técnico)
 
-- Definir el contenido exacto del easter egg de cada bioma (Control: posible referencia al psicoanálisis, a confirmar; Aislamiento y Fricción: pendientes).
-- Layout concreto sala por sala del **Laberinto 2** (pendiente, se hará después del Laberinto 1).
-- Qué debe encontrar cada rol y contenido específico de cada puzzle compartido restante (paneles, símbolos, mecanismos exactos) — siguiente tema a definir.
-- Diseño de la sala/tramo de la **salida real del Laberinto 2** (dónde y cómo el Corredor encuentra la llave/tarjeta), y del tramo de regreso conjunto tras abrir la puerta del cuarto del nuevo Guía.
+- **Diseño de los 2 personajes iniciales** (1M + 1F) — cada uno con: arquetipo, historia breve, profesión, habilidades específicas al rol de Corredor y al de Guía, sus 3 biomas propios (nombre, estética, temática), y sus 9 puzzles propios (3 por bioma).
+- Diseño del easter egg de cada bioma de cada personaje (uno de referencia posible: psicoanálisis, a confirmar; el resto pendiente).
+- Diseño de los **2 mini-puzzles finales compartidos** (uno para el falso final del Acto 1, otro para el final real del Acto 2) — biomas propios, dedicados, iguales para todas las combinaciones de personajes.
+- Diseño concreto de las **dos puertas del clímax del Acto 2** (salida real vs. cuarto de control), del sistema de decisión simultánea de traición (Guía cierra/no cierra, Corredor vuelve/no vuelve), y de la secuencia narrativa que se dispara con cada una de las 4 combinaciones.
 - Balance de detección de ambos monstruos (radio, velocidad de reacción, patrones de patrullaje).
 - Decidir si la linterna tiene límite de batería/uso, o es de uso libre sin restricción de energía.
-- Arte de referencia final para cada bioma (paleta de color exacta, assets de Unreal Marketplace o creados a mano).
-- Duración estimada por sala / por laberinto completo.
+- Arte de referencia final para cada bioma de cada personaje (paleta de color exacta, assets de Unreal Marketplace o creados a mano).
+- Duración estimada por sala / por bioma / por acto completo.
+- Definir cómo se ve visual y mecánicamente el **punto de envío/recepción** en cada bioma (¿es el mismo objeto físico repetido con distinta estética, o cada bioma tiene su propio diseño diegético?).
 
 ---
 

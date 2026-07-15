@@ -1,11 +1,7 @@
-# Propuesta de juego — Summer Camp (borrador para equipo)
+# Propuesta de juego — Echoes of Suspicion (borrador para equipo)
 *Temática del evento: Videojuegos + IA*
 
-> Nota inicial importante: usar a Claude/Claude Code como apoyo de desarrollo NO cuenta como la "IA" de la temática del evento — eso es una herramienta, como Unreal o Git. La IA que califica para la temática debe estar **dentro del juego** (mecánica, personaje, sistema, tema narrativo). Las dos cosas conviven, pero hay que presentarlas por separado en la propuesta.
-
----
-
-## 1. Concepto en una frase
+## 1. Concepto
 
 Un juego cooperativo de **puzzles y exploración** (LAN, 2 jugadores para esta primera versión), donde dos personas firman para ser sujetos de prueba en un experimento psicológico dirigido por una IA, con la finalidad declarada de analizar la naturaleza del egoísmo y la confianza humana — para desarrollar técnicas que debiliten la confianza y la cohesión entre personas (útil en contexto militar-académico para interrogatorios, contrainteligencia, control de grupos). El experimento resulta ser una simulación mental compartida: deben cooperar si quieren terminarlo con "éxito". **Desde el inicio de la simulación saben las reglas**: si ambos sobreviven, cada uno cobra su pago; si solo uno sobrevive, se lleva el pago de los dos; y si alguno muere ahí dentro, muere también en la vida real.
 
@@ -88,7 +84,7 @@ Tras el discurso inicial, ambos despiertan acostados en el suelo, con visión bo
 
 Cada jugador tiene su propia reserva de vida, pero **ninguno la controla del todo por sí mismo** — depende de cómo actúa el otro.
 
-### Guía — vida y voluntad (dos recursos separados, el sistema de voluntad está en un "veremos")
+### Guía — vida y voluntad (dos recursos separados)
 - **Vida:** decae pasivamente con el tiempo. Se recupera **crafteando** en su cuarto, usando materiales que le envía el Corredor (encontrados explorando —vía principal y segura— o de enemigos derrotados —vía opcional, más rápida pero arriesgada—).
 - **Voluntad:** se gasta específicamente en **ayuda activa discreta hacia el Corredor** — craftear y enviar objetos, iluminar temporalmente una zona del mapa, marcar peligros directamente en su HUD. Se regenera lentamente sola, con el tiempo.
 - **Gratis (no gasta voluntad):** guiar por voz, craftear objetos de recuperación para sí mismo, investigar los puzzles de su propio cuarto.
@@ -100,35 +96,80 @@ Cada jugador tiene su propia reserva de vida, pero **ninguno la controla del tod
 - Cuando esa barra se agota por completo, **pierde una vida** de un contador de vidas totales.
 - Sin apoyo del Guía (objetos, avisos, iluminación), sobrevivir es mucho más difícil, aunque no imposible con habilidad — esto hace que abandonar al Guía sea una apuesta arriesgada, no una estrategia segura.
 
-### Intercambio de objetos: la maleta
+### Intercambio de objetos: puntos de envío por bioma
 
-- El Corredor lleva una **maleta con dos bolsillos**: "Enviar" (donde caen automáticamente los materiales que recoge) y "Recibido" (donde llegan los objetos que el Guía le envía, listos para usar). Sin límite de espacio por el momento.
-- Un botón envía de una sola vez todo el contenido del bolsillo "Enviar" — el jugador decide el momento (enviar rápido si el Guía lo necesita con urgencia, o esperar a acumular varios materiales).
-- El Guía tiene un aparato equivalente (de trabajo, "el Receptor") donde llegan los materiales y desde donde transmite de vuelta lo que craftea.
-- **Costo del envío (ambos lados):** al Guía le cuesta voluntad, como ya está definido. Al Corredor, el envío dispara una **animación corta de vulnerabilidad** (se agacha, abre y cierra la maleta) durante la cual no puede moverse con normalidad, y **emite un sonido de transmisión** detectable por los monstruos igual que cualquier otro ruido del juego. En sala segura no hay riesgo de daño directo, pero el sonido puede atraer a un monstruo a esperar justo afuera de la salida (ver sección de Roles — los monstruos no pueden entrar a salas seguras, pero sí merodear en la puerta). Fuera de sala segura, además del sonido, la inmovilidad puede costarle daño real si hay un monstruo cerca.
-- **El bolsillo "Recibido" funciona como señal orgánica de confianza:** si el Guía ayuda con regularidad, el bolsillo se llena seguido; si empieza a traicionar, simplemente deja de llenarse — sin necesidad de ninguna alerta explícita.
+- **En cada bioma hay un punto fijo específico de envío/recepción** — no es un botón que se puede activar desde cualquier lugar, es una ubicación física en el mapa que el Corredor debe **descubrir explorando**. Encontrarlo es parte de la exploración de cada bioma.
+- El Corredor recoge materiales libremente por el mapa y los **carga consigo** hasta llegar a ese punto — no envía al instante, planea rutas.
+- En el punto de envío, una interacción inicia una **animación de transmisión** que envía todos los materiales acumulados y, si el Guía preparó algo, recibe también los objetos crafteados.
+- **La animación se puede cancelar en cualquier momento** (el Corredor recupera movilidad de inmediato), pero **el sonido de transmisión ya suena de todas formas** — cancelar te salva de quedarte inmóvil más tiempo, no te salva de haber hecho ruido. La decisión real es "¿me arriesgo a terminar el envío completo, o corto ya que el ruido está hecho de todas formas?".
+- **Costo del envío (ambos lados):** al Guía le cuesta voluntad, como ya está definido. Al Corredor, además del sonido y la vulnerabilidad de la animación, estar atado a un punto fijo lo obliga a evaluar el estado del entorno antes de iniciar la transmisión (¿hay una criatura cerca?, ¿acabo de generar ruido?).
+- **La ausencia de objetos recibidos funciona como señal orgánica de confianza:** si el Guía ayuda con regularidad, el Corredor recibe objetos con frecuencia; si empieza a traicionar, simplemente deja de recibir — sin necesidad de ninguna alerta explícita.
 
 ### Por qué esto da libertad a futuro
 Al ser dos recursos separados (vida y voluntad) por personaje, queda abierta la puerta a introducir en el futuro distintos personajes jugables con distintas estadísticas base (uno más resistente pero con menos voluntad, otro al revés, etc.).
 
 ---
 
+## 5.5 Personajes y arquetipos
+
+El juego se juega con **personajes jugables**, cada uno con su propio arquetipo de personalidad, historia breve, posiblemente una profesión, y — lo más importante — **un set único de habilidades y un mundo interior propio** que define los biomas y puzzles del acto en el que ese personaje es Guía.
+
+### Cantidad y meta de alcance
+- **Meta de la entrega del summer camp:** 2 personajes (1 mujer, 1 hombre), cada uno con historia, arquetipo y set completo de biomas + puzzles.
+- **Visión final:** 4 personajes en total (2 mujeres, 2 hombres), donde cada miembro del equipo se encarga de uno — se llegará a este número si el tiempo lo permite.
+
+### Habilidades ligadas al personaje, no al rol
+Cada personaje tiene estadísticas propias que **le pertenecen a él, no al rol que ocupa en ese momento**. Ejemplo (a definir con precisión): un personaje tiene más fuerza y resistencia física, otro tiene mejor visión y un boost útil para investigar.
+
+Esto genera **fricción real al intercambiar roles entre actos**: si en el Acto 1 el personaje con "buena visión" era Guía y funcionaba perfecto para su rol, en el Acto 2 pasa a ser Corredor y esa buena visión no le sirve tanto en el laberinto (le falta la fuerza/resistencia que necesita ahora). Y el otro personaje, que en el Acto 1 era Corredor con su fuerza, ahora es Guía sin la visión especial que ese rol suele aprovechar.
+
+**Consecuencia mecánica:** al invertir roles, cada jugador debe comunicar activamente al otro cosas nuevas que compensen lo que no tiene por naturaleza — el nuevo Corredor le pide al nuevo Guía instrucciones más detalladas de observación; el nuevo Guía le pide al nuevo Corredor que le describa mejor cosas que él normalmente vería solo. El intercambio de roles deja de ser solo un cambio de escenario y se vuelve un cambio real de dinámica cooperativa. *(Pendiente: pulir habilidades exactas de cada arquetipo — ver pendientes.)*
+
+### Biomas y puzzles según el arquetipo del Guía
+
+Los **3 biomas + 9 puzzles de cada acto están basados en la psiquis del personaje que hace de Guía en ese acto**. Es decir: el "laberinto" que recorre el Corredor es literalmente el mundo interior del Guía — su personalidad, lo que le gusta, cómo funciona su mente — traducido en espacio jugable.
+
+Esto significa que:
+- Cada personaje trae consigo sus propios 3 biomas únicos y sus propios 9 puzzles únicos.
+- En el Acto 1, los biomas/puzzles corresponden a la mente del personaje-A (Guía inicial).
+- Al intercambiar roles, los biomas y puzzles del Acto 2 corresponden a la mente del personaje-B (nuevo Guía).
+- **Los mini-puzzles finales de cada acto son los mismos para todas las combinaciones de personajes** — no dependen del arquetipo (ver sección 6).
+
+Esto genera **rejugabilidad real**: la dificultad y experiencia no depende solo de las mecánicas del juego, sino de qué combinación de personajes eligieron los dos jugadores. Cambiar de personaje = cambiar de mundo, no solo de habilidades.
+
+### Programación
+- Cada personaje trae empaquetado: historia + arquetipo + habilidades + 3 biomas + 9 puzzles.
+- Al iniciar la partida, se cargan los assets del personaje que hace de Guía en el Acto 1.
+- Al intercambiar roles, se cargan los del nuevo Guía para el Acto 2.
+- Los mini-puzzles finales están hechos una sola vez, en dos biomas dedicados (uno para el falso final del Acto 1, uno para el final real del Acto 2), y no dependen del personaje.
+
+---
+
 ## 6. Estructura narrativa de dos actos
 
-**Acto 1:** Jugador A (Guía) guía a Jugador B (Corredor) a través del laberinto 1. Al llegar al final, B no encuentra la salida real — encuentra el cuarto del Guía, y ambos se reencuentran físicamente por primera vez desde que empezó la simulación. Celebran, creen haber terminado.
+Cada acto se estructura así: **3 biomas + 3 puzzles por bioma + un mini-puzzle final compartido** que reúne físicamente a ambos jugadores por primera vez en el acto. El intercambio de roles ocurre entre los dos actos.
 
-**La revelación (escena unificada):** en ese momento la comandante IA se ríe y revela que era una prueba, no el final real — el golpe aquí no son las reglas (ya las sabían desde el discurso inicial), sino la falsa victoria: creían haber cumplido las condiciones para ganar, y no era así. Con su tono ácido e indiferente de siempre, puede reiterar burlonamente lo que ya dijo al inicio para reforzar que la carga que llevaban desde el principio sigue vigente.
+**Acto 1:** Jugador A (Guía) guía a Jugador B (Corredor) a través del laberinto 1 (3 biomas del personaje de A). Al llegar al final, B no encuentra la salida real — encuentra el cuarto del Guía, y ambos se reencuentran físicamente por primera vez desde que empezó la simulación.
 
-Inmediatamente después, fuerza el **intercambio de roles**: B pasa a ser Guía (en un cuarto nuevo), A pasa a ser Corredor (en un laberinto nuevo, ligeramente más difícil que el primero).
+**Mini-puzzle final del Acto 1 (estilo It Takes Two):** ya juntos en el mismo espacio, ambos deben combinar sus habilidades reales de personaje (fuerza + visión especial + lo que sea, según los arquetipos que hayan elegido — ver sección 5.5) para resolver un pequeño reto físico compartido que los lleva a la "puerta final". Al cruzarla, celebran creyendo que ganaron.
 
-**Acto 2:** A (ahora Corredor) es guiado por B (ahora Guía) por el laberinto 2. A diferencia del Acto 1, aquí A sí llega a la **salida real del laberinto** — y ahí encuentra una llave o tarjeta de acceso (a definir cuál) que abre la puerta del cuarto del nuevo Guía (B).
+**La revelación:** la comandante IA se ríe y revela que era una prueba, no el final real — el golpe no son las reglas (ya las sabían desde el discurso inicial), sino la falsa victoria. Con su tono ácido de siempre, algo como *"lol, qué mal — este no era el final"*, e inmediatamente fuerza el **intercambio de roles**: B pasa a ser Guía, A pasa a ser Corredor.
 
-En ese momento, A enfrenta la decisión clave del juego:
+**Acto 2:** A (ahora Corredor) es guiado por B (ahora Guía) por el laberinto 2 (que corresponde ahora a los 3 biomas del personaje de B — ver sección 5.5). Al llegar al final, A tiene ante sí **dos puertas visibles**: la que lleva a la salida real y la que lleva al cuarto de control del Guía. En paralelo, B (desde su cuarto) también tiene control sobre esas puertas.
 
-- **Salir solo, de inmediato, por la salida ya encontrada** → B (el Guía) muere, nunca es rescatado. A sobrevive solo.
-- **Volver por B**, usando la llave/tarjeta para abrir la puerta de su cuarto, y regresar juntos hasta la salida que A ya dejó abierta. Este regreso es la parte más arriesgada del juego — a partir de aquí hay dos desenlaces posibles: **ambos mueren en el intento**, o **ambos logran cruzar la salida con vida**.
+**La doble decisión de traición del Acto 2 (simultánea e independiente):**
+- **El Guía (B)** decide si cierra la puerta de la salida real, dejando abierta solo la del cuarto de control (atrapando al Corredor con él) — o mantiene abierta la salida real.
+- **El Corredor (A)** decide si vuelve por el Guía a través de la puerta del cuarto de control — o sale solo por la salida real.
 
-La decisión de volver o no es completamente del jugador que está en el rol de Corredor en ese momento — nadie más puede tomarla por él.
+Cada uno toma su decisión sin saber qué está haciendo el otro. Las combinaciones y resultados:
+
+- **Ambos cooperan** (Guía deja abierta la salida real, Corredor decide volver): se reencuentran, resuelven juntos el **mini-puzzle final del Acto 2** (mismo tipo que el del Acto 1, en un bioma nuevo dedicado exclusivamente a este momento), y **ambos escapan por la salida real**. Único final donde ambos ganan.
+- **Ambos traicionan** (Guía cierra la salida real, Corredor no vuelve): quedan atrapados y **ambos mueren dentro de la simulación**.
+- **Solo uno traiciona** (el otro cooperó): **el que traicionó muere, sin excepción**. El que cooperó sobrevive.
+
+**El truco emocional:** los jugadores no lo saben, pero **traicionar en el Acto 2 siempre lleva a la muerte** — creen que están tomando la decisión "segura" (evitando el riesgo de volver por el otro, o quedándose con todo), y resulta que la única forma real de sobrevivir era confiar. La comandante IA, con su manipulación habitual, le echa la culpa al sobreviviente ("no lograste que confiara lo suficiente en ti") — sin que eso sea necesariamente justo.
+
+**Nota importante sobre los personajes:** los **3 biomas + 9 puzzles de cada acto sí cambian según qué personaje esté de Guía** en ese acto (cada personaje trae los suyos, basados en su psiquis — ver sección 5.5). Los **mini-puzzles finales de cada acto NO cambian** — son los mismos para todas las combinaciones de personajes. Están diseñados una sola vez y funcionan igual sin importar los arquetipos elegidos.
 
 ---
 
@@ -154,9 +195,13 @@ Si uno de los dos muere, la comandante IA le dice al sobreviviente que la culpa 
 
 **Monto de referencia:** cada sujeto firmó por **$50.000.000 COP**. Si ambos sobreviven, cada uno se lleva sus $50 millones. Si solo uno sobrevive, se lleva los $100 millones completos.
 
-1. **Solo uno cruza con vida** (el otro murió en algún punto, o A decide salir solo en el Acto 2 sin volver por B): la sesión termina de inmediato, el sobreviviente es desconectado y extraído. La comandante IA le informa que la culpa fue del otro y que, por default contractual, se lleva el pago completo de ambos ($100.000.000 COP). Al despertar en el laboratorio real, ve el cuerpo sin vida de su compañero justo al lado. "Gana", pero mal.
-2. **Ambos cruzan con vida:** solo posible si A vuelve por B en el Acto 2, logra abrir la puerta con la llave/tarjeta, y ambos consiguen llegar juntos hasta la salida. Cada uno se lleva su propio pago acordado ($50.000.000 COP). Es el único final de cooperación total y el único en el que ambos "ganan" limpiamente. Incluye una escena de despertar juntos en el laboratorio real, viéndose por primera vez fuera de la simulación.
-3. **Ambos mueren:** este final **solo puede ocurrir en el Acto 2**, específicamente durante el intento de regreso —si A decide volver por B, abre la puerta, y algo sale mal en el trayecto compartido de vuelta a la salida. Fuera de esta ventana específica, la muerte de un jugador siempre termina la sesión de inmediato para el otro (final 1) — la doble muerte es exclusiva de este momento de reunión y regreso conjunto.
+Los tres finales se determinan por las decisiones de traición en el clímax del Acto 2 (ver sección 6):
+
+1. **Ambos cooperan → ambos ganan.** El Guía deja abierta la salida real, el Corredor decide volver por él, resuelven juntos el mini-puzzle final, y cruzan la salida los dos. Cada uno se lleva su pago acordado ($50 millones). Único final de cooperación total. Escena de despertar juntos en el laboratorio real, viéndose por primera vez fuera de la simulación.
+2. **Solo uno traiciona → el traidor muere.** El que cooperó sobrevive y es extraído; se lleva el pago completo de los dos ($100 millones). La comandante IA, con su manipulación habitual, le echa la culpa ("no lograste que confiara en ti lo suficiente"), aunque eso no sea necesariamente justo. Al despertar en el laboratorio real, ve el cuerpo sin vida de su compañero.
+3. **Ambos traicionan → ambos mueren.** Quedan atrapados dentro de la simulación y mueren los dos. Nadie cobra nada.
+
+**Nota clave:** los jugadores no saben que traicionar mata en el Acto 2 — creen que están haciendo la jugada "segura" y por eso el golpe del final 2 es doblemente cruel: no solo pierden todo, sino que además la IA los culpa a ellos mismos. Este es el corazón emocional del experimento: probar que basta con la duda sembrada + el incentivo económico para que la gente sabotee la única jugada que realmente los salvaría.
 
 ---
 
@@ -194,21 +239,21 @@ Ningún sistema requiere machine learning real ni mecánicas inventadas desde ce
 
 ## 11. Pendiente por definir (próximos pasos del equipo)
 
-- Nombre de trabajo del juego.
-- Estructura de niveles/capítulos concretos de cada laberinto (cuáles tienen monstruos, cuáles son puramente puzzle/exploración).
-- Diseño concreto de los puzzles (tipos, cantidad, curva de dificultad) en ambos laberintos y ambos cuartos del Guía.
-- Guion completo de la comandante IA: discurso inicial (propósito, reglas de pago, y la muerte real), líneas de duda sembrada, líneas de culpa repartida, y el monólogo de la escena del falso final.
-- Diseño visual/tono estético de los laberintos, los cuartos del Guía, el laboratorio real y los monstruos.
+- **Definir los 2 personajes iniciales** (1 mujer, 1 hombre): nombre, arquetipo de personalidad, historia breve, posiblemente profesión, y set exacto de habilidades/estadísticas que llevan al rol de Corredor y al de Guía. Meta a futuro: los otros 2 personajes.
+- Diseño de los 3 biomas + 9 puzzles de cada personaje (según su psiquis).
+- Diseño de los 2 mini-puzzles finales compartidos (mismos para todas las combinaciones de personajes): uno para el falso final del Acto 1, otro para el final real del Acto 2 cuando ambos cooperan.
+- Guion completo de la comandante IA: discurso inicial, líneas de duda sembrada, líneas de culpa repartida, monólogo del falso final del Acto 1, y las líneas de reacción a cada uno de los 3 finales del Acto 2.
+- Diseño visual/tono estético del laboratorio real y los monstruos.
 - Balance numérico: velocidad de decaimiento de vida del Guía, costo de voluntad por acción, velocidad de regeneración, tamaño de la barra y número de vidas del Corredor.
-- Decidir si el objeto que abre la puerta del cuarto del nuevo Guía en el Acto 2 es una llave física o una tarjeta de acceso.
-- Diseño concreto del tramo de regreso conjunto en el Acto 2 (qué hace que puedan morir los dos, cómo se balancea esa dificultad).
+- Diseño concreto de las dos puertas visibles al final del Acto 2 (salida real vs. cuarto de control) y de cómo cada jugador toma su decisión sin ver la del otro.
 - Decisión final sobre escalar a 3+ jugadores y/o online (visión a futuro, no para esta entrega).
+- Decisión de recorte: si el tiempo aprieta, priorizar 1 acto completo (sin intercambio de roles) sobre 2 actos incompletos.
 
 ---
 
 ## Disclaimer sobre el uso de IA en el desarrollo
 
-Durante el desarrollo de este proyecto, el equipo utilizará herramientas de IA (Claude / Claude Code) para prototipar sistemas, resolver dudas técnicas, y acelerar el desarrollo en general. Este uso es una herramienta de apoyo al proceso de creación, y es independiente de la IA como personaje/sistema narrativo dentro del propio juego (la comandante IA), que es lo que corresponde a la temática "Videojuegos + IA" del evento.
+Durante el desarrollo de este proyecto, el equipo utilizará herramientas de IA (Claude / Claude Code) para prototipar sistemas, resolver dudas técnicas, y acelerar el desarrollo en general.
 
 ---
 
