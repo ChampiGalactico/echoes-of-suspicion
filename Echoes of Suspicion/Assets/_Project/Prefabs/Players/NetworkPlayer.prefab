@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 8847093028974224244}
   - component: {fileID: -3661369472631849033}
   - component: {fileID: 5931935319080669408}
+  - component: {fileID: -6306908716043375669}
   m_Layer: 0
   m_Name: NetworkPlayer
   m_TagString: Untagged
@@ -187,7 +188,11 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  moveSpeed: 5
+  walkSpeed: 5
+  crouchSpeed: 2
+  jumpHeight: 1.5
+  standingHeight: 2
+  crouchingHeight: 1
   gravity: -20
   groundedVerticalVelocity: -2
 --- !u!114 &5931935319080669408
@@ -212,6 +217,22 @@ MonoBehaviour:
   mouseSensitivity: 0.08
   minimumPitch: -85
   maximumPitch: 85
+--- !u!114 &-6306908716043375669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1060991537307844142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62b4708cfd0e85c47a019d7b0cd69e25, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerColor
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  bodyRenderer: {fileID: 2668830161863186231}
 --- !u!1 &4737856245144419918
 GameObject:
   m_ObjectHideFlags: 0

@@ -7,7 +7,21 @@ public sealed class NetworkPlayerMovement : NetworkBehaviour
 {
     [Header("Movement")]
     [SerializeField, Min(0f)]
-    private float moveSpeed = 5f;
+    private float walkSpeed = 5f;
+
+    [SerializeField, Min(0f)]
+    private float crouchSpeed = 2f;
+
+    [Header("Jump")]
+    [SerializeField, Min(0f)]
+    private float jumpHeight = 1.5f;
+
+    [Header("Crouch")]
+    [SerializeField, Min(0f)]
+    private float standingHeight = 2f;
+
+    [SerializeField, Min(0f)]
+    private float crouchingHeight = 1f;
 
     [Header("Gravity")]
     [SerializeField]
@@ -18,6 +32,7 @@ public sealed class NetworkPlayerMovement : NetworkBehaviour
 
     private CharacterController characterController;
     private float verticalVelocity;
+    private bool isCrouching;
 
     private void Awake()
     {
@@ -39,13 +54,18 @@ public sealed class NetworkPlayerMovement : NetworkBehaviour
             return;
         }
 
+        HandleCrouch(keyboard);
+        HandleJump(keyboard);
+
         Vector2 input = ReadKeyboardInput();
+
+        float currentSpeed = isCrouching ? crouchSpeed : walkSpeed;
 
         Vector3 horizontalMovement =
             transform.right * input.x +
             transform.forward * input.y;
 
-        horizontalMovement *= moveSpeed;
+        horizontalMovement *= currentSpeed;
 
         ApplyGravity();
 
@@ -54,6 +74,31 @@ public sealed class NetworkPlayerMovement : NetworkBehaviour
             Vector3.up * verticalVelocity;
 
         characterController.Move(finalVelocity * Time.deltaTime);
+    }
+
+    private void HandleCrouch(Keyboard keyboard)
+    {
+        // Mantener presionado Ctrl para agacharse.
+        bool wantsToCrouch = keyboard.leftCtrlKey.isPressed;
+
+        if (wantsToCrouch != isCrouching)
+        {
+            isCrouching = wantsToCrouch;
+            characterController.height =
+                isCrouching ? crouchingHeight : standingHeight;
+        }
+    }
+
+    private void HandleJump(Keyboard keyboard)
+    {
+        // Solo se puede saltar si está en el piso y no está agachado.
+        if (keyboard.spaceKey.wasPressedThisFrame &&
+            characterController.isGrounded &&
+            !isCrouching)
+        {
+            // Fórmula física: v = sqrt(2 * altura * gravedad).
+            verticalVelocity = Mathf.Sqrt(-2f * gravity * jumpHeight);
+        }
     }
 
     private static Vector2 ReadKeyboardInput()
@@ -81,7 +126,7 @@ public sealed class NetworkPlayerMovement : NetworkBehaviour
             input.x -= 1f;
         }
 
-        // Evita que moverse en diagonal sea m�s r�pido.
+        // Evita que moverse en diagonal sea más rápido.
         return Vector2.ClampMagnitude(input, 1f);
     }
 
