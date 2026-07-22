@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: -3661369472631849033}
   - component: {fileID: 5931935319080669408}
   - component: {fileID: -6306908716043375669}
+  - component: {fileID: 1547087187519626714}
   m_Layer: 0
   m_Name: NetworkPlayer
   m_TagString: Untagged
@@ -233,6 +234,27 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   bodyRenderer: {fileID: 2668830161863186231}
+--- !u!114 &1547087187519626714
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1060991537307844142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66efd9777c6c7ac4993841774019ef69, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MicrophoneNoiseSource
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  sampleRate: 44100
+  bufferLengthSeconds: 1
+  noiseThreshold: 0.05
+  analysisInterval: 0.1
+  samplesToAnalyze: 1024
+  showDebugLogs: 1
 --- !u!1 &4737856245144419918
 GameObject:
   m_ObjectHideFlags: 0
