@@ -13,8 +13,13 @@ using Adrenak.UniMic;
 public sealed class MicrophoneNoiseSource : NetworkBehaviour
 {
     [Header("Noise Detection")]
-    [SerializeField, Range(0f, 1f), Tooltip("Volumen mínimo para considerarse ruido (0-1).")]
-    private float noiseThreshold = 0.05f;
+    [SerializeField, Range(0f, 1f), Tooltip("Volumen mínimo para considerarse ruido (0-1). " +
+        "Con ganancia aplicada, valores típicos: susurro ~0.05, hablar normal ~0.15, gritar ~0.5.")]
+    private float noiseThreshold = 0.15f;
+
+    [SerializeField, Range(1f, 20f), Tooltip("Multiplicador de amplificación del RMS. " +
+        "Sube este valor si tu mic capta muy suave. Valor típico: 5-10.")]
+    private float gainMultiplier = 5f;
 
     [SerializeField, Tooltip("Intervalo mínimo entre publicaciones al bus (segundos).")]
     private float publishInterval = 0.1f;
@@ -118,11 +123,13 @@ public sealed class MicrophoneNoiseSource : NetworkBehaviour
             return;
         }
 
-        float rms = CalculateRMS(samples);
+        float rawRms = CalculateRMS(samples);
+        float rms = rawRms * gainMultiplier;
 
         if (showDebugLogs)
         {
-            Debug.Log($"[MicrophoneNoiseSource] RMS: {rms:F4} (umbral: {noiseThreshold:F4})");
+            Debug.Log($"[MicrophoneNoiseSource] RMS raw: {rawRms:F4}, " +
+                      $"RMS gain: {rms:F4} (umbral: {noiseThreshold:F4})");
         }
 
         if (rms >= noiseThreshold)
@@ -147,7 +154,7 @@ public sealed class MicrophoneNoiseSource : NetworkBehaviour
 
     private void PublishNoiseEvent(float rms)
     {
-        float intensity = Mathf.Clamp01(rms * 3f);
+        float intensity = Mathf.Clamp01(rms);
 
         // Publica localmente para el HUD del propio jugador.
         NoiseEvent localNoiseEvent = new NoiseEvent(

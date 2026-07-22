@@ -83,6 +83,14 @@ public class EOSNetworkManager : NetworkManager
         base.OnDestroy();
     }
 
+    [Header("Server Setup")]
+    [SerializeField, Tooltip("Prefabs de criaturas para spawnear al arrancar el server.")]
+    private GameObject[] creaturePrefabsToSpawn;
+
+    [Header("Server Setup")]
+    [SerializeField, Tooltip("Configuración de criaturas a spawnear al arrancar el server.")]
+    private CreatureSpawnConfig[] creatureSpawns;
+
     #endregion
 
     #region Start & Stop
@@ -278,8 +286,12 @@ public class EOSNetworkManager : NetworkManager
     /// </summary>
     public override void OnStartServer()
     {
+        base.OnStartServer();
+
         Debug.Log("[EOSNetworkManager] 🟢 Server arrancado.");
         OnServerReady_Event?.Invoke();
+
+        SpawnCreatures();
     }
 
     /// <summary>
@@ -303,4 +315,58 @@ public class EOSNetworkManager : NetworkManager
     public override void OnStopClient() { }
 
     #endregion
+
+    private void SpawnCreatures()
+    {
+        if (creatureSpawns == null || creatureSpawns.Length == 0)
+        {
+            Debug.LogWarning("[EOSNetworkManager] No hay criaturas configuradas para spawnear.");
+            return;
+        }
+
+        foreach (var config in creatureSpawns)
+        {
+            if (config.creaturePrefab == null || config.spawnPoint == null)
+            {
+                Debug.LogWarning("[EOSNetworkManager] Config de criatura incompleta, saltando.");
+                continue;
+            }
+
+            var creature = Instantiate(
+                config.creaturePrefab,
+                config.spawnPoint.position,
+                config.spawnPoint.rotation);
+
+            // Asignar waypoints ANTES de spawnear en red,
+            // para que el estado inicial en OnStartServer los use.
+            var controller = creature.GetComponent<CreatureController>();
+            if (controller != null && config.patrolWaypoints != null)
+            {
+                controller.SetPatrolWaypoints(config.patrolWaypoints);
+            }
+
+            NetworkServer.Spawn(creature);
+
+            Debug.Log($"[EOSNetworkManager] Criatura spawneada: {config.creaturePrefab.name} " +
+                      $"en {config.spawnPoint.position} " +
+                      $"con {config.patrolWaypoints?.Length ?? 0} waypoints.");
+        }
+    }
+}
+
+/// <summary>
+/// Configuración de una criatura para spawnear al arrancar el server.
+/// Contiene el prefab, dónde spawnearla y su ruta de patrullaje.
+/// </summary>
+[System.Serializable]
+public sealed class CreatureSpawnConfig
+{
+    [Tooltip("Prefab de la criatura.")]
+    public GameObject creaturePrefab;
+
+    [Tooltip("Punto donde spawnear.")]
+    public Transform spawnPoint;
+
+    [Tooltip("Waypoints por donde patrullará esta criatura específica.")]
+    public Transform[] patrolWaypoints;
 }
