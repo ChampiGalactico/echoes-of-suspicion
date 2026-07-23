@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a32ba8b2bd381e94886f7957671eef43, type: 3}
+  m_Name: CarlosData
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterName: Carlos
+  archetype: El Protector
+  shortDescription: "Edad: 45 a\xF1os.\nProfesi\xF3n: Mec\xE1nico.\r\nPersonalidad
+    observable: \r\n\r\nEl arquetipo del protector o cuidador est\xE1 relacionado
+    con el amigo pero, en este caso, la comunidad o pertenencia a un grupo queda
+    en segundo plano. En el caso del protector, se trata de personas que est\xE1n
+    llenas de compasi\xF3n y empat\xEDa.\r\n\r\nPor ello, su principal objetivo es
+    ayudar a los dem\xE1s. Su principal virtud es la generosidad y la capacidad de
+    sacrificio. Sin embargo, su mayor debilidad es que pueden ser explotados con
+    facilidad por otras personas. Su mayor miedo es ser percibidos como personas
+    ego\xEDstas.\r\n\r\nRaz\xF3n por la que acept\xF3 el experimento: El dinero\r\n\r\nPara
+    qu\xE9 necesita el dinero: Cubrir los estudios de sus hijos en el extranjero\r\n"
+  strengthMultiplier: 1.8
+  staminaMultiplier: 1.2
+  agilityMultiplier: 1
+  perceptionMultiplier: 1.8
+  guideBiomeSceneName: 

@@ -17,6 +17,9 @@ public sealed class NoiseMaterialConfig : ScriptableObject
 
         [Range(0f, 2f), Tooltip("1 = ruido normal. 0 = silencioso. 2 = el doble de ruidoso.")]
         public float multiplier;
+
+        [Tooltip("Clip de audio que se reproduce al impactar con este material.")]
+        public AudioClip impactSound;
     }
 
     [SerializeField]
@@ -46,4 +49,17 @@ public sealed class NoiseMaterialConfig : ScriptableObject
         Debug.LogWarning($"[NoiseMaterialConfig] No hay multiplicador configurado para {materialType}. Usando 1.");
         return 1f;
     }
+
+    public AudioClip GetImpactSound(NoiseMaterialType materialType)
+{
+    foreach (var entry in multipliers)
+    {
+        if (entry.materialType == materialType)
+        {
+            return entry.impactSound;
+        }
+    }
+
+    return null;
+}
 }

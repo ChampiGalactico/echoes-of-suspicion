@@ -85,10 +85,30 @@ public class EOSNetworkManager : NetworkManager
         base.OnServerReady(conn);
     }
 
-    /* public override void OnServerAddPlayer(NetworkConnectionToClient conn) { } 
+    public override void OnServerAddPlayer(NetworkConnectionToClient conn)
+    {
+        base.OnServerAddPlayer(conn);
 
-    Aquí, eventualmente irá la lógica de spawn por rol (Guía/Corredor)
-    */
+        // El primero en conectar (el Host) queda como Guía con la mujer (índice 0).
+        // El resto, Corredor con el hombre (índice 1).
+        // TODO: reemplazar por selección real de rol/personaje cuando exista el lobby.
+        PlayerRole role = conn.connectionId == 0 ? PlayerRole.Guide : PlayerRole.Runner;
+        int characterIndex = conn.connectionId == 0 ? 0 : 1;
+
+        var statsProvider = conn.identity.GetComponent<CharacterStatsProvider>();
+        if (statsProvider != null)
+        {
+            statsProvider.SetHardcodedRole(role);
+            statsProvider.SetHardcodedCharacter(characterIndex);
+            Debug.Log($"[EOSNetworkManager] ConnectionId {conn.connectionId} → {role}, personaje índice {characterIndex}.");
+        }
+        else
+        {
+            Debug.LogWarning("[EOSNetworkManager] El Player no tiene CharacterStatsProvider.");
+        }
+    }
+
+
 
     public override void OnServerDisconnect(NetworkConnectionToClient conn)
     {

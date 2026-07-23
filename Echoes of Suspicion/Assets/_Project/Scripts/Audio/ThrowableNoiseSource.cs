@@ -10,6 +10,7 @@ using UnityEngine;
 /// </summary>
 [RequireComponent(typeof(NetworkIdentity))]
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(AudioSource))]
 public sealed class ThrowableNoiseSource : NetworkBehaviour
 {
     [Header("Material")]
@@ -27,6 +28,8 @@ public sealed class ThrowableNoiseSource : NetworkBehaviour
     private float maxImpactSpeed = 8f;
 
     [SerializeField, Tooltip("Tiempo mínimo entre impactos que generan ruido (evita spam si rebota varias veces).")]
+
+    private AudioSource audioSource;
     private float impactCooldown = 0.3f;
 
     private float lastImpactTime;
@@ -65,9 +68,18 @@ public sealed class ThrowableNoiseSource : NetworkBehaviour
         RpcNotifyImpactNoise(impactPosition, intensity);
     }
 
+    private void Awake()
+    {
+        audioSource = GetComponent<AudioSource>();
+        audioSource.spatialBlend = 1f; // 1 = sonido 3D completo (se atenúa con distancia)
+        audioSource.playOnAwake = false;
+    }
+
     [ClientRpc]
     private void RpcNotifyImpactNoise(Vector3 position, float intensity)
     {
+        PlayImpactSound(); // esto sí debe sonar en todos, incluido el host
+
         if (isServer)
         {
             return;
@@ -75,5 +87,19 @@ public sealed class ThrowableNoiseSource : NetworkBehaviour
 
         NoiseEvent noiseEvent = new NoiseEvent(position, intensity, NoiseSource.ObjectImpact, netId);
         NoiseEventBus.Publish(noiseEvent);
+    }
+
+    private void PlayImpactSound()
+    {
+        if (materialConfig == null)
+        {
+            return;
+        }
+
+        AudioClip clip = materialConfig.GetImpactSound(materialType);
+        if (clip != null)
+        {
+            audioSource.PlayOneShot(clip);
+        }
     }
 }

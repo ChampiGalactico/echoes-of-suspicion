@@ -46,7 +46,7 @@ public sealed class SearchState : ICreatureState
 
     public void Update()
     {
-        Transform targetTransform = CreaturePerceptionUtils.FindPlayerTransformByNetId(targetPlayerNetId);
+        Transform targetTransform = PlayerUtils.FindPlayerTransformByNetId(targetPlayerNetId);
 
         // Si lo vuelve a ver, retoma la caza directamente.
         if (targetTransform != null &&

@@ -78,7 +78,7 @@ public sealed class AlertState : ICreatureState
     /// </summary>
     private void CheckForChaseTransition()
     {
-        Transform targetTransform = CreaturePerceptionUtils.FindPlayerTransformByNetId(TargetPlayerNetId);
+        Transform targetTransform = PlayerUtils.FindPlayerTransformByNetId(TargetPlayerNetId);
 
         if (targetTransform == null)
         {
