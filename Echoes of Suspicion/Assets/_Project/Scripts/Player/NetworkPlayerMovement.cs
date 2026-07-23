@@ -7,7 +7,7 @@ public sealed class NetworkPlayerMovement : NetworkBehaviour
 {
     [Header("Movement")]
     [SerializeField, Min(0f)]
-    private float walkSpeed = 5f;
+    private float walkSpeed = 6f;
 
     [SerializeField, Min(0f)]
     private float crouchSpeed = 2f;

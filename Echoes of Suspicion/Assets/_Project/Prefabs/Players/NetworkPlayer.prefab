@@ -189,8 +189,8 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  walkSpeed: 5
-  crouchSpeed: 2
+  walkSpeed: 10
+  crouchSpeed: 5
   jumpHeight: 1.5
   standingHeight: 2
   crouchingHeight: 1
@@ -249,12 +249,12 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  sampleRate: 44100
-  bufferLengthSeconds: 1
   noiseThreshold: 0.05
-  analysisInterval: 0.1
-  samplesToAnalyze: 1024
-  showDebugLogs: 1
+  gainMultiplier: 5
+  publishInterval: 0.1
+  showDebugLogs: 0
+  muteToggleKey: 27
+  isMuted: 0
 --- !u!1 &4737856245144419918
 GameObject:
   m_ObjectHideFlags: 0

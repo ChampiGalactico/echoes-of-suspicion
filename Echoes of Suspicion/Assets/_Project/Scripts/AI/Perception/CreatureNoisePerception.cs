@@ -41,7 +41,7 @@ public sealed class CreatureNoisePerception : NetworkBehaviour
     /// </summary>
     private void HandleNoise(NoiseEvent noiseEvent)
     {
-        // Verificar intensidad mínima según los datos de la criatura.
+        // Verificar intensidad mínima.
         if (noiseEvent.intensity < creature.Data.minNoiseIntensity)
         {
             return;
@@ -49,22 +49,41 @@ public sealed class CreatureNoisePerception : NetworkBehaviour
 
         // Verificar distancia.
         float distance = Vector3.Distance(transform.position, noiseEvent.worldPosition);
-
         if (distance > creature.Data.hearingRadius)
         {
             return;
         }
 
-        // Ruido válido detectado.
         if (showDebugLogs)
         {
             Debug.Log($"[CreatureNoisePerception] 👂 Ruido detectado: " +
+                      $"player {noiseEvent.sourcePlayerNetId}, " +
                       $"intensidad {noiseEvent.intensity:F2} " +
-                      $"a {distance:F1}m de distancia. " +
-                      $"Cambio a AlertState.");
+                      $"a {distance:F1}m.");
         }
 
-        // Cambiar al estado de alerta con la posición del ruido.
-        creature.ChangeState(new AlertState(creature, noiseEvent.worldPosition));
+        // Si ya está en Alert, delegarle la decisión al AlertState (target lock).
+         if (creature.CurrentState is AlertState alertState)
+        {
+            alertState.OnNoiseReceived(noiseEvent);
+            return;
+        }
+
+        // Si está en Chase, refrescar el "last seen" si es el mismo target.
+        if (creature.CurrentState is ChaseState chaseState)
+        {
+            chaseState.OnNoiseReceived(noiseEvent);
+            return;
+        }
+
+        // Si está en Search, redirigir la búsqueda si es el mismo target.
+        if (creature.CurrentState is SearchState searchState)
+        {
+            searchState.OnNoiseReceived(noiseEvent);
+            return;
+        }
+
+        // Si está en Patrol, entrar a Alert con este target.
+        creature.ChangeState(new AlertState(creature, noiseEvent.worldPosition, noiseEvent.sourcePlayerNetId));
     }
 }

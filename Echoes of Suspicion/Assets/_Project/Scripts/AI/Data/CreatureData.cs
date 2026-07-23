@@ -43,6 +43,18 @@ public sealed class CreatureData : ScriptableObject
     [Tooltip("Tiempo que espera en el punto del ruido antes de volver a patrullar.")]
     public float investigationTime = 4f;
 
+    [Header("Search")]
+    [Tooltip("Segundos que la criatura busca en la última posición conocida antes de rendirse.")]
+    public float searchDuration = 4f;
+
+    [Header("Chase")]
+    [Tooltip("Tiempo mínimo que la criatura se compromete con un target antes de considerar cambiar. " +
+             "Evita el 'ida y vuelta' cuando varios jugadores hacen ruido.")]
+    public float targetCommitmentTime = 2f;
+
+    [Tooltip("Segundos sin contacto (visual o auditivo) antes de perder el rastro y volver a patrullar.")]
+    public float loseTargetTime = 5f;
+
     [Header("Stun")]
     [Tooltip("Duración del aturdimiento cuando la aturden con luz.")]
     public float stunDuration = 2f;
@@ -56,4 +68,5 @@ public sealed class CreatureData : ScriptableObject
 
     [Tooltip("Segundos entre ataques (cooldown).")]
     public float attackCooldown = 1f;
+
 }

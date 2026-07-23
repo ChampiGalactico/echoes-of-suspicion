@@ -30,7 +30,7 @@ public sealed class CreatureController : NetworkBehaviour
     /// reproducir animaciones o efectos distintos.
     /// </summary>
     [SyncVar]
-    private CreatureStateType currentStateType = CreatureStateType.Patrol;
+    private CreatureStateType CurrentStateType = CreatureStateType.Patrol;
 
     /// <summary>
     /// Flag que indica si la criatura puede ser aturdida ahora mismo.
@@ -40,10 +40,11 @@ public sealed class CreatureController : NetworkBehaviour
 
     // Acceso a los datos y componentes (los estados los necesitan).
     public CreatureData Data => data;
+
     public NavMeshAgent Agent { get; private set; }
     public Transform[] Waypoints => patrolWaypoints;
 
-    private ICreatureState currentState;
+    public ICreatureState CurrentState { get; private set; }
 
     /// <summary>
     /// Asigna waypoints a la criatura después de spawneada.
@@ -80,7 +81,7 @@ public sealed class CreatureController : NetworkBehaviour
             return;
         }
 
-        currentState?.Update();
+        CurrentState?.Update();
     }
 
     /// <summary>
@@ -95,15 +96,15 @@ public sealed class CreatureController : NetworkBehaviour
             return;
         }
 
-        currentState?.Exit();
-        currentState = newState;
+        CurrentState?.Exit();
+        CurrentState = newState;
 
         // Actualiza el tipo sincronizado según el estado concreto.
-        currentStateType = GetStateType(newState);
+        CurrentStateType = GetStateType(newState);
 
-        currentState?.Enter();
+        CurrentState?.Enter();
 
-        Debug.Log($"[CreatureController] Cambio de estado: {currentStateType}");
+        Debug.Log($"[CreatureController] Cambio de estado: {CurrentStateType}");
     }
 
     /// <summary>
@@ -129,8 +130,44 @@ public sealed class CreatureController : NetworkBehaviour
         {
             PatrolState => CreatureStateType.Patrol,
             AlertState => CreatureStateType.Alert,
+            ChaseState => CreatureStateType.Chase,
+            SearchState => CreatureStateType.Search,
             _ => CreatureStateType.Patrol
         };
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (data == null)
+        {
+            return;
+        }
+
+        // Radio de audición (amarillo).
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, data.hearingRadius);
+
+        // Radio de "detección cercana" que dispara Chase (naranja).
+        Gizmos.color = new Color(1f, 0.5f, 0f);
+        Gizmos.DrawWireSphere(transform.position, data.hearingRadius * 0.3f);
+
+        // Radio de visión (rojo) — aún no implementado funcionalmente, pero
+        // lo dejamos visible para cuando construyamos la percepción visual.
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, data.visionRadius);
+
+        if (Agent != null && Agent.hasPath)
+        {
+            Vector3 destination = Agent.destination;
+
+            Gizmos.color = Color.magenta;
+            Gizmos.DrawSphere(destination, 0.4f);
+            Gizmos.DrawLine(transform.position, destination);
+
+#if UNITY_EDITOR
+            UnityEditor.Handles.Label(destination + Vector3.up * 0.6f, $"Target: {CurrentStateType}");
+#endif
+        }
     }
 }
 
@@ -143,6 +180,7 @@ public enum CreatureStateType
     Patrol,
     Alert,
     Chase,
+    Search,
     Enraged,
     Stunned,
     Attacking
