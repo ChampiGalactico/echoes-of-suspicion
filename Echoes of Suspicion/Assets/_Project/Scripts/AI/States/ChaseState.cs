@@ -30,7 +30,7 @@ public sealed class ChaseState : ICreatureState
     {
         creature.Agent.speed = creature.Data.chaseSpeed;
         visualPerception = creature.GetComponent<CreatureVisualPerception>();
-        targetTransform = CreaturePerceptionUtils.FindPlayerTransformByNetId(targetPlayerNetId);
+        targetTransform = PlayerUtils.FindPlayerTransformByNetId(targetPlayerNetId);
         lastContactTime = Time.time;
 
         // Asumimos contacto inicial (por vista o por cercanía que disparó este estado).
@@ -43,7 +43,7 @@ public sealed class ChaseState : ICreatureState
     {
         if (targetTransform == null)
         {
-            targetTransform = CreaturePerceptionUtils.FindPlayerTransformByNetId(targetPlayerNetId);
+            targetTransform = PlayerUtils.FindPlayerTransformByNetId(targetPlayerNetId);
 
             if (targetTransform == null)
             {
