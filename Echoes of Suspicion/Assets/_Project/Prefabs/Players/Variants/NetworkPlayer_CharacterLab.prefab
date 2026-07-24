@@ -1348,6 +1348,37 @@ Transform:
   - {fileID: 7721493915721654489}
   m_Father: {fileID: 875019725032397294}
   m_LocalEulerAnglesHint: {x: 12, y: 8, z: 8}
+--- !u!1 &5453748633943158620
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1153924140024978355}
+  m_Layer: 0
+  m_Name: ItemDropOrigin
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1153924140024978355
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5453748633943158620}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.45, z: 0.9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5805369590082354068}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5510100787429519700
 GameObject:
   m_ObjectHideFlags: 0
@@ -2483,6 +2514,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5853930235955711644, guid: d3ba08cdd6b57ba4992e998fb024ce7a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3828372509920518922}
+    - targetCorrespondingSourceObject: {fileID: 5853930235955711644, guid: d3ba08cdd6b57ba4992e998fb024ce7a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1153924140024978355}
     - targetCorrespondingSourceObject: {fileID: 5951610896565467802, guid: d3ba08cdd6b57ba4992e998fb024ce7a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1208500869882052051}
@@ -2502,6 +2536,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1060991537307844142, guid: d3ba08cdd6b57ba4992e998fb024ce7a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6027920581043373137}
+    - targetCorrespondingSourceObject: {fileID: 1060991537307844142, guid: d3ba08cdd6b57ba4992e998fb024ce7a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1883824390997967760}
   m_SourcePrefab: {fileID: 100100000, guid: d3ba08cdd6b57ba4992e998fb024ce7a, type: 3}
 --- !u!143 &941054280007378376 stripped
 CharacterController:
@@ -2619,7 +2656,22 @@ MonoBehaviour:
   interactionMask:
     serializedVersion: 2
     m_Bits: 8
+  maximumServerDistance: 2.75
   drawDebugRay: 1
+--- !u!114 &1883824390997967760
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1086739994817874726}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f64087ec7e5aece4dab2fb4b103489dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RatHoldSocketProvider
+  holdSocket: {fileID: 2482841199147475731}
+  dropOrigin: {fileID: 1153924140024978355}
 --- !u!4 &5805369590082354068 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5853930235955711644, guid: d3ba08cdd6b57ba4992e998fb024ce7a, type: 3}

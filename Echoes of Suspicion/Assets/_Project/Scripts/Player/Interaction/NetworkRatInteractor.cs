@@ -23,7 +23,16 @@ public sealed class NetworkRatInteractor : NetworkBehaviour
     [SerializeField]
     private bool drawDebugRay = true;
 
+    [SyncVar]
+    private NetworkIdentity heldItemIdentity;
+
     private RatInteractable currentTarget;
+
+    public NetworkIdentity HeldItemIdentity =>
+        heldItemIdentity;
+
+    public bool IsHoldingItem =>
+        heldItemIdentity != null;
 
     private void Update()
     {
@@ -48,7 +57,7 @@ public sealed class NetworkRatInteractor : NetworkBehaviour
 
         currentTarget = detectedTarget;
 
-        if (currentTarget != null)
+        if (currentTarget != null && !IsHoldingItem)
         {
             Debug.Log(
                 $"[E] {currentTarget.InteractionPrompt}: " +
@@ -59,6 +68,11 @@ public sealed class NetworkRatInteractor : NetworkBehaviour
 
     private RatInteractable DetectTarget()
     {
+        if (IsHoldingItem)
+        {
+            return null;
+        }
+
         bool didHit = Physics.Raycast(
             interactionOrigin.position,
             interactionOrigin.forward,
@@ -89,8 +103,19 @@ public sealed class NetworkRatInteractor : NetworkBehaviour
         Keyboard keyboard = Keyboard.current;
 
         if (keyboard == null ||
-            !keyboard.eKey.wasPressedThisFrame ||
-            currentTarget == null)
+            !keyboard.eKey.wasPressedThisFrame)
+        {
+            return;
+        }
+
+        // Si ya sostiene algo, E lo suelta.
+        if (heldItemIdentity != null)
+        {
+            CmdDropHeldItem();
+            return;
+        }
+
+        if (currentTarget == null)
         {
             return;
         }
@@ -124,27 +149,65 @@ public sealed class NetworkRatInteractor : NetworkBehaviour
         RatInteractable target =
             targetIdentity.GetComponent<RatInteractable>();
 
-        if (target == null)
-        {
-            return;
-        }
-
-        if (!IsWithinServerRange(target))
-        {
-            Debug.LogWarning(
-                $"{name} intentó interactuar con " +
-                $"{target.name} desde demasiado lejos.",
-                this);
-
-            return;
-        }
-
-        if (!target.CanServerInteract(netIdentity))
+        if (target == null ||
+            !IsWithinServerRange(target) ||
+            !target.CanServerInteract(netIdentity))
         {
             return;
         }
 
         target.ServerInteract(netIdentity);
+    }
+
+    [Command]
+    private void CmdDropHeldItem()
+    {
+        if (heldItemIdentity == null)
+        {
+            return;
+        }
+
+        NetworkPickupItem pickupItem =
+            heldItemIdentity.GetComponent<NetworkPickupItem>();
+
+        if (pickupItem == null)
+        {
+            heldItemIdentity = null;
+            return;
+        }
+
+        pickupItem.ServerDrop(netIdentity);
+    }
+
+    [Server]
+    public bool ServerCanAcceptPickup(
+        NetworkIdentity itemIdentity)
+    {
+        return itemIdentity != null &&
+               heldItemIdentity == null;
+    }
+
+    [Server]
+    public bool ServerTryAssignPickup(
+        NetworkIdentity itemIdentity)
+    {
+        if (!ServerCanAcceptPickup(itemIdentity))
+        {
+            return false;
+        }
+
+        heldItemIdentity = itemIdentity;
+        return true;
+    }
+
+    [Server]
+    public void ServerClearPickup(
+        NetworkIdentity itemIdentity)
+    {
+        if (heldItemIdentity == itemIdentity)
+        {
+            heldItemIdentity = null;
+        }
     }
 
     [Server]
@@ -186,6 +249,32 @@ public sealed class NetworkRatInteractor : NetworkBehaviour
             currentTarget != null
                 ? Color.green
                 : Color.red);
+    }
+
+    public override void OnStopServer()
+    {
+        // El servidor todavía conoce qué objeto llevaba este jugador.
+        // Lo soltamos antes de que desaparezca su NetworkIdentity.
+        if (NetworkServer.active && heldItemIdentity != null)
+        {
+            NetworkIdentity itemToDrop = heldItemIdentity;
+
+            NetworkPickupItem pickupItem =
+                itemToDrop.GetComponent<NetworkPickupItem>();
+
+            if (pickupItem != null)
+            {
+                pickupItem.ServerDrop(netIdentity);
+            }
+            else
+            {
+                // Protección por si el objeto fue destruido o perdió
+                // inesperadamente su componente de pickup.
+                heldItemIdentity = null;
+            }
+        }
+
+        base.OnStopServer();
     }
 
     private void OnDisable()
