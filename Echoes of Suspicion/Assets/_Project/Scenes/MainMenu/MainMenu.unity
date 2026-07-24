@@ -453,6 +453,10 @@ PrefabInstance:
       value: EOSNetworkSession
       objectReference: {fileID: 0}
     - target: {fileID: 4757041507534513929, guid: 2b79c075ea6d5b44c875b080788c7e8c, type: 3}
+      propertyPath: onlineScene
+      value: Assets/_Project/Scenes/Biomes/Carlos/CarlosWorkshop.unity
+      objectReference: {fileID: 0}
+    - target: {fileID: 4757041507534513929, guid: 2b79c075ea6d5b44c875b080788c7e8c, type: 3}
       propertyPath: playerPrefab
       value: 
       objectReference: {fileID: 1086739994817874726, guid: 010a29c3a69334c44ae1d22445dd4a29, type: 3}
