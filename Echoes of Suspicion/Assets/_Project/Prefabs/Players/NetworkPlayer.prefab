@@ -467,7 +467,7 @@ MonoBehaviour:
   checkInterval: 0.3
   alertDetectSomething: {fileID: 8300000, guid: 75f8ff3e2763abe4a923230daaddc22c, type: 3}
   searchTensionLoop: {fileID: 8300000, guid: 70ce9a69b77866c4dac0e2f83e387011, type: 3}
-  chaseTensionLoop: {fileID: 8300000, guid: 8acfcc4b36a294c49a8849981cbdb651, type: 3}
+  chaseTensionLoop: {fileID: 8300000, guid: 716fd5c2e9ee2b841a4ee535e4eff50a, type: 3}
   tensionVolume: 0.5
   searchFadeOutDuration: 1.5
   audioSource: {fileID: 5060285132801758096}
