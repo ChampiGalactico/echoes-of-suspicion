@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a32ba8b2bd381e94886f7957671eef43, type: 3}
+  m_Name: CarmenData
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterName: Carmen
+  archetype: Exploradora
+  shortDescription: "Edad: 36 a\xF1os.\nProfesi\xF3n: Conductora personal de autom\xF3vil\r\nPersonalidad
+    observable: \r\n\r\nValora el conocimiento y las ideas por encima de todo. Su
+    principal virtud es su capacidad para ense\xF1ar a los dem\xE1s y comprender
+    el mundo que le rodea. Por esta raz\xF3n, a menudo, suelen encontrarse en roles
+    de ense\xF1anza o relacionados con la educaci\xF3n.\r\n\r\nSu mayor miedo es
+    ser percibido como un ignorante, mientras que su mayor debilidad es sentirse
+    paralizado ante la toma de decisiones por creer que no tiene la informaci\xF3n
+    suficiente.\r\nRaz\xF3n por la que acept\xF3 el experimento: El dinero\r\nPara
+    qu\xE9 necesita el dinero: Pagar cuentas medicas de su madre"
+  strengthMultiplier: 1
+  staminaMultiplier: 0.8
+  agilityMultiplier: 1.2
+  perceptionMultiplier: 1
+  guideBiomeSceneName: 

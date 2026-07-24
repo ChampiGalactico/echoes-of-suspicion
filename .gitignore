@@ -14,6 +14,7 @@
 **/.idea/
 *.csproj
 *.sln
+*.slnx
 *.suo
 *.user
 *.userprefs
@@ -26,6 +27,8 @@
 sysinfo.txt
 mono_crash.*
 crashlytics-build.properties
+
+**/.vscode/
 
 # Operating system files
 .DS_Store

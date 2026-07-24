@@ -40,7 +40,7 @@ public sealed class NetworkFirstPersonView : NetworkBehaviour
         playerCamera.enabled = true;
         playerAudioListener.enabled = true;
 
-        // En primera persona no queremos ver el interior de la cápsula.
+        // En primera persona no queremos ver el interior de la cï¿½psula.
         if (bodyRenderer != null)
         {
             bodyRenderer.enabled = false;
@@ -100,17 +100,29 @@ public sealed class NetworkFirstPersonView : NetworkBehaviour
 
     private void ApplyLook(Vector2 mouseDelta)
     {
-        float yawDelta = mouseDelta.x * mouseSensitivity;
-        float pitchDelta = mouseDelta.y * mouseSensitivity;
+        float configuredSensitivity =
+            mouseSensitivity *
+            OptionsMenuController.MouseSensitivityMultiplier;
+
+        float yawDelta =
+            mouseDelta.x * configuredSensitivity;
+
+        float pitchDelta =
+            mouseDelta.y * configuredSensitivity;
 
         // El cuerpo completo rota horizontalmente.
         transform.Rotate(0f, yawDelta, 0f, Space.Self);
 
-        // Solo el pivote de la cámara rota verticalmente.
+        // Solo el pivote de la cÃ¡mara rota verticalmente.
         pitch -= pitchDelta;
-        pitch = Mathf.Clamp(pitch, minimumPitch, maximumPitch);
+        pitch = Mathf.Clamp(
+            pitch,
+            minimumPitch,
+            maximumPitch
+        );
 
-        viewPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+        viewPivot.localRotation =
+            Quaternion.Euler(pitch, 0f, 0f);
     }
 
     private void HandleCursorState()

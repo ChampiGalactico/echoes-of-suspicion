@@ -301,7 +301,7 @@ GameObject:
   - component: {fileID: 606380305}
   - component: {fileID: 606380312}
   - component: {fileID: 606380311}
-  m_Layer: 3
+  m_Layer: 6
   m_Name: PickupCube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -514,7 +514,7 @@ GameObject:
   - component: {fileID: 721665984}
   - component: {fileID: 721665983}
   - component: {fileID: 721665988}
-  m_Layer: 3
+  m_Layer: 6
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -2656,8 +2656,10 @@ MonoBehaviour:
   interactionRadius: 0.18
   interactionMask:
     serializedVersion: 2
-    m_Bits: 8
+    m_Bits: 64
   maximumServerDistance: 2.75
+  throwImpulse: 2.4
+  upwardThrowBias: 0.08
   drawDebugRay: 1
 --- !u!114 &1883824390997967760
 MonoBehaviour:
