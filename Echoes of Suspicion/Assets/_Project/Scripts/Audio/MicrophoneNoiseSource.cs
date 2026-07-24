@@ -38,6 +38,10 @@ public sealed class MicrophoneNoiseSource : NetworkBehaviour
     private Mic.Device subscribedDevice;
     private float lastPublishTime;
 
+    private PlayerRole role;
+
+    private CharacterStatsProvider statsProvider;
+
     public override void OnStartLocalPlayer()
     {
         base.OnStartLocalPlayer();
@@ -48,6 +52,12 @@ public sealed class MicrophoneNoiseSource : NetworkBehaviour
     {
         UnsubscribeFromUniVoiceMic();
         base.OnStopLocalPlayer();
+    }
+
+    private void Awake()
+    {
+        statsProvider = GetComponent<CharacterStatsProvider>();
+        role = statsProvider.Role;
     }
 
     private void Update()
@@ -156,52 +166,79 @@ public sealed class MicrophoneNoiseSource : NetworkBehaviour
     {
         float intensity = Mathf.Clamp01(rms);
 
-        // Publica localmente para el HUD del propio jugador.
-        NoiseEvent localNoiseEvent = new NoiseEvent(
-            worldPosition: transform.position,
+        ResolveNoiseIdentity(out Vector3 noisePosition, out uint noiseSourceNetId);
+
+        NoiseEvent noiseEvent = new NoiseEvent(
+            worldPosition: noisePosition,
             intensity: intensity,
             source: NoiseSource.Voice,
-            sourcePlayerNetId: netId
+            sourcePlayerNetId: noiseSourceNetId
         );
-        NoiseEventBus.Publish(localNoiseEvent);
+
+        // Publica localmente para el HUD del propio jugador.
+        NoiseEventBus.Publish(noiseEvent);
 
         // Manda al servidor para que la criatura lo escuche.
-        CmdReportNoise(transform.position, intensity, NoiseSource.Voice);
+        CmdReportNoise(noiseEvent);
+    }
+
+    /// <summary>
+    /// Decide dónde "suena" este ruido y a nombre de quién.
+    ///
+    /// - Si soy Runner: siempre mi propia posición y mi propio netId (caso normal).
+    /// - Si soy Guide y NO estamos reunidos: mi voz se transmite por el altavoz al
+    ///   entorno del Corredor — el ruido debe sonar en SU posición, y a nombre
+    ///   suyo (sourcePlayerNetId = netId del Runner). Así toda la lógica de
+    ///   percepción de la criatura (que filtra por sourcePlayerNetId) funciona
+    ///   sin ningún cambio: cree que fue el Corredor quien hizo ruido.
+    /// - Si soy Guide y SÍ estamos reunidos (Acto 2, reencuentro): ya estamos
+    ///   físicamente en el mismo lugar, así que mi propia posición y mi propio
+    ///   netId son correctos — la criatura puede perseguirme a mí directamente.
+    /// </summary>
+    private void ResolveNoiseIdentity(out Vector3 noisePosition, out uint noiseSourceNetId)
+    {
+        noisePosition = transform.position;
+        noiseSourceNetId = netId;
+
+        if (statsProvider.Role != PlayerRole.Guide)
+        {
+            return;
+        }
+
+        if (EOSNetworkManager.AreProtagonistsReunited)
+        {
+            return;
+        }
+
+        var runnerProvider = PlayerUtils.FindPlayerByRole(PlayerRole.Runner);
+        if (runnerProvider != null)
+        {
+            noisePosition = runnerProvider.transform.position;
+            noiseSourceNetId = runnerProvider.netId;
+        }
     }
 
     [Command]
-    private void CmdReportNoise(Vector3 position, float intensity, NoiseSource source)
+    private void CmdReportNoise(NoiseEvent noiseEvent)
     {
         Debug.Log($"[Server] 📨 Mensaje recibido del cliente. " +
-                  $"Player netId: {netId}, " +
+                  $"Player netId real: {netId}, " +
+                  $"reportado como: {noiseEvent.sourcePlayerNetId}, " +
                   $"connectionId: {connectionToClient?.connectionId}, " +
-                  $"intensidad: {intensity:F2}");
+                  $"intensidad: {noiseEvent.intensity:F2}");
 
-        NoiseEvent noiseEvent = new NoiseEvent(
-            worldPosition: position,
-            intensity: intensity,
-            source: source,
-            sourcePlayerNetId: netId
-        );
         NoiseEventBus.Publish(noiseEvent);
-
-        RpcNotifyNoise(position, intensity, source);
+        RpcNotifyNoise(noiseEvent);
     }
 
     [ClientRpc(includeOwner = false)]
-    private void RpcNotifyNoise(Vector3 position, float intensity, NoiseSource source)
+    private void RpcNotifyNoise(NoiseEvent noiseEvent)
     {
         if (isServer)
         {
             return;
         }
 
-        NoiseEvent noiseEvent = new NoiseEvent(
-            worldPosition: position,
-            intensity: intensity,
-            source: source,
-            sourcePlayerNetId: netId
-        );
         NoiseEventBus.Publish(noiseEvent);
     }
 
