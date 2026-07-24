@@ -12,6 +12,8 @@ public sealed class NetworkRatInteractor : NetworkBehaviour
     [SerializeField, Min(0.1f)]
     private float interactionDistance = 2.2f;
 
+    private CharacterStatsProvider statsProvider;
+
     [SerializeField, Min(0.01f)]
     private float interactionRadius = 0.18f;
 
@@ -288,10 +290,20 @@ public sealed class NetworkRatInteractor : NetworkBehaviour
             (throwDirection +
             Vector3.up * upwardThrowBias).normalized;
 
+        float strengthMultiplier =
+            statsProvider != null
+                ? Mathf.Max(
+                    0f,
+                    statsProvider.StrengthMultiplier)
+                : 1f;
+
+        float finalThrowImpulse =
+            throwImpulse * strengthMultiplier;
+
         pickupItem.ServerThrow(
             netIdentity,
             throwDirection,
-            throwImpulse);
+            finalThrowImpulse);
     }
 
     [Server]
@@ -450,5 +462,11 @@ public sealed class NetworkRatInteractor : NetworkBehaviour
     private void OnDisable()
     {
         currentTarget = null;
+    }
+
+    private void Awake()
+    {
+        statsProvider =
+            GetComponent<CharacterStatsProvider>();
     }
 }
