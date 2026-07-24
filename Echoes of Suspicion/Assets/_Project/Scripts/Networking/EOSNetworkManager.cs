@@ -17,6 +17,25 @@ using Mirror;
 /// </summary>
 public class EOSNetworkManager : NetworkManager
 {
+
+    private bool areProtagonistsReunited;
+
+    public static bool AreProtagonistsReunited =>
+        singleton != null && ((EOSNetworkManager)singleton).areProtagonistsReunited;
+
+    /// <summary>
+    /// Marca a Guía y Corredor como reunidos físicamente (ej. trigger al final
+    /// del Acto 2). A partir de este punto, la criatura percibe y puede dañar
+    /// a AMBOS jugadores, no solo al Corredor.
+    ///
+    /// TODO: esto solo cambia el estado en el servidor. Cuando se construya la
+    /// mecánica real del final del Acto 2, replicar a los clientes si hace
+    /// falta (ej. vía ClientRpc desde algún NetworkBehaviour del GameManager).
+    /// </summary>
+    public void SetProtagonistsReunited(bool reunited)
+    {
+        areProtagonistsReunited = reunited;
+    }
     // Overrides the base singleton so we don't
     // have to cast to this type everywhere.
     public static EOSNetworkManager Singleton => (EOSNetworkManager)NetworkManager.singleton;
@@ -87,25 +106,43 @@ public class EOSNetworkManager : NetworkManager
 
     public override void OnServerAddPlayer(NetworkConnectionToClient conn)
     {
-        base.OnServerAddPlayer(conn);
-
-        // El primero en conectar (el Host) queda como Guía con la mujer (índice 0).
-        // El resto, Corredor con el hombre (índice 1).
         // TODO: reemplazar por selección real de rol/personaje cuando exista el lobby.
         PlayerRole role = conn.connectionId == 0 ? PlayerRole.Guide : PlayerRole.Runner;
         int characterIndex = conn.connectionId == 0 ? 0 : 1;
 
-        var statsProvider = conn.identity.GetComponent<CharacterStatsProvider>();
+        var biomeSpawner = FindAnyObjectByType<BiomeSpawner>();
+        Transform spawnPoint = role == PlayerRole.Guide
+            ? biomeSpawner?.GuideSpawnPoint
+            : biomeSpawner?.RunnerSpawnPoint;
+
+        Vector3 position = spawnPoint != null ? spawnPoint.position : Vector3.zero;
+        Quaternion rotation = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
+
+        if (spawnPoint == null)
+        {
+            Debug.LogWarning($"[EOSNetworkManager] No hay spawn point configurado para {role}. Usando origen.");
+        }
+
+        GameObject player = Instantiate(playerPrefab, position, rotation);
+        NetworkServer.AddPlayerForConnection(conn, player);
+
+        var statsProvider = player.GetComponent<CharacterStatsProvider>();
         if (statsProvider != null)
         {
             statsProvider.SetHardcodedRole(role);
             statsProvider.SetHardcodedCharacter(characterIndex);
-            Debug.Log($"[EOSNetworkManager] ConnectionId {conn.connectionId} → {role}, personaje índice {characterIndex}.");
+            Debug.Log($"[EOSNetworkManager] ConnectionId {conn.connectionId} → {role}, personaje índice {characterIndex}, spawn en {position}.");
         }
         else
         {
             Debug.LogWarning("[EOSNetworkManager] El Player no tiene CharacterStatsProvider.");
         }
+
+        var stamina = player.GetComponent<PlayerStamina>();
+        stamina?.RecalculateFromStats();
+
+        var health = player.GetComponent<PlayerHealth>();
+        health?.RecalculateFromStats();
     }
 
 

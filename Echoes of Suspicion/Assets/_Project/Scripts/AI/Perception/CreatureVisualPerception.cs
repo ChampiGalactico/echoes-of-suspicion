@@ -67,8 +67,15 @@ public sealed class CreatureVisualPerception : NetworkBehaviour
                 continue;
             }
 
-            Transform playerTransform = conn.identity.transform;
+            var provider = conn.identity.GetComponent<CharacterStatsProvider>();
+            if (!EOSNetworkManager.AreProtagonistsReunited &&
+                (provider == null || provider.Role != PlayerRole.Runner))
+            {
+                continue;
+            }
 
+            Transform playerTransform = conn.identity.transform;
+            
             if (HasLineOfSight(playerTransform))
             {
                 if (showDebugLogs)
@@ -83,14 +90,13 @@ public sealed class CreatureVisualPerception : NetworkBehaviour
         }
     }
 
-    public bool HasLineOfSight(Transform player)
+    public bool HasLineOfSight(Transform player, float radiusBonus = 0f)
     {
         Vector3 eyePosition = transform.position + Vector3.up * eyeHeight;
         Vector3 toPlayer = player.position - eyePosition;
 
-        // 1. Chequeo de distancia.
         float distance = toPlayer.magnitude;
-        if (distance > creature.Data.visionRadius)
+        if (distance > creature.Data.visionRadius + radiusBonus)
         {
             return false;
         }

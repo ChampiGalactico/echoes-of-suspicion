@@ -10,10 +10,11 @@ using UnityEngine;
 /// Si nunca lo tuvo a la vista (solo por cercanía/ruido) y pierde el rastro por
 /// distancia o silencio prolongado, vuelve directo a Patrol.
 /// </summary>
-public sealed class ChaseState : ICreatureState
+public sealed class ChaseState : ICreatureState, ITargetedState
 {
     private readonly CreatureController creature;
     private readonly uint targetPlayerNetId;
+    public uint TargetPlayerNetId => targetPlayerNetId;
 
     private CreatureVisualPerception visualPerception;
     private Transform targetTransform;
@@ -53,13 +54,21 @@ public sealed class ChaseState : ICreatureState
             }
         }
 
-        bool canSeeNow = visualPerception != null && visualPerception.HasLineOfSight(targetTransform);
+        bool canSeeNow = visualPerception != null && visualPerception.HasLineOfSight(targetTransform, creature.Data.chaseVisionRadiusBonus);
 
         if (canSeeNow)
         {
             lastContactTime = Time.time;
             creature.Agent.SetDestination(targetTransform.position);
             wasVisibleLastCheck = true;
+
+            float distanceToTarget = Vector3.Distance(creature.transform.position, targetTransform.position);
+            if (distanceToTarget <= creature.Data.attackRadius)
+            {
+                Debug.Log("[ChaseState] Target dentro del radio de ataque. Cambia a AttackState.");
+                creature.ChangeState(new AttackState(creature, targetPlayerNetId));
+                return;
+            }
         }
         else
         {

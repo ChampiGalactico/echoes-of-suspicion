@@ -23,6 +23,7 @@ public sealed class CreatureData : ScriptableObject
     [Tooltip("Velocidad cuando persigue al jugador o está enfurecida.")]
     public float chaseSpeed = 12f;
 
+
     [Header("Noise Perception")]
     [Tooltip("Radio en el que puede escuchar ruidos. Si el ruido está más lejos, no reacciona.")]
     public float hearingRadius = 20f;
@@ -54,6 +55,9 @@ public sealed class CreatureData : ScriptableObject
 
     [Tooltip("Segundos sin contacto (visual o auditivo) antes de perder el rastro y volver a patrullar.")]
     public float loseTargetTime = 5f;
+
+    [Tooltip("Bonus de radio de visión mientras persigue activamente, para no perder al jugador apenas se sale del radio de detección inicial.")]
+    public float chaseVisionRadiusBonus = 4f;
 
     [Header("Stun")]
     [Tooltip("Duración del aturdimiento cuando la aturden con luz.")]

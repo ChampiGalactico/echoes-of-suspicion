@@ -24,9 +24,16 @@ public sealed class BiomeSpawner : NetworkBehaviour
     [SerializeField, Tooltip("Configuración de criaturas a spawnear en este bioma.")]
     private CreatureSpawnConfig[] creatureSpawns;
 
-    [Header("Players Spawn Points")]
-    [SerializeField] private Transform guideSpawnPoint;
-    [SerializeField] private Transform runnerSpawnPoint;
+    [Header("Player Spawn Points")]
+    [SerializeField, Tooltip("Punto donde spawnea el Corredor al iniciar la partida.")]
+    private Transform runnerSpawnPoint;
+
+    [SerializeField, Tooltip("Punto donde spawnea el Guía al iniciar la partida.")]
+    private Transform guideSpawnPoint;
+
+    public Transform RunnerSpawnPoint => runnerSpawnPoint;
+    public Transform GuideSpawnPoint => guideSpawnPoint;
+
 
     public override void OnStartServer()
     {

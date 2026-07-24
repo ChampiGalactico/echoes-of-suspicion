@@ -8,13 +8,14 @@ using UnityEngine;
 ///
 /// Al llegar al punto del ruido, espera N segundos y vuelve a patrullar.
 /// </summary>
-public sealed class AlertState : ICreatureState
+public sealed class AlertState : ICreatureState, ITargetedState
 {
     private readonly CreatureController creature;
     private Vector3 currentNoisePosition;
 
     /// <summary>NetId del jugador que causó el ruido inicial.</summary>
-    public uint TargetPlayerNetId { get; private set; }
+    private uint targetPlayerNetId;
+    public uint TargetPlayerNetId => targetPlayerNetId;
 
     /// <summary>Timestamp hasta el cual estamos comprometidos con el target actual.</summary>
     private float commitmentEndTime;
@@ -26,7 +27,7 @@ public sealed class AlertState : ICreatureState
     {
         this.creature = creature;
         this.currentNoisePosition = noisePosition;
-        this.TargetPlayerNetId = targetPlayerNetId;
+        this.targetPlayerNetId = targetPlayerNetId;
     }
 
     public void Enter()
@@ -134,7 +135,7 @@ public sealed class AlertState : ICreatureState
             Debug.Log($"[AlertState] Cambio de target: player {TargetPlayerNetId} " +
                       $"→ player {noiseEvent.sourcePlayerNetId} (más cerca).");
 
-            TargetPlayerNetId = noiseEvent.sourcePlayerNetId;
+            targetPlayerNetId = noiseEvent.sourcePlayerNetId;
             currentNoisePosition = noiseEvent.worldPosition;
 
             // Nuevo compromiso.

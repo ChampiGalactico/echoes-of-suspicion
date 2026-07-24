@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(CharacterStatsProvider))]
 public sealed class NetworkPlayerMovement : NetworkBehaviour
 {
     [Header("Movement")]
@@ -12,16 +13,12 @@ public sealed class NetworkPlayerMovement : NetworkBehaviour
     [SerializeField, Min(0f)]
     private float crouchSpeed = 2f;
 
+    [SerializeField, Min(0f)]
+    private float sprintSpeed = 9f;
+
     [Header("Jump")]
     [SerializeField, Min(0f)]
     private float jumpHeight = 1.5f;
-
-    [Header("Crouch")]
-    [SerializeField, Min(0f)]
-    private float standingHeight = 2f;
-
-    [SerializeField, Min(0f)]
-    private float crouchingHeight = 1f;
 
     [Header("Gravity")]
     [SerializeField]
@@ -31,72 +28,67 @@ public sealed class NetworkPlayerMovement : NetworkBehaviour
     private float groundedVerticalVelocity = -2f;
 
     private CharacterController characterController;
+    private CharacterStatsProvider statsProvider;
+    private PlayerCrouchController crouchController;
+    private PlayerSprintController sprintController;
+
     private float verticalVelocity;
-    private bool isCrouching;
 
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
+        statsProvider = GetComponent<CharacterStatsProvider>();
+        crouchController = GetComponent<PlayerCrouchController>();
+        sprintController = GetComponent<PlayerSprintController>();
     }
 
     private void Update()
     {
-        // Cada cliente solo puede leer el input de su propio jugador.
         if (!isLocalPlayer)
         {
             return;
         }
 
         Keyboard keyboard = Keyboard.current;
-
         if (keyboard == null)
         {
             return;
         }
 
-        HandleCrouch(keyboard);
         HandleJump(keyboard);
 
         Vector2 input = ReadKeyboardInput();
-
-        float currentSpeed = isCrouching ? crouchSpeed : walkSpeed;
+        float currentSpeed = GetCurrentSpeed();
 
         Vector3 horizontalMovement =
-            transform.right * input.x +
-            transform.forward * input.y;
-
-        horizontalMovement *= currentSpeed;
+            (transform.right * input.x + transform.forward * input.y) * currentSpeed;
 
         ApplyGravity();
 
-        Vector3 finalVelocity =
-            horizontalMovement +
-            Vector3.up * verticalVelocity;
-
+        Vector3 finalVelocity = horizontalMovement + Vector3.up * verticalVelocity;
         characterController.Move(finalVelocity * Time.deltaTime);
     }
 
-    private void HandleCrouch(Keyboard keyboard)
+    private float GetCurrentSpeed()
     {
-        // Mantener presionado Ctrl para agacharse.
-        bool wantsToCrouch = keyboard.leftCtrlKey.isPressed;
+        bool isCrouching = crouchController != null && crouchController.IsCrouching;
+        bool isSprinting = sprintController != null && sprintController.IsSprinting;
 
-        if (wantsToCrouch != isCrouching)
-        {
-            isCrouching = wantsToCrouch;
-            characterController.height =
-                isCrouching ? crouchingHeight : standingHeight;
-        }
+        float baseSpeed = isCrouching ? crouchSpeed : (isSprinting ? sprintSpeed : walkSpeed);
+        float agility = statsProvider != null ? statsProvider.AgilityMultiplier : 1f;
+
+
+        return baseSpeed * agility;
     }
 
     private void HandleJump(Keyboard keyboard)
     {
-        // Solo se puede saltar si está en el piso y no está agachado.
+        bool isCrouching = crouchController != null && crouchController.IsCrouching;
+
         if (keyboard.spaceKey.wasPressedThisFrame &&
             characterController.isGrounded &&
             !isCrouching)
         {
-            // Fórmula física: v = sqrt(2 * altura * gravedad).
             verticalVelocity = Mathf.Sqrt(-2f * gravity * jumpHeight);
         }
     }
@@ -106,27 +98,11 @@ public sealed class NetworkPlayerMovement : NetworkBehaviour
         Keyboard keyboard = Keyboard.current;
         Vector2 input = Vector2.zero;
 
-        if (keyboard.wKey.isPressed)
-        {
-            input.y += 1f;
-        }
+        if (keyboard.wKey.isPressed) input.y += 1f;
+        if (keyboard.sKey.isPressed) input.y -= 1f;
+        if (keyboard.dKey.isPressed) input.x += 1f;
+        if (keyboard.aKey.isPressed) input.x -= 1f;
 
-        if (keyboard.sKey.isPressed)
-        {
-            input.y -= 1f;
-        }
-
-        if (keyboard.dKey.isPressed)
-        {
-            input.x += 1f;
-        }
-
-        if (keyboard.aKey.isPressed)
-        {
-            input.x -= 1f;
-        }
-
-        // Evita que moverse en diagonal sea más rápido.
         return Vector2.ClampMagnitude(input, 1f);
     }
 

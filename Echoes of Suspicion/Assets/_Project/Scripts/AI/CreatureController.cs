@@ -46,6 +46,16 @@ public sealed class CreatureController : NetworkBehaviour
 
     public ICreatureState CurrentState { get; private set; }
 
+    [Header("Debug")]
+    [SerializeField, Tooltip("Muestra en consola los eventos de ruido recibidos.")]
+    private bool showDebugLogs = true;
+
+    /// <summary>
+    /// Se dispara cada vez que CUALQUIER criatura cambia de estado. targetNetId
+    /// es null si el nuevo estado no tiene target (ej. Patrol).
+    /// </summary>
+    public static event System.Action<CreatureController, CreatureStateType, uint?> OnAnyCreatureStateChanged;
+
     /// <summary>
     /// Asigna waypoints a la criatura después de spawneada.
     /// Debe llamarse ANTES del primer Update — típicamente desde el spawner.
@@ -90,21 +100,30 @@ public sealed class CreatureController : NetworkBehaviour
     /// </summary>
     public void ChangeState(ICreatureState newState)
     {
-        if (!isServer)
-        {
-            Debug.LogWarning("[CreatureController] ChangeState llamado en el cliente. Se ignora.");
-            return;
-        }
+        uint? previousTargetNetId = CurrentState is ITargetedState prevTargeted
+            ? prevTargeted.TargetPlayerNetId
+            : (uint?)null;
 
         CurrentState?.Exit();
         CurrentState = newState;
+        CurrentState.Enter();
 
-        // Actualiza el tipo sincronizado según el estado concreto.
         CurrentStateType = GetStateType(newState);
 
-        CurrentState?.Enter();
+        if (showDebugLogs)
+        {
+            Debug.Log($"[CreatureController] Cambio de estado: {CurrentStateType}");
+        }
 
-        Debug.Log($"[CreatureController] Cambio de estado: {CurrentStateType}");
+        // Si el nuevo estado no tiene target propio (ej. Patrol), usamos el
+        // target del estado ANTERIOR — así el jugador que estaba siendo
+        // investigado se entera de que la amenaza terminó, en vez de que el
+        // evento se descarte silenciosamente por no tener a quién avisar.
+        uint? targetNetId = newState is ITargetedState targeted
+            ? targeted.TargetPlayerNetId
+            : previousTargetNetId;
+
+        OnAnyCreatureStateChanged?.Invoke(this, CurrentStateType, targetNetId);
     }
 
     /// <summary>
@@ -132,6 +151,7 @@ public sealed class CreatureController : NetworkBehaviour
             AlertState => CreatureStateType.Alert,
             ChaseState => CreatureStateType.Chase,
             SearchState => CreatureStateType.Search,
+            AttackState => CreatureStateType.Attacking,
             _ => CreatureStateType.Patrol
         };
     }
