@@ -28,6 +28,8 @@ public sealed class NetworkPickupItem : RatInteractable
 
     private Transform resolvedHoldSocket;
 
+    private ThrowableNoiseSource throwableNoiseSource;
+
     public bool IsHeld => holderIdentity != null;
 
     private void Awake()
@@ -35,6 +37,12 @@ public sealed class NetworkPickupItem : RatInteractable
         if (itemRigidbody == null)
         {
             itemRigidbody = GetComponent<Rigidbody>();
+        }
+
+        if (throwableNoiseSource == null)
+        {
+            throwableNoiseSource =
+                GetComponent<ThrowableNoiseSource>();
         }
 
         if (itemColliders == null || itemColliders.Length == 0)
@@ -155,6 +163,12 @@ public sealed class NetworkPickupItem : RatInteractable
         Vector3 inheritedVelocity =
             GetInteractorVelocity(requester) *
             inheritedPlayerVelocityMultiplier;
+
+        if (throwableNoiseSource != null)
+        {
+            throwableNoiseSource.ServerSetSourcePlayer(
+                requester.netId);
+        }
 
         NetworkRatInteractor ratInteractor =
             requester.GetComponent<NetworkRatInteractor>();
