@@ -34,10 +34,6 @@ public static class NoiseEventBus
     {
         // El "?" protege de NullReferenceException si no hay suscriptores.
         OnNoiseGenerated?.Invoke(noiseEvent);
-
-        Debug.Log($"[NoiseEventBus] 🔊 Ruido publicado: {noiseEvent.source} " +
-                  $"intensidad {noiseEvent.intensity:F2} " +
-                  $"en {noiseEvent.worldPosition}");
     }
 
     /// <summary>

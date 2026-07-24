@@ -23,6 +23,10 @@ public sealed class CharacterData : ScriptableObject
     [TextArea(3, 6), Tooltip("Descripción corta para la pantalla de selección de personaje.")]
     public string shortDescription;
 
+    [Header("Health")]
+    [Tooltip("Vida máxima del Corredor con este personaje. Valor absoluto, no multiplicador.")]
+    public float maxHealth = 100f;
+
     [Header("Stats (multiplicadores, 1 = neutro)")]
     [Tooltip("Corredor: fuerza de lanzamiento y futuro daño cuerpo a cuerpo.")]
     [Range(0.5f, 2f)]

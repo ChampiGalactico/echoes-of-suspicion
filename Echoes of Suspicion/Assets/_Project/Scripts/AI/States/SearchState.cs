@@ -8,10 +8,11 @@ using System.Collections.Generic;
 /// Si recupera contacto (visual o auditivo) durante la búsqueda, retoma la caza.
 /// Si se agota el tiempo sin nada, vuelve a patrullar.
 /// </summary>
-public sealed class SearchState : ICreatureState
+public sealed class SearchState : ICreatureState, ITargetedState
 {
     private readonly CreatureController creature;
     private readonly uint targetPlayerNetId;
+    public uint TargetPlayerNetId => targetPlayerNetId;
     private readonly Vector3 lastKnownPosition;
 
     private CreatureVisualPerception visualPerception;

@@ -41,6 +41,10 @@ public sealed class CreatureNoisePerception : NetworkBehaviour
     /// </summary>
     private void HandleNoise(NoiseEvent noiseEvent)
     {
+        if (!IsValidTarget(noiseEvent.sourcePlayerNetId))
+        {
+            return;
+        }
         // Verificar intensidad mínima.
         if (noiseEvent.intensity < creature.Data.minNoiseIntensity)
         {
@@ -63,7 +67,7 @@ public sealed class CreatureNoisePerception : NetworkBehaviour
         }
 
         // Si ya está en Alert, delegarle la decisión al AlertState (target lock).
-         if (creature.CurrentState is AlertState alertState)
+        if (creature.CurrentState is AlertState alertState)
         {
             alertState.OnNoiseReceived(noiseEvent);
             return;
@@ -85,5 +89,16 @@ public sealed class CreatureNoisePerception : NetworkBehaviour
 
         // Si está en Patrol, entrar a Alert con este target.
         creature.ChangeState(new AlertState(creature, noiseEvent.worldPosition, noiseEvent.sourcePlayerNetId));
+    }
+
+    private static bool IsValidTarget(uint playerNetId)
+    {
+        if (EOSNetworkManager.AreProtagonistsReunited)
+        {
+            return true;
+        }
+
+        var provider = PlayerUtils.FindPlayerByNetId(playerNetId);
+        return provider != null && provider.Role == PlayerRole.Runner;
     }
 }

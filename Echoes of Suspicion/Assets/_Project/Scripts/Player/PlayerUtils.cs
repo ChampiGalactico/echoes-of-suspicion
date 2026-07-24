@@ -42,4 +42,17 @@ public static class PlayerUtils
 
         return null;
     }
+
+    public static CharacterStatsProvider FindPlayerByNetId(uint netId)
+    {
+        foreach (var conn in NetworkServer.connections.Values)
+        {
+            if (conn.identity != null && conn.identity.netId == netId)
+            {
+                return conn.identity.GetComponent<CharacterStatsProvider>();
+            }
+        }
+
+        return null;
+    }
 }
