@@ -169,6 +169,32 @@ public sealed class RunnerCreatureAwareness : NetworkBehaviour
         Debug.Log($"[RunnerCreatureAwareness] A punto de enviar TargetRpc. connectionToClient null? {connectionToClient == null}");
 
         TargetUpdateThreatAudio(connectionToClient, newLevel, previousLevel);
+
+        bool becameThreatened = previousLevel == RunnerThreatLevel.None && newLevel != RunnerThreatLevel.None;
+        bool becameSafe = newLevel == RunnerThreatLevel.None;
+
+        if (EOSNetworkManager.AreProtagonistsReunited)
+        {
+            if (becameThreatened)
+            {
+                RpcDuckAmbientForAll();
+            }
+            if (becameSafe)
+            {
+                RpcResumeAmbientForAll();
+            }
+        }
+        else
+        {
+            if (becameThreatened)
+            {
+                TargetDuckAmbient(connectionToClient);
+            }
+            if (becameSafe)
+            {
+                TargetResumeAmbient(connectionToClient);
+            }
+        }
     }
 
     /// <summary>
@@ -240,6 +266,7 @@ public sealed class RunnerCreatureAwareness : NetworkBehaviour
             StopCoroutine(fadeOutCoroutine);
             fadeOutCoroutine = null;
         }
+
 
         if (level == RunnerThreatLevel.Alert)
         {
@@ -319,5 +346,41 @@ public sealed class RunnerCreatureAwareness : NetworkBehaviour
         audioSource.loop = true;
         audioSource.volume = tensionVolume;
         audioSource.Play();
+    }
+
+    [TargetRpc]
+    private void TargetDuckAmbient(NetworkConnectionToClient target)
+    {
+        if (AmbientMusicManager.Instance != null)
+        {
+            AmbientMusicManager.Instance.Duck();
+        }
+    }
+
+    [TargetRpc]
+    private void TargetResumeAmbient(NetworkConnectionToClient target)
+    {
+        if (AmbientMusicManager.Instance != null)
+        {
+            AmbientMusicManager.Instance.Resume();
+        }
+    }
+
+    [ClientRpc]
+    private void RpcDuckAmbientForAll()
+    {
+        if (AmbientMusicManager.Instance != null)
+        {
+            AmbientMusicManager.Instance.Duck();
+        }
+    }
+
+    [ClientRpc]
+    private void RpcResumeAmbientForAll()
+    {
+        if (AmbientMusicManager.Instance != null)
+        {
+            AmbientMusicManager.Instance.Resume();
+        }
     }
 }
