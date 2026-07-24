@@ -23,8 +23,9 @@ MonoBehaviour:
   investigationTime: 3
   searchDuration: 4
   targetCommitmentTime: 2
+  visionLossGracePeriod: 5
   loseTargetTime: 5
-  chaseVisionRadiusBonus: 4
+  chaseVisionRadiusBonus: 5
   stunDuration: 2
   attackRadius: 2
   attackDamage: 20

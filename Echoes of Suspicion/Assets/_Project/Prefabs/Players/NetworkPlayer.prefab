@@ -442,8 +442,8 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   availableCharacters:
-  - {fileID: 11400000, guid: 829bd021608483a42930a78d63087cbd, type: 2}
   - {fileID: 11400000, guid: 529acf04243d1d140bb03954d176bbef, type: 2}
+  - {fileID: 11400000, guid: 829bd021608483a42930a78d63087cbd, type: 2}
 --- !u!114 &2345652548321934777
 MonoBehaviour:
   m_ObjectHideFlags: 0
