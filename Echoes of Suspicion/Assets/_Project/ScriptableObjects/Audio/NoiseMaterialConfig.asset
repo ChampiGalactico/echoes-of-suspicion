@@ -15,11 +15,16 @@ MonoBehaviour:
   multipliers:
   - materialType: 0
     multiplier: 1.2
+    impactSound: {fileID: 8300000, guid: 8d3564b20a6fdbb4d95fc77d0e21fb9c, type: 3}
   - materialType: 1
     multiplier: 0.9
+    impactSound: {fileID: 0}
   - materialType: 2
     multiplier: 1.4
+    impactSound: {fileID: 0}
   - materialType: 3
     multiplier: 1.1
+    impactSound: {fileID: 0}
   - materialType: 4
     multiplier: 0.15
+    impactSound: {fileID: 0}

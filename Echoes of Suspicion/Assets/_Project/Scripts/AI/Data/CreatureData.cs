@@ -53,6 +53,12 @@ public sealed class CreatureData : ScriptableObject
              "Evita el 'ida y vuelta' cuando varios jugadores hacen ruido.")]
     public float targetCommitmentTime = 2f;
 
+    [Tooltip("Segundos de gracia con la vista perdida antes de pasar a SearchState. " +
+    "Mientras tanto, la criatura sigue persiguiendo hacia la última posición vista, " +
+    "sin cambiar de estado — absorbe parpadeos cortos de línea de visión (esquinas, " +
+    "obstáculos pequeños, el jugador rodeándola por la espalda).")]
+    public float visionLossGracePeriod = 4f;
+
     [Tooltip("Segundos sin contacto (visual o auditivo) antes de perder el rastro y volver a patrullar.")]
     public float loseTargetTime = 5f;
 

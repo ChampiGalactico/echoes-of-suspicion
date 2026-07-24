@@ -5,8 +5,14 @@ using UnityEngine;
 /// La criatura está persiguiendo activamente a un jugador específico.
 ///
 /// Mientras tiene línea de vista, lo sigue directamente.
-/// Si PIERDE la línea de vista de golpe (se escondió), transiciona a SearchState
-/// para investigar el último punto visto.
+/// Si PIERDE la línea de vista, no reacciona de inmediato — sigue persiguiendo
+/// hacia la última posición conocida durante un pequeño período de gracia
+/// (creature.Data.visionLossGracePeriod). Si recupera la vista dentro de ese
+/// margen, todo sigue normal, sin ningún cambio de estado (esto absorbe
+/// parpadeos cortos: esquinas, obstáculos pequeños, el jugador rodeándola por
+/// la espalda). Solo si el margen se agota sin recuperar la vista, transiciona
+/// a SearchState para investigar el último punto visto.
+///
 /// Si nunca lo tuvo a la vista (solo por cercanía/ruido) y pierde el rastro por
 /// distancia o silencio prolongado, vuelve directo a Patrol.
 /// </summary>
@@ -20,6 +26,12 @@ public sealed class ChaseState : ICreatureState, ITargetedState
     private Transform targetTransform;
     private float lastContactTime;
     private bool wasVisibleLastCheck;
+
+    // Período de gracia: cuándo empezó la pérdida de visión actual, y la
+    // última posición conocida mientras dura esa pérdida (por si se agota
+    // el margen y hay que pasar a SearchState con el punto correcto).
+    private float visionLostTime;
+    private Vector3 lastKnownPositionDuringGrace;
 
     public ChaseState(CreatureController creature, uint targetPlayerNetId)
     {
@@ -45,7 +57,6 @@ public sealed class ChaseState : ICreatureState, ITargetedState
         if (targetTransform == null)
         {
             targetTransform = PlayerUtils.FindPlayerTransformByNetId(targetPlayerNetId);
-
             if (targetTransform == null)
             {
                 Debug.Log("[ChaseState] Target perdido (desconectado). Vuelve a patrullar.");
@@ -58,8 +69,11 @@ public sealed class ChaseState : ICreatureState, ITargetedState
 
         if (canSeeNow)
         {
+
             lastContactTime = Time.time;
             creature.Agent.SetDestination(targetTransform.position);
+
+            // Recuperó la vista — cancela cualquier período de gracia en curso.
             wasVisibleLastCheck = true;
 
             float distanceToTarget = Vector3.Distance(creature.transform.position, targetTransform.position);
@@ -72,14 +86,25 @@ public sealed class ChaseState : ICreatureState, ITargetedState
         }
         else
         {
-            // Acabamos de perder la visión — investigar dónde se escondió.
             if (wasVisibleLastCheck)
             {
-                Vector3 lastKnownPosition = targetTransform.position;
+                // Acabamos de perder la visión ESTE frame — arranca el período
+                // de gracia, sin cambiar de estado todavía. Mientras dure la
+                // gracia, la criatura sigue persiguiendo hacia esta posición.
                 wasVisibleLastCheck = false;
+                visionLostTime = Time.time;
+                lastKnownPositionDuringGrace = targetTransform.position;
 
-                Debug.Log("[ChaseState] Perdió de vista al jugador. Investiga dónde se escondió.");
-                creature.ChangeState(new SearchState(creature, targetPlayerNetId, lastKnownPosition));
+            }
+
+            // Mientras dure el período de gracia, sigue persiguiendo hacia la
+            // última posición conocida (no se queda quieta esperando).
+            creature.Agent.SetDestination(lastKnownPositionDuringGrace);
+
+            float timeSinceVisionLost = Time.time - visionLostTime;
+            if (timeSinceVisionLost >= creature.Data.visionLossGracePeriod)
+            {
+                creature.ChangeState(new SearchState(creature, targetPlayerNetId, lastKnownPositionDuringGrace));
                 return;
             }
 

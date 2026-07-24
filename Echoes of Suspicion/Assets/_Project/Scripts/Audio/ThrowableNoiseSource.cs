@@ -34,6 +34,14 @@ public sealed class ThrowableNoiseSource : NetworkBehaviour
 
     private float lastImpactTime;
 
+    private uint sourcePlayerNetId;
+
+    [Server]
+    public void ServerSetSourcePlayer(uint playerNetId)
+    {
+        sourcePlayerNetId = playerNetId;
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
         if (!isServer)
@@ -62,10 +70,23 @@ public sealed class ThrowableNoiseSource : NetworkBehaviour
         float intensity = Mathf.Clamp01(baseIntensity * materialMultiplier);
         Vector3 impactPosition = collision.GetContact(0).point;
 
-        NoiseEvent noiseEvent = new NoiseEvent(impactPosition, intensity, NoiseSource.ObjectImpact, netId);
+        uint effectiveSourceNetId =
+            sourcePlayerNetId != 0
+                ? sourcePlayerNetId
+                : netId;
+
+        NoiseEvent noiseEvent = new NoiseEvent(
+            impactPosition,
+            intensity,
+            NoiseSource.ObjectImpact,
+            effectiveSourceNetId);
+
         NoiseEventBus.Publish(noiseEvent);
 
-        RpcNotifyImpactNoise(impactPosition, intensity);
+        RpcNotifyImpactNoise(
+            impactPosition,
+            intensity,
+            effectiveSourceNetId);
     }
 
     private void Awake()
@@ -76,16 +97,24 @@ public sealed class ThrowableNoiseSource : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void RpcNotifyImpactNoise(Vector3 position, float intensity)
+    private void RpcNotifyImpactNoise(
+        Vector3 position,
+        float intensity,
+        uint effectiveSourceNetId)
     {
-        PlayImpactSound(); // esto sí debe sonar en todos, incluido el host
+        PlayImpactSound();
 
         if (isServer)
         {
             return;
         }
 
-        NoiseEvent noiseEvent = new NoiseEvent(position, intensity, NoiseSource.ObjectImpact, netId);
+        NoiseEvent noiseEvent = new NoiseEvent(
+            position,
+            intensity,
+            NoiseSource.ObjectImpact,
+            effectiveSourceNetId);
+
         NoiseEventBus.Publish(noiseEvent);
     }
 
