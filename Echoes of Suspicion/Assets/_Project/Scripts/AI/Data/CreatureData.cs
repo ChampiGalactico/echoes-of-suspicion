@@ -78,5 +78,4 @@ public sealed class CreatureData : ScriptableObject
 
     [Tooltip("Segundos entre ataques (cooldown).")]
     public float attackCooldown = 1f;
-
 }

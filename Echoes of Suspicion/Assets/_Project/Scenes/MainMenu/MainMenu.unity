@@ -27,7 +27,7 @@ RenderSettings:
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
   m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
-  m_HaloStrength: 0.5
+  m_HaloStrength: 0.055
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
   m_HaloTexture: {fileID: 0}
@@ -454,7 +454,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4757041507534513929, guid: 2b79c075ea6d5b44c875b080788c7e8c, type: 3}
       propertyPath: onlineScene
-      value: Assets/_Project/Scenes/Biomes/Carlos/CarlosWorkshop.unity
+      value: Assets/_Project/Scenes/Biomes/Carlos/CarlosWorkshopTesting.unity
       objectReference: {fileID: 0}
     - target: {fileID: 4757041507534513929, guid: 2b79c075ea6d5b44c875b080788c7e8c, type: 3}
       propertyPath: playerPrefab
@@ -5305,7 +5305,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

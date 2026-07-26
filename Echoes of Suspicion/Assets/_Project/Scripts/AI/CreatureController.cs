@@ -41,6 +41,9 @@ public sealed class CreatureController : NetworkBehaviour
     // Acceso a los datos y componentes (los estados los necesitan).
     public CreatureData Data => data;
 
+    /// <summary>Acceso público al estado sincronizado, usado por RunnerCreatureAwareness al armar los CreatureMapBlip del mapa del Guía.</summary>
+    public CreatureStateType StateType => CurrentStateType;
+
     public NavMeshAgent Agent { get; private set; }
     public Transform[] Waypoints => patrolWaypoints;
 

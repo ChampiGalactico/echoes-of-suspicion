@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Mirror;
 using UnityEngine;
 
@@ -8,9 +9,12 @@ public enum RunnerThreatLevel { None, Alert, Search, Chase }
 /// ambos jugadores (Corredor + Guía). Solo tiene efecto real cuando este
 /// Player tiene rol Runner.
 ///
-/// El radio compartido (lo que vería el Guía en su mapa) y el latido usan
-/// polling normal (CheckNearbyCreatures cada checkInterval) — no necesitan
-/// precisión de frame.
+/// El radio compartido (lo que ve el Guía en su mapa, vía GuideMapView) y
+/// el latido usan polling normal (CheckNearbyCreatures cada checkInterval)
+/// — no necesitan precisión de frame. Cada chequeo arma la lista de
+/// CreatureMapBlip dentro del radio y la envía SOLO a la conexión del Guía
+/// (TargetUpdateMapBlips), incluso si está vacía, para que el Guía sepa
+/// cuándo dejó de haber criaturas cerca.
 ///
 /// La música de amenaza (Alert/Search/Chase) usa EVENTOS en vez de polling:
 /// se suscribe a CreatureController.OnAnyCreatureStateChanged, que se
@@ -81,6 +85,16 @@ public sealed class RunnerCreatureAwareness : NetworkBehaviour
 
     /// <summary>Se dispara SOLO en la máquina del dueño del Player, cada vez que "siente" un pulso de latido.</summary>
     public event System.Action OnHeartbeatPulse;
+
+    /// <summary>
+    /// Se dispara SOLO en la máquina del Guía (vía TargetRpc), con la lista de
+    /// criaturas actualmente dentro del radio compartido. Lo consume
+    /// GuideMapView para dibujar/actualizar los íconos del mapa esquemático.
+    /// Un array vacío significa "ninguna criatura detectada ahora mismo" —
+    /// GuideMapView decide si eso implica ocultar los íconos o dejarlos como
+    /// última posición conocida.
+    /// </summary>
+    public event System.Action<CreatureMapBlip[]> OnMapBlipsUpdated;
 
     private CharacterStatsProvider statsProvider;
     private float lastCheckTime;
@@ -216,6 +230,12 @@ public sealed class RunnerCreatureAwareness : NetworkBehaviour
         var creatures = FindObjectsByType<CreatureController>(FindObjectsSortMode.None);
         bool creatureNearby = false;
 
+        List<CreatureMapBlip> blipsInRadius = null;
+        if (guideProvider != null)
+        {
+            blipsInRadius = new List<CreatureMapBlip>(creatures.Length);
+        }
+
         foreach (var creature in creatures)
         {
             float distance = Vector3.Distance(transform.position, creature.transform.position);
@@ -223,10 +243,17 @@ public sealed class RunnerCreatureAwareness : NetworkBehaviour
             if (distance <= sharedRadius)
             {
                 creatureNearby = true;
-            }
 
-            // TODO: cuando exista el mapa del Guía, publicar aquí qué criaturas
-            // caen dentro de sharedRadius para que ese sistema las muestre.
+                // Publicamos la posición/estado de cada criatura dentro del
+                // radio compartido para que GuideMapView la dibuje en el mapa
+                // esquemático del Guía (Propuesta_Tecnica, sección 7).
+                blipsInRadius?.Add(new CreatureMapBlip(creature.netId, creature.transform.position, creature.StateType));
+            }
+        }
+
+        if (guideProvider != null)
+        {
+            TargetUpdateMapBlips(guideProvider.connectionToClient, blipsInRadius.ToArray());
         }
 
         if (!hasHeartbeatAbility || !creatureNearby)
@@ -256,6 +283,18 @@ public sealed class RunnerCreatureAwareness : NetworkBehaviour
     private void TargetHeartbeatPulse(NetworkConnectionToClient target)
     {
         OnHeartbeatPulse?.Invoke();
+    }
+
+    /// <summary>
+    /// Envía SOLO a la conexión del Guía la lista de criaturas actualmente
+    /// dentro del radio compartido. Se llama cada checkInterval desde
+    /// CheckNearbyCreatures(), sin importar si hay o no criaturas (un array
+    /// vacío también es información válida: "ya no hay nada cerca").
+    /// </summary>
+    [TargetRpc]
+    private void TargetUpdateMapBlips(NetworkConnectionToClient target, CreatureMapBlip[] blips)
+    {
+        OnMapBlipsUpdated?.Invoke(blips);
     }
 
     [TargetRpc]
