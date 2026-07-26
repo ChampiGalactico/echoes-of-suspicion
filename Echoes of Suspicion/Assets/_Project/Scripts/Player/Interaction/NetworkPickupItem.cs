@@ -311,10 +311,10 @@ public sealed class NetworkPickupItem : RatInteractable
 
         if (itemRigidbody != null)
         {
-            itemRigidbody.useGravity = false;
-            itemRigidbody.isKinematic = true;
             itemRigidbody.linearVelocity = Vector3.zero;
             itemRigidbody.angularVelocity = Vector3.zero;
+            itemRigidbody.useGravity = false;
+            itemRigidbody.isKinematic = true;
         }
 
         TryResolveHoldSocket();
@@ -332,18 +332,16 @@ public sealed class NetworkPickupItem : RatInteractable
 
         if (isServer)
         {
-            // Solo el servidor ejecuta la física real.
             itemRigidbody.isKinematic = false;
             itemRigidbody.useGravity = true;
             itemRigidbody.WakeUp();
         }
         else
         {
-            // Los clientes reciben la pose desde NetworkTransform.
-            itemRigidbody.useGravity = false;
-            itemRigidbody.isKinematic = true;
             itemRigidbody.linearVelocity = Vector3.zero;
             itemRigidbody.angularVelocity = Vector3.zero;
+            itemRigidbody.useGravity = false;
+            itemRigidbody.isKinematic = true;
         }
     }
 
