@@ -20,10 +20,16 @@ public sealed class NetworkRatAnimatorDriver : NetworkBehaviour
 
     [SerializeField]
     private PlayerSprintController sprintController;
+    
+    [SerializeField]
+    private PlayerCrouchController crouchController;
 
     [Header("Animator Parameters")]
     [SerializeField]
     private string moveSpeedParameter = "MoveSpeed";
+
+    [SerializeField]
+    private string crouchParameter = "IsCrouching";
 
     [Header("Blend Values")]
     [SerializeField, Range(0f, 1f)]
@@ -43,6 +49,7 @@ public sealed class NetworkRatAnimatorDriver : NetworkBehaviour
     private float dampingTime = 0.12f;
 
     private int moveSpeedHash;
+    private int crouchHash;
     private Vector3 previousPosition;
     private bool hasPreviousPosition;
 
@@ -61,6 +68,16 @@ public sealed class NetworkRatAnimatorDriver : NetworkBehaviour
 
         moveSpeedHash =
             Animator.StringToHash(moveSpeedParameter);
+
+        if (crouchController == null)
+        {
+            crouchController =
+                GetComponent<PlayerCrouchController>();
+        }
+
+        crouchHash =
+            Animator.StringToHash(
+                crouchParameter);
     }
 
     public override void OnStartClient()
@@ -77,6 +94,14 @@ public sealed class NetworkRatAnimatorDriver : NetworkBehaviour
         {
             return;
         }
+
+        bool isCrouching =
+            crouchController != null &&
+            crouchController.IsCrouching;
+
+        animator.SetBool(
+            crouchHash,
+            isCrouching);
 
         Vector3 currentPosition =
             movementSource.position;
