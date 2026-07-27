@@ -646,9 +646,9 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 443522070}
   m_Enabled: 1
-  m_Alpha: 1
-  m_Interactable: 1
-  m_BlocksRaycasts: 1
+  m_Alpha: 0
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
 --- !u!114 &443522073
 MonoBehaviour:
@@ -665,7 +665,7 @@ MonoBehaviour:
   inGameMenuGroup: {fileID: 443522072}
   menuPanelGroup: {fileID: 2045354316}
   optionsPanelGroup: {fileID: 834757255}
-  startOpen: 1
+  startOpen: 0
 --- !u!1 &500622495
 GameObject:
   m_ObjectHideFlags: 0
@@ -2220,7 +2220,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &887581185
 RectTransform:
   m_ObjectHideFlags: 0
