@@ -25,6 +25,12 @@ namespace EOS.Puzzles
 
         public bool HasItem => _placedItemNetId != 0;
 
+        /// <summary>
+        /// World position where items snap to when placed.
+        /// </summary>
+        public Vector3 SnapPosition =>
+            _snapPoint != null ? _snapPoint.position : transform.position;
+
         public PickableItem PlacedItem
         {
             get
@@ -49,22 +55,23 @@ namespace EOS.Puzzles
                 bool accepted = false;
                 foreach (var tag in _acceptedTags)
                 {
-                    if (item.ItemData != null && item.ItemData.ItemTag == tag) { accepted = true; break; }
+                    if (item.ItemData != null && item.ItemData.ItemTag == tag)
+                    {
+                        accepted = true;
+                        break;
+                    }
                 }
                 if (!accepted) return false;
             }
 
             _placedItemNetId = item.GetComponent<NetworkIdentity>().netId;
 
-            var pos = _snapPoint != null ? _snapPoint.position : transform.position;
-            item.transform.position = pos;
-
             MakeNoise(NoiseLevel.Low);
             RaiseValueChanged();
             return true;
         }
 
-        /// <summary>Vacía el slot y devuelve el item que estaba (para que el jugador lo recupere).</summary>
+        /// <summary>Vacía el slot y devuelve el item que estaba.</summary>
         [Server]
         public PickableItem Clear()
         {

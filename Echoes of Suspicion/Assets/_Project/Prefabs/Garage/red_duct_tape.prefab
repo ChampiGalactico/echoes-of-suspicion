@@ -11,11 +11,11 @@ GameObject:
   - component: {fileID: 8444548088230950999}
   - component: {fileID: 2932171267592796529}
   - component: {fileID: 8415005725422346961}
-  - component: {fileID: 5182654493306316656}
   - component: {fileID: 869023993913053607}
   - component: {fileID: -9146759844937455936}
   - component: {fileID: 6186883312618199951}
   - component: {fileID: -5422212045262661263}
+  - component: {fileID: 2454179207216691652}
   m_Layer: 6
   m_Name: red_duct_tape
   m_TagString: Untagged
@@ -95,28 +95,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &5182654493306316656
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3181642005534271395}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 2015691799059998317, guid: 3abc31b0351aeb443acd270da906f8d3, type: 3}
 --- !u!54 &869023993913053607
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -160,11 +138,7 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   interactionPrompt: Interactuar
-  heldLocalPosition: {x: 0, y: 0, z: 0}
-  heldLocalEulerAngles: {x: 0, y: 0, z: 0}
-  itemRigidbody: {fileID: 0}
-  itemColliders: []
-  inheritedPlayerVelocityMultiplier: 0.35
+  itemData: {fileID: 11400000, guid: f5e30988e466c7447b7fab763561bc2a, type: 2}
 --- !u!114 &6186883312618199951
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -216,3 +190,24 @@ MonoBehaviour:
   rotationSensitivity: 0.01
   positionPrecision: 0.01
   scalePrecision: 0.01
+--- !u!65 &2454179207216691652
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3181642005534271395}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.10233116, y: 0.043275118, z: 0.10233139}
+  m_Center: {x: 0.0000019073486, y: -0.0043284893, z: -0.0000007152557}
