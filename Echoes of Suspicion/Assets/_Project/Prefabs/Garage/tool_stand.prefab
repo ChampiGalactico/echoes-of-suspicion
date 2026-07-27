@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 9063750252208655455}
   - component: {fileID: 4826730233432457815}
   - component: {fileID: 4960032256973200447}
-  - component: {fileID: 8239259836769905868}
+  - component: {fileID: 2587224046679802176}
   m_Layer: 0
   m_Name: tool_stand
   m_TagString: Untagged
@@ -91,8 +91,8 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &8239259836769905868
-MeshCollider:
+--- !u!65 &2587224046679802176
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -109,7 +109,6 @@ MeshCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -4789828024306261103, guid: 3abc31b0351aeb443acd270da906f8d3, type: 3}
+  serializedVersion: 3
+  m_Size: {x: 0.01855595, y: 1.0966313, z: 1.0961057}
+  m_Center: {x: -0.009277975, y: -0.0000001490116, z: 0.000000029802314}

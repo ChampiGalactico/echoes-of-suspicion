@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 1693662165243539282}
   - component: {fileID: 7527053053381702975}
   - component: {fileID: 2525830314225995973}
+  - component: {fileID: -1231181474743760879}
   m_Layer: 0
   m_Name: EOSNetworkSession
   m_TagString: Untagged
@@ -54,7 +55,7 @@ MonoBehaviour:
   editorAutoStart: 0
   sendRate: 60
   offlineScene: Assets/_Project/Scenes/MainMenu/MainMenu.unity
-  onlineScene: Assets/_Project/Scenes/Development/EOSNetworkTest.unity
+  onlineScene: 
   offlineSceneLoadDelay: 0
   transport: {fileID: 8323050256839498260}
   networkAddress: localhost
@@ -62,7 +63,7 @@ MonoBehaviour:
   disconnectInactiveConnections: 0
   disconnectInactiveTimeout: 60
   authenticator: {fileID: 0}
-  playerPrefab: {fileID: 1060991537307844142, guid: d3ba08cdd6b57ba4992e998fb024ce7a, type: 3}
+  playerPrefab: {fileID: 1086739994817874726, guid: 010a29c3a69334c44ae1d22445dd4a29, type: 3}
   autoCreatePlayer: 1
   playerSpawnMethod: 0
   spawnPrefabs:
@@ -152,3 +153,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdc006a767b876d4694ec6edf0ead775, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EOSVoiceManager
+--- !u!114 &-1231181474743760879
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2263125043491632432}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ef28fbec2042434d93752d4d4e04c34, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemRegistry
+  registeredItems:
+  - {fileID: 11400000, guid: 8798168542b7b0243880f7ebaaea2876, type: 2}
+  - {fileID: 11400000, guid: 79954fb5482987f4594a05f529416899, type: 2}
+  - {fileID: 11400000, guid: c577275f18c5529458085791ace6469f, type: 2}
+  - {fileID: 11400000, guid: db573c91d040ed84cbbb3d4e34c37abd, type: 2}
+  - {fileID: 11400000, guid: 84971377447f1dd4cb772dd4e08b27de, type: 2}
+  - {fileID: 11400000, guid: d1b25a100c4e45648b61cd7c1c8417e7, type: 2}
+  - {fileID: 11400000, guid: 6bb1ee2ec659d7547be4dfa8b899e7e5, type: 2}
+  - {fileID: 11400000, guid: 53d6b221c59517f4a96d91f98ed126e2, type: 2}
+  - {fileID: 11400000, guid: e0831767f0a8ef34182ecf13602bb015, type: 2}
+  - {fileID: 11400000, guid: f5e30988e466c7447b7fab763561bc2a, type: 2}
+  - {fileID: 11400000, guid: 4e13ebdb13c9ca34e9ac84b129d22364, type: 2}
+  - {fileID: 11400000, guid: 01d460c3a88a3574ea3754a578d85ed7, type: 2}
+  - {fileID: 11400000, guid: 107f8f8b36b42a549a8271e36a3903ed, type: 2}
+  - {fileID: 11400000, guid: f76167a6805536043a4b7c6009cbc523, type: 2}
+  - {fileID: 11400000, guid: c1e0e678bcf210c4f9d345a00c2cfe16, type: 2}

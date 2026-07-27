@@ -10,6 +10,9 @@ public sealed class NetworkRatInteractionHUD : NetworkBehaviour
     private NetworkRatInteractor interactor;
 
     [SerializeField]
+    private NetworkInventory inventory;
+
+    [SerializeField]
     private Canvas hudCanvas;
 
     [SerializeField]
@@ -36,6 +39,12 @@ public sealed class NetworkRatInteractionHUD : NetworkBehaviour
                 GetComponent<NetworkRatInteractor>();
         }
 
+        if (inventory == null)
+        {
+            inventory =
+                GetComponent<NetworkInventory>();
+        }
+
         if (hudCanvasGroup == null &&
             hudCanvas != null)
         {
@@ -43,24 +52,18 @@ public sealed class NetworkRatInteractionHUD : NetworkBehaviour
                 hudCanvas.GetComponent<CanvasGroup>();
         }
 
-        // Todos los HUD comienzan ocultos.
-        // Solamente el jugador local lo activa después.
         SetHudVisible(false);
     }
 
     public override void OnStartClient()
     {
         base.OnStartClient();
-
-        // Cada cliente recibe todos los jugadores.
-        // El HUD remoto siempre permanece oculto.
         SetHudVisible(false);
     }
 
     public override void OnStartLocalPlayer()
     {
         base.OnStartLocalPlayer();
-
         SetHudVisible(true);
         RefreshHud();
     }
@@ -68,7 +71,6 @@ public sealed class NetworkRatInteractionHUD : NetworkBehaviour
     public override void OnStopLocalPlayer()
     {
         SetHudVisible(false);
-
         base.OnStopLocalPlayer();
     }
 
@@ -85,17 +87,6 @@ public sealed class NetworkRatInteractionHUD : NetworkBehaviour
 
     private void RefreshHud()
     {
-        if (interactor.IsHoldingItem)
-        {
-            SetCrosshair(false);
-
-            SetPrompt(
-                "[E] Soltar   ·   " +
-                "[Clic izquierdo] Lanzar");
-
-            return;
-        }
-
         if (interactor.HasInteractionTarget)
         {
             SetCrosshair(true);
@@ -103,6 +94,14 @@ public sealed class NetworkRatInteractionHUD : NetworkBehaviour
             SetPrompt(
                 $"[E] {interactor.CurrentInteractionPrompt}");
 
+            return;
+        }
+
+        // Show drop/throw hint if holding an item in active slot.
+        if (interactor.HasActiveItem)
+        {
+            SetCrosshair(false);
+            SetPrompt("[Clic] Lanzar   ·   [G] Soltar");
             return;
         }
 

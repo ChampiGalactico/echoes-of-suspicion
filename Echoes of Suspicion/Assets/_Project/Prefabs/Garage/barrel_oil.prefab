@@ -138,11 +138,7 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   interactionPrompt: Interactuar
-  heldLocalPosition: {x: 0, y: 0, z: 0}
-  heldLocalEulerAngles: {x: 0, y: 0, z: 0}
-  itemRigidbody: {fileID: 0}
-  itemColliders: []
-  inheritedPlayerVelocityMultiplier: 0.35
+  itemData: {fileID: 11400000, guid: 8798168542b7b0243880f7ebaaea2876, type: 2}
 --- !u!114 &-3026549299329172513
 MonoBehaviour:
   m_ObjectHideFlags: 0
