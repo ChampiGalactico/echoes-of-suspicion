@@ -1,363 +1,216 @@
 using Mirror;
 using UnityEngine;
 
+/// <summary>
+/// Unified pickup component for ALL inventory items.
+///
+/// When a player interacts, the object is hidden (not destroyed) and its
+/// netId is stored in the inventory slot. On drop or throw, the same object
+/// is revealed at the target position.
+///
+/// For puzzle items, add a PickableItem companion component alongside this one.
+/// NetworkPickupItem handles all interaction and visibility; PickableItem
+/// only holds PuzzleItemData for the puzzle system.
+/// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(NetworkIdentity))]
 public sealed class NetworkPickupItem : RatInteractable
 {
-    [Header("Held Pose")]
+    [Header("Item")]
     [SerializeField]
-    private Vector3 heldLocalPosition = Vector3.zero;
+    private ItemData itemData;
 
-    [SerializeField]
-    private Vector3 heldLocalEulerAngles = Vector3.zero;
+    // ── Synced state ──────────────────────────────────────────
 
-    [Header("Physics")]
-    [SerializeField]
+    [SyncVar(hook = nameof(OnPickedUpChanged))]
+    private bool isPickedUp;
+
+    [SyncVar]
+    private float currentDurability = -1f;
+
+    // ── Local cache ───────────────────────────────────────────
+
+    private Vector3 originPosition;
+    private Quaternion originRotation;
     private Rigidbody itemRigidbody;
 
-    [SerializeField]
-    private Collider[] itemColliders;
+    // ── Public accessors ──────────────────────────────────────
 
-    [SerializeField, Range(0f, 1f)]
-    private float inheritedPlayerVelocityMultiplier = 0.35f;
+    public ItemData ItemData => itemData;
+    public bool IsPickedUp => isPickedUp;
+    public float CurrentDurability => currentDurability;
 
-    // Null significa que el objeto está libre.
-    [SyncVar(hook = nameof(OnHolderChanged))]
-    private NetworkIdentity holderIdentity;
-
-    private Transform resolvedHoldSocket;
-
-    private ThrowableNoiseSource throwableNoiseSource;
-
-    public bool IsHeld => holderIdentity != null;
+    // ── Lifecycle ─────────────────────────────────────────────
 
     private void Awake()
     {
-        if (itemRigidbody == null)
-        {
-            itemRigidbody = GetComponent<Rigidbody>();
-        }
-
-        if (throwableNoiseSource == null)
-        {
-            throwableNoiseSource =
-                GetComponent<ThrowableNoiseSource>();
-        }
-
-        if (itemColliders == null || itemColliders.Length == 0)
-        {
-            itemColliders =
-                GetComponentsInChildren<Collider>(true);
-        }
+        itemRigidbody = GetComponent<Rigidbody>();
     }
 
-    public override void OnStartServer()
+    private void Start()
     {
-        base.OnStartServer();
-
-        if (holderIdentity == null)
-        {
-            ApplyFreePresentation();
-        }
-        else
-        {
-            ApplyHeldPresentation();
-        }
+        originPosition = transform.position;
+        originRotation = transform.rotation;
     }
 
-    public override void OnStartClient()
-    {
-        base.OnStartClient();
-        RefreshPresentation();
-    }
+    // ── RatInteractable overrides ─────────────────────────────
 
-    public override bool CanPreviewInteraction(
-        GameObject interactor)
+    public override bool CanPreviewInteraction(GameObject interactor)
     {
-        return !IsHeld &&
-               base.CanPreviewInteraction(interactor);
+        return !isPickedUp && base.CanPreviewInteraction(interactor);
     }
 
     [Server]
-    public override bool CanServerInteract(
-        NetworkIdentity interactor)
+    public override bool CanServerInteract(NetworkIdentity interactor)
     {
-        if (interactor == null || holderIdentity != null)
+        if (isPickedUp || interactor == null)
         {
             return false;
         }
 
-        NetworkRatInteractor ratInteractor =
-            interactor.GetComponent<NetworkRatInteractor>();
+        NetworkInventory inventory =
+            interactor.GetComponent<NetworkInventory>();
 
-        return ratInteractor != null &&
-               ratInteractor.ServerCanAcceptPickup(netIdentity);
+        if (inventory == null)
+        {
+            return false;
+        }
+
+        // Check if there's room.
+        for (int i = 0; i < NetworkInventory.SlotCount; i++)
+        {
+            if (inventory.GetSlot(i).IsEmpty)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     [Server]
-    public override void ServerInteract(
-        NetworkIdentity interactor)
+    public override void ServerInteract(NetworkIdentity interactor)
     {
         if (!CanServerInteract(interactor))
         {
             return;
         }
 
-        NetworkRatInteractor ratInteractor =
-            interactor.GetComponent<NetworkRatInteractor>();
+        NetworkInventory inventory =
+            interactor.GetComponent<NetworkInventory>();
 
-        if (ratInteractor == null ||
-            !ratInteractor.ServerTryAssignPickup(netIdentity))
+        // Check if this is a puzzle item.
+        bool isPuzzle = GetComponent<EOS.Puzzles.PickableItem>() != null;
+
+        int slotUsed = inventory.ServerAddItem(
+            itemData,
+            count: 1,
+            itemNetId: netIdentity.netId,
+            isPuzzle: isPuzzle);
+
+        if (slotUsed < 0)
         {
             return;
         }
 
-        holderIdentity = interactor;
-        ApplyHeldPresentation();
+        // Restore durability if this item had one.
+        if (currentDurability >= 0f)
+        {
+            inventory.ServerSetDurability(slotUsed, currentDurability);
+        }
+
+        // Hide the world object.
+        isPickedUp = true;
+        ServerSetPhysicsEnabled(false);
+
+        if (isPuzzle)
+        {
+            EOS.Puzzles.PuzzleEvents.RaiseNoiseGenerated(
+                transform.position,
+                EOS.Puzzles.NoiseLevel.Low);
+        }
     }
+
+    // ── Server: drop / throw / puzzle placement ──────────────
+
+    /// <summary>
+    /// Reveal the item at the given position (used by drop and throw).
+    /// </summary>
+    [Server]
+    public void Drop(Vector3 position)
+    {
+        transform.position = position;
+        isPickedUp = false;
+        ServerSetPhysicsEnabled(true);
+    }
+
+    /// <summary>
+    /// Return the item to its original spawn position.
+    /// </summary>
+    [Server]
+    public void ReturnToOrigin()
+    {
+        transform.position = originPosition;
+        transform.rotation = originRotation;
+        isPickedUp = false;
+        ServerSetPhysicsEnabled(true);
+    }
+
+    /// <summary>
+    /// Move the item to a snap point but keep it hidden.
+    /// Used by SlotActor when the item is placed in a puzzle slot.
+    /// </summary>
+    [Server]
+    public void PlaceInSlot(Vector3 snapPosition)
+    {
+        transform.position = snapPosition;
+        // Stays picked up (hidden) — the SlotActor manages visual representation.
+    }
+
+    // ── Durability ────────────────────────────────────────────
 
     [Server]
-    public void ServerDrop(
-        NetworkIdentity requester)
+    public void ServerSetDurability(float durability)
     {
-        ServerRelease(
-            requester,
-            Vector3.zero,
-            0f);
+        currentDurability = durability;
     }
+
+    // ── Physics helpers ───────────────────────────────────────
 
     [Server]
-    public void ServerThrow(
-        NetworkIdentity requester,
-        Vector3 throwDirection,
-        float throwImpulse)
+    private void ServerSetPhysicsEnabled(bool enabled)
     {
-        if (throwDirection.sqrMagnitude < 0.0001f)
-        {
-            return;
-        }
-
-        ServerRelease(
-            requester,
-            throwDirection.normalized,
-            Mathf.Max(0f, throwImpulse));
-    }
-
-    private void ServerRelease(
-        NetworkIdentity requester,
-        Vector3 throwDirection,
-        float throwImpulse)
-    {
-        if (requester == null ||
-            holderIdentity != requester)
-        {
-            return;
-        }
-
-        ResolveDropPose(
-            requester,
-            out Vector3 releasePosition,
-            out Quaternion releaseRotation);
-
-        Vector3 inheritedVelocity =
-            GetInteractorVelocity(requester) *
-            inheritedPlayerVelocityMultiplier;
-
-        if (throwableNoiseSource != null)
-        {
-            throwableNoiseSource.ServerSetSourcePlayer(
-                requester.netId);
-        }
-
-        NetworkRatInteractor ratInteractor =
-            requester.GetComponent<NetworkRatInteractor>();
-
-        if (ratInteractor != null)
-        {
-            ratInteractor.ServerClearPickup(
-                netIdentity);
-        }
-
-        holderIdentity = null;
-
-        transform.SetPositionAndRotation(
-            releasePosition,
-            releaseRotation);
-
-        ApplyFreePresentation();
-
-        if (itemRigidbody == null)
-        {
-            return;
-        }
-
-        itemRigidbody.linearVelocity =
-            inheritedVelocity;
-
-        itemRigidbody.angularVelocity =
-            Vector3.zero;
-
-        if (throwImpulse > 0f)
-        {
-            itemRigidbody.AddForce(
-                throwDirection * throwImpulse,
-                ForceMode.Impulse);
-        }
-
-        itemRigidbody.WakeUp();
-    }
-
-    private void LateUpdate()
-    {
-        if (holderIdentity == null)
-        {
-            return;
-        }
-
-        if (resolvedHoldSocket == null &&
-            !TryResolveHoldSocket())
-        {
-            return;
-        }
-
-        Vector3 targetPosition =
-            resolvedHoldSocket.TransformPoint(
-                heldLocalPosition);
-
-        Quaternion targetRotation =
-            resolvedHoldSocket.rotation *
-            Quaternion.Euler(heldLocalEulerAngles);
-
-        transform.SetPositionAndRotation(
-            targetPosition,
-            targetRotation);
-    }
-
-    private bool TryResolveHoldSocket()
-    {
-        resolvedHoldSocket = null;
-
-        if (holderIdentity == null)
-        {
-            return false;
-        }
-
-        RatHoldSocketProvider provider =
-            holderIdentity.GetComponent<RatHoldSocketProvider>();
-
-        return provider != null &&
-               provider.TryGetHoldSocket(
-                   out resolvedHoldSocket);
-    }
-
-    private static void ResolveDropPose(
-        NetworkIdentity requester,
-        out Vector3 position,
-        out Quaternion rotation)
-    {
-        RatHoldSocketProvider provider =
-            requester.GetComponent<RatHoldSocketProvider>();
-
-        if (provider != null &&
-            provider.TryGetDropPose(
-                out position,
-                out rotation))
-        {
-            return;
-        }
-
-        position =
-            requester.transform.position +
-            requester.transform.forward;
-
-        rotation = Quaternion.identity;
-    }
-
-    private static Vector3 GetInteractorVelocity(
-        NetworkIdentity requester)
-    {
-        CharacterController characterController =
-            requester.GetComponent<CharacterController>();
-
-        return characterController != null
-            ? characterController.velocity
-            : Vector3.zero;
-    }
-
-    private void OnHolderChanged(
-        NetworkIdentity previousHolder,
-        NetworkIdentity newHolder)
-    {
-        RefreshPresentation();
-    }
-
-    private void RefreshPresentation()
-    {
-        if (IsHeld)
-        {
-            ApplyHeldPresentation();
-        }
-        else
-        {
-            ApplyFreePresentation();
-        }
-    }
-
-    private void ApplyHeldPresentation()
-    {
-        resolvedHoldSocket = null;
-        SetCollidersEnabled(false);
-
         if (itemRigidbody != null)
         {
-            itemRigidbody.linearVelocity = Vector3.zero;
-            itemRigidbody.angularVelocity = Vector3.zero;
-            itemRigidbody.useGravity = false;
-            itemRigidbody.isKinematic = true;
-        }
+            itemRigidbody.isKinematic = !enabled;
+            itemRigidbody.useGravity = enabled;
 
-        TryResolveHoldSocket();
-    }
-
-    private void ApplyFreePresentation()
-    {
-        resolvedHoldSocket = null;
-        SetCollidersEnabled(true);
-
-        if (itemRigidbody == null)
-        {
-            return;
-        }
-
-        if (isServer)
-        {
-            itemRigidbody.isKinematic = false;
-            itemRigidbody.useGravity = true;
-            itemRigidbody.WakeUp();
-        }
-        else
-        {
-            itemRigidbody.linearVelocity = Vector3.zero;
-            itemRigidbody.angularVelocity = Vector3.zero;
-            itemRigidbody.useGravity = false;
-            itemRigidbody.isKinematic = true;
-        }
-    }
-
-    private void SetCollidersEnabled(bool isEnabled)
-    {
-        if (itemColliders == null)
-        {
-            return;
-        }
-
-        foreach (Collider itemCollider in itemColliders)
-        {
-            if (itemCollider != null)
+            if (!enabled)
             {
-                itemCollider.enabled = isEnabled;
+                itemRigidbody.linearVelocity = Vector3.zero;
+                itemRigidbody.angularVelocity = Vector3.zero;
             }
+        }
+    }
+
+    // ── Visual sync (all clients) ─────────────────────────────
+
+    private void OnPickedUpChanged(bool oldValue, bool newValue)
+    {
+        SetVisibility(!newValue);
+    }
+
+    private void SetVisibility(bool visible)
+    {
+        foreach (Renderer r in GetComponentsInChildren<Renderer>(true))
+        {
+            r.enabled = visible;
+        }
+
+        foreach (Collider c in GetComponentsInChildren<Collider>(true))
+        {
+            c.enabled = visible;
         }
     }
 }
