@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 265761424014816841}
   - component: {fileID: 6329962010453089947}
   - component: {fileID: 5420839502956363824}
+  - component: {fileID: 8460352653544829841}
   m_Layer: 6
   m_Name: blue_duct_tape
   m_TagString: Untagged
@@ -211,3 +212,16 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.13408089, y: 0.043275118, z: 0.1340804}
   m_Center: {x: 0.000002861023, y: -0.0043284893, z: -0.00000047683713}
+--- !u!114 &8460352653544829841
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7027549110248203888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90d8e3f77d66c65478e68c206dbff438, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EOS.Puzzles.PickableItem
+  _puzzleData: {fileID: 11400000, guid: 425a47ee43e555e4b899edfc39c53b6b, type: 2}

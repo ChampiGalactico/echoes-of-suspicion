@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: -298314167002030728}
   - component: {fileID: -1355319359551576427}
   - component: {fileID: -6381914870448445132}
+  - component: {fileID: 7807966509637328485}
   m_Layer: 6
   m_Name: wrench
   m_TagString: Untagged
@@ -211,3 +212,16 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.38947022, y: 0.011152637, z: 0.0807411}
   m_Center: {x: -0.008205137, y: 0.005079161, z: 0.0009728129}
+--- !u!114 &7807966509637328485
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8206153585010649582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90d8e3f77d66c65478e68c206dbff438, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EOS.Puzzles.PickableItem
+  _puzzleData: {fileID: 11400000, guid: e08d39e2df31fe24e92da95d37804ab5, type: 2}

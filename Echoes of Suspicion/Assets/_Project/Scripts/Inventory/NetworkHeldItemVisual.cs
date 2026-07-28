@@ -165,22 +165,27 @@ public class NetworkHeldItemVisual : NetworkBehaviour
 
     /// <summary>
     /// Disable all non-visual components on the held model clone.
-    /// We disable instead of destroying to avoid RequireComponent conflicts
-    /// (e.g. NetworkPickupItem requires Rigidbody).
+    /// Uses DestroyImmediate in reverse dependency order so
+    /// RequireComponent constraints don't block removal.
+    /// Safe because this is a freshly instantiated clone, not a scene object.
     /// </summary>
     private static void StripNonVisual(GameObject obj)
     {
-        // Disable all MonoBehaviours (NetworkPickupItem, PickableItem, etc.)
+        // 1. First: components that depend on others (PickableItem → NetworkPickupItem)
+        foreach (EOS.Puzzles.PickableItem pi in obj.GetComponentsInChildren<EOS.Puzzles.PickableItem>(true))
+            DestroyImmediate(pi);
+
+        // 2. Then: remaining MonoBehaviours (NetworkPickupItem, etc.)
         foreach (MonoBehaviour mb in obj.GetComponentsInChildren<MonoBehaviour>(true))
-            Destroy(mb);
+            DestroyImmediate(mb);
 
-        // Disable all NetworkIdentities.
+        // 3. Then: NetworkIdentity (NetworkPickupItem required it, but it's gone now)
         foreach (Mirror.NetworkIdentity ni in obj.GetComponentsInChildren<Mirror.NetworkIdentity>(true))
-            Destroy(ni);
+            DestroyImmediate(ni);
 
-        // Now safe to destroy Rigidbodies (no RequireComponent left).
+        // 4. Finally: Rigidbody (NetworkPickupItem required it, but it's gone now)
         foreach (Rigidbody rb in obj.GetComponentsInChildren<Rigidbody>(true))
-            Destroy(rb);
+            DestroyImmediate(rb);
 
         // Disable colliders so the visual doesn't block raycasts.
         foreach (Collider col in obj.GetComponentsInChildren<Collider>(true))

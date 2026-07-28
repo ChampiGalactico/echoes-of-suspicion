@@ -41,11 +41,11 @@ MonoBehaviour:
     m_Values:
     - position: {x: -1, y: 0, z: -1}
       index: 0
-      probeCount: 2176
+      probeCount: 2240
       minSubdiv: 0
       indexChunkCount: 91
       shChunkCount: 1
-      bricksCount: 34
+      bricksCount: 35
       indirectionEntryInfo:
       - positionInBricks: {x: -27, y: 0, z: -27}
         minSubdiv: 0
@@ -69,11 +69,11 @@ MonoBehaviour:
         hasOnlyBiggerBricks: 0
     - position: {x: 0, y: 0, z: -1}
       index: 1
-      probeCount: 2496
+      probeCount: 2880
       minSubdiv: 0
       indexChunkCount: 91
       shChunkCount: 1
-      bricksCount: 39
+      bricksCount: 45
       indirectionEntryInfo:
       - positionInBricks: {x: 0, y: 0, z: -27}
         minSubdiv: 0
@@ -83,11 +83,11 @@ MonoBehaviour:
         hasOnlyBiggerBricks: 0
     - position: {x: 0, y: 0, z: 0}
       index: 7
-      probeCount: 2496
+      probeCount: 3008
       minSubdiv: 0
       indexChunkCount: 91
       shChunkCount: 1
-      bricksCount: 39
+      bricksCount: 47
       indirectionEntryInfo:
       - positionInBricks: {x: 0, y: 0, z: 0}
         minSubdiv: 0
@@ -118,7 +118,7 @@ MonoBehaviour:
     m_Keys:
     - Default
     m_Values:
-    - sceneHash: -1719591212
+    - sceneHash: 1592493178
       cellDataAsset:
         m_AssetGUID: fdb7c423e4e42a94c89f457c222587b9
         m_StreamableAssetPath: APVStreamingAssets\e6304cf9df4c71e4ab2f52bea014ccd5\fdb7c423e4e42a94c89f457c222587b9.bytes
@@ -175,13 +175,13 @@ MonoBehaviour:
       m_Keys: 00000000060000000100000007000000
       m_Values:
       - offset: 0
+        elementCount: 35
+      - offset: 560
         elementCount: 34
-      - offset: 544
-        elementCount: 34
-      - offset: 1088
-        elementCount: 39
-      - offset: 1712
-        elementCount: 39
+      - offset: 1104
+        elementCount: 45
+      - offset: 1824
+        elementCount: 47
     m_Asset: {fileID: 4900000, guid: aede8d0b123ba314490e673b922f9407, type: 3}
   cellSupportDataAsset:
     m_AssetGUID: 7856d2efbfd77554b94a27fbd62acc3b
