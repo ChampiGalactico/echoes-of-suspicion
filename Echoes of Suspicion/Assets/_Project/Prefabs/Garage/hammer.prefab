@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: -4773631327783419883}
   - component: {fileID: 6809279537570299303}
   - component: {fileID: 2309737727661430338}
+  - component: {fileID: -8984218801578054790}
   m_Layer: 6
   m_Name: hammer
   m_TagString: Untagged
@@ -211,3 +212,16 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.042663697, y: 0.43802506, z: 0.2060989}
   m_Center: {x: 0.0000010577013, y: -0.19580545, z: 0.004981115}
+--- !u!114 &-8984218801578054790
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 870893547646296339}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90d8e3f77d66c65478e68c206dbff438, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EOS.Puzzles.PickableItem
+  _puzzleData: {fileID: 11400000, guid: 8f62dcb36d7979948b2ccf4ff5c9db25, type: 2}

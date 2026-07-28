@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: -6942574768522749919}
   - component: {fileID: -4082256285287125582}
   - component: {fileID: -5777164949580820417}
+  - component: {fileID: 5471292459423600951}
   m_Layer: 6
   m_Name: unscrew
   m_TagString: Untagged
@@ -211,3 +212,16 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.045768734, y: 0.37777996, z: 0.045769185}
   m_Center: {x: 0.0000019073484, y: -0.058304198, z: -0.00000016298145}
+--- !u!114 &5471292459423600951
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1104790330205740444}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90d8e3f77d66c65478e68c206dbff438, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EOS.Puzzles.PickableItem
+  _puzzleData: {fileID: 11400000, guid: 800691c1cae5a21498c9aeac1ada961a, type: 2}

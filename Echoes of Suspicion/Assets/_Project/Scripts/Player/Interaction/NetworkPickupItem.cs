@@ -183,14 +183,15 @@ public sealed class NetworkPickupItem : RatInteractable
     {
         if (itemRigidbody != null)
         {
-            itemRigidbody.isKinematic = !enabled;
-            itemRigidbody.useGravity = enabled;
-
             if (!enabled)
             {
+                // Zero out velocity BEFORE going kinematic.
                 itemRigidbody.linearVelocity = Vector3.zero;
                 itemRigidbody.angularVelocity = Vector3.zero;
             }
+
+            itemRigidbody.isKinematic = !enabled;
+            itemRigidbody.useGravity = enabled;
         }
     }
 

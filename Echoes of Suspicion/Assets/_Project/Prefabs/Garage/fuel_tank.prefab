@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 6818101987505593611}
   - component: {fileID: -2636536268035229723}
   - component: {fileID: 820885086019641065}
+  - component: {fileID: -1468132759958149435}
   m_Layer: 6
   m_Name: fuel_tank
   m_TagString: Untagged
@@ -211,3 +212,16 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.8055843, y: 0.48843944, z: 0.18802342}
   m_Center: {x: 0.015334876, y: 0.24374959, z: 9.1402974e-10}
+--- !u!114 &-1468132759958149435
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7796289200967755957}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90d8e3f77d66c65478e68c206dbff438, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EOS.Puzzles.PickableItem
+  _puzzleData: {fileID: 11400000, guid: 07640adb47ac1cf4d9f760d5131ff178, type: 2}

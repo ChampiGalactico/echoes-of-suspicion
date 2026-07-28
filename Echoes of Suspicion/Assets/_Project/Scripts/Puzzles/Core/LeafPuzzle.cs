@@ -3,6 +3,7 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.Events;
 
 namespace EOS.Puzzles
 {
@@ -21,6 +22,11 @@ namespace EOS.Puzzles
     /// </summary>
     public class LeafPuzzle : NetworkBehaviour, IPuzzleNode
     {
+        [Header("Events")]
+        public UnityEvent OnPuzzleSolved;
+        public UnityEvent OnPuzzleFailed;
+        public UnityEvent OnPuzzleReset;
+
         [Header("Identidad")]
         [SerializeField] private string _nodeId;
 
@@ -47,6 +53,7 @@ namespace EOS.Puzzles
         public string NodeId => _nodeId;
         public bool IsSolved => _isSolved;
         public event Action<IPuzzleNode> OnSolved;
+
 
         public override void OnStartServer()
         {
@@ -162,8 +169,17 @@ namespace EOS.Puzzles
         [Server]
         public void SetActive(bool active) => _isActive = active;
 
-        [ClientRpc] private void RpcOnSolved() { /* enganchar VFX/SFX aquí */ }
-        [ClientRpc] private void RpcOnFailed() { }
-        [ClientRpc] private void RpcOnReset() { }
+        [ClientRpc] private void RpcOnSolved()
+        {
+            OnPuzzleSolved?.Invoke();
+        }
+        [ClientRpc] private void RpcOnFailed()
+        {
+            OnPuzzleFailed?.Invoke();
+        }
+        [ClientRpc] private void RpcOnReset()
+        {
+            OnPuzzleReset?.Invoke();    
+        }
     }
 }
