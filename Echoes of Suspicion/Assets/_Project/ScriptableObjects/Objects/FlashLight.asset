@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ccd229622a3e284497e1b518a4fd108, type: 3}
   m_Name: FlashLight
   m_EditorClassIdentifier: Assembly-CSharp::FlashlightData
-  maxBattery: 20
+  maxBattery: 60
   drainPerSecond: 1
-  lightRange: 15
-  lightIntensity: 1.5
+  lightRange: 25
+  lightIntensity: 5
   spotAngle: 45
   lightColor: {r: 1, g: 1, b: 1, a: 1}
