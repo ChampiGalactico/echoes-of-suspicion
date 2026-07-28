@@ -1,27 +1,67 @@
 using UnityEngine;
 
 /// <summary>
-/// Expone los puntos que utilizan los objetos agarrables.
-/// No contiene lógica de red; el NetworkIdentity ya está en la raíz
-/// del jugador.
+/// Proporciona sockets distintos para la representación local
+/// en primera persona y para las copias remotas en tercera persona.
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class RatHoldSocketProvider : MonoBehaviour
 {
-    [Header("Sockets")]
+    [Header("Player")]
     [SerializeField]
-    private Transform holdSocket;
+    private NetworkRatInteractor networkInteractor;
 
+    [Header("Hold Sockets")]
+    [SerializeField]
+    private Transform firstPersonHoldSocket;
+
+    [SerializeField]
+    private Transform thirdPersonHoldSocket;
+
+    [Header("Drop")]
     [SerializeField]
     private Transform dropOrigin;
 
-    public Transform HoldSocket => holdSocket;
+    public Transform FirstPersonHoldSocket =>
+        firstPersonHoldSocket;
 
-    public Transform DropOrigin => dropOrigin;
+    public Transform ThirdPersonHoldSocket =>
+        thirdPersonHoldSocket;
 
-    public bool TryGetHoldSocket(out Transform socket)
+    public Transform DropOrigin =>
+        dropOrigin;
+
+    private void Awake()
     {
-        socket = holdSocket;
+        if (networkInteractor == null)
+        {
+            networkInteractor =
+                GetComponent<NetworkRatInteractor>();
+        }
+    }
+
+    public bool TryGetHoldSocket(
+        out Transform socket)
+    {
+        bool useFirstPerson =
+            networkInteractor != null &&
+            networkInteractor.isLocalPlayer;
+
+        socket =
+            useFirstPerson
+                ? firstPersonHoldSocket
+                : thirdPersonHoldSocket;
+
+        // Respaldo para evitar perder el objeto si una
+        // referencia quedó sin asignar temporalmente.
+        if (socket == null)
+        {
+            socket =
+                useFirstPerson
+                    ? thirdPersonHoldSocket
+                    : firstPersonHoldSocket;
+        }
+
         return socket != null;
     }
 
@@ -44,18 +84,10 @@ public sealed class RatHoldSocketProvider : MonoBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (holdSocket == null)
+        if (networkInteractor == null)
         {
-            Debug.LogWarning(
-                "RatHoldSocketProvider no tiene HoldSocket asignado.",
-                this);
-        }
-
-        if (dropOrigin == null)
-        {
-            Debug.LogWarning(
-                "RatHoldSocketProvider no tiene DropOrigin asignado.",
-                this);
+            networkInteractor =
+                GetComponent<NetworkRatInteractor>();
         }
     }
 #endif
