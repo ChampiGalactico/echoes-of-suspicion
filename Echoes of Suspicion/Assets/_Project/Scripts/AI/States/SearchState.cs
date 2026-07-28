@@ -19,6 +19,12 @@ public sealed class SearchState : ICreatureState, ITargetedState
     private float searchEndTime;
     private bool hasReachedSearchPoint;
 
+    /// <summary>
+    /// True cuando la criatura ya llegó al punto y está mirando alrededor.
+    /// Usado por CreatureAnimator para cambiar a la animación de Look Around.
+    /// </summary>
+    public bool IsLookingAround => hasReachedSearchPoint;
+
     private float nextLookChangeTime;
     private Quaternion targetLookRotation;
     private const float LookChangeInterval = 2f;
