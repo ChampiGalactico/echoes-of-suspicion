@@ -1,3 +1,4 @@
+using Mirror;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -122,7 +123,60 @@ public sealed class InGameMenuController : MonoBehaviour
 
         Cursor.visible = open;
     }
+    public void ReturnToMainMenu()
+    {
+        NetworkManager networkManager = NetworkManager.singleton;
 
+        if (networkManager == null)
+        {
+            Debug.LogError(
+                "InGameMenuController: no se encontró el NetworkManager.",
+                this
+            );
+
+            return;
+        }
+
+        // Liberamos cualquier bloqueo local antes de abandonar la partida.
+        GameplayInputBlocker.SetBlocked(false);
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        /*
+        * Host:
+        * detiene simultáneamente el servidor y su cliente local.
+        */
+        if (NetworkServer.active && NetworkClient.isConnected)
+        {
+            networkManager.StopHost();
+            return;
+        }
+
+        /*
+        * Cliente:
+        * se desconecta del host y vuelve a la Offline Scene.
+        */
+        if (NetworkClient.active)
+        {
+            networkManager.StopClient();
+            return;
+        }
+
+        /*
+        * Protección para una posible instancia server-only.
+        */
+        if (NetworkServer.active)
+        {
+            networkManager.StopServer();
+            return;
+        }
+
+        Debug.LogWarning(
+            "InGameMenuController: no existe una sesión de red activa.",
+            this
+        );
+    }
     private static void SetCanvasGroup(
         CanvasGroup group,
         bool visible
