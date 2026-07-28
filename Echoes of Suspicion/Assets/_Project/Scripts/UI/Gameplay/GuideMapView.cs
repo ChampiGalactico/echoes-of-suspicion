@@ -37,8 +37,8 @@ using UnityEngine;
 public sealed class GuideMapView : MonoBehaviour
 {
     [Header("Debug")]
-    [SerializeField, Tooltip("Muestra en consola cada paso: rol detectado, si encontró al Corredor, si falta MapBounds. Útil mientras se arma el monitor por primera vez.")]
-    private bool showDebugLogs = true;
+    [SerializeField, Tooltip("Muestra en consola cada paso: rol detectado, si encontró al Corredor, si falta MapBounds. Déjalo en false salvo que estés depurando algo puntual del mapa.")]
+    private bool showDebugLogs = false;
 
     [Header("Local Role Gate")]
     [SerializeField, Tooltip("CanvasGroup que envuelve TODO el panel del mapa (fondo + íconos). Se oculta (alpha 0) si el jugador local no es el Guía. Puede ser el mismo Canvas del monitor o un panel hijo.")]
@@ -71,7 +71,6 @@ public sealed class GuideMapView : MonoBehaviour
     private float roleCheckTimer;
     private bool loggedNoLocalPlayerWarning;
     private bool loggedMapBoundsWarning;
-    private float runnerPositionLogTimer;
 
     private readonly Dictionary<uint, GuideMapCreatureIcon> creatureIcons = new Dictionary<uint, GuideMapCreatureIcon>();
     private readonly HashSet<uint> blipsSeenThisUpdate = new HashSet<uint>();
@@ -267,24 +266,7 @@ public sealed class GuideMapView : MonoBehaviour
         loggedMapBoundsWarning = false;
 
         Vector2 uv = MapBounds.Current.WorldToMapUV(trackedRunnerTransform.position);
-        Vector2 anchoredPosition = UvToAnchoredPosition(uv);
-        runnerIcon.anchoredPosition = anchoredPosition;
-
-        if (showDebugLogs)
-        {
-            runnerPositionLogTimer += Time.deltaTime;
-            if (runnerPositionLogTimer >= 1f)
-            {
-                runnerPositionLogTimer = 0f;
-
-                bool outOfBounds = uv.x < 0f || uv.x > 1f || uv.y < 0f || uv.y > 1f;
-                string boundsWarning = outOfBounds
-                    ? " ⚠ UV fuera de [0,1] — el Corredor está fuera del rectángulo que definen las esquinas del MapBounds, el punto se está dibujando fuera del área visible del mapa."
-                    : string.Empty;
-
-                Debug.Log($"[GuideMapView] Runner world={trackedRunnerTransform.position} → uv={uv} → anchoredPosition={anchoredPosition} (mapArea.rect={(mapArea != null ? mapArea.rect.ToString() : "null")}).{boundsWarning}");
-            }
-        }
+        runnerIcon.anchoredPosition = UvToAnchoredPosition(uv);
     }
 
     /// <summary>
