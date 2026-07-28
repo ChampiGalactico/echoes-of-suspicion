@@ -1,88 +1,129 @@
+using System;
 using Mirror;
 using UnityEngine;
 
 /// <summary>
-/// Stamina del jugador: se gasta mientras corre, se regenera caminando o quieto.
+/// Stamina del jugador: se gasta mientras corre y se regenera
+/// mientras camina o permanece quieto.
 ///
-/// Al agotarse del todo entra en estado "exhausted": no puede volver a correr
-/// apenas tenga stamina > 0 (eso oscilaría encendido/apagado en el límite),
-/// sino que debe recuperar hasta un umbral (recoveryThresholdFraction) antes
-/// de poder volver a activarse.
+/// Al agotarse completamente entra en estado "exhausted".
+/// No puede volver a correr apenas recupere un poco de stamina,
+/// sino cuando alcance el porcentaje indicado por
+/// recoveryThresholdFraction.
 ///
-/// Revisa CanSprint en cada Update (no solo cuando el cliente manda un nuevo
-/// Command) para forzar el corte de sprint apenas se agota, sin depender de
-/// que el cliente vuelva a mandar su intención.
-///
-/// El máximo y la velocidad de regeneración escalan con StaminaMultiplier
-/// del personaje — todos parten de una base común, más grande y más rápida
-/// para quien tenga mejor stamina.
+/// El máximo y la regeneración escalan con el StaminaMultiplier
+/// proporcionado por CharacterStatsProvider.
 /// </summary>
 [RequireComponent(typeof(CharacterStatsProvider))]
 public sealed class PlayerStamina : NetworkBehaviour
 {
     [Header("Base (antes de multiplicador)")]
+
     [SerializeField, Min(0f)]
     private float baseMaxStamina = 6f;
 
-    [SerializeField, Min(0f), Tooltip("Segundos de stamina que se gastan por segundo mientras corre.")]
+    [SerializeField, Min(0f)]
+    [Tooltip(
+        "Cantidad de stamina gastada por segundo mientras corre."
+    )]
     private float drainPerSecond = 1f;
 
-    [SerializeField, Min(0f), Tooltip("Segundos de stamina que se regeneran por segundo caminando o quieto.")]
+    [SerializeField, Min(0f)]
+    [Tooltip(
+        "Cantidad base de stamina regenerada por segundo."
+    )]
     private float baseRegenPerSecond = 0.5f;
 
     [Header("Exhaustion")]
-    [SerializeField, Range(0f, 1f), Tooltip("Fracción del máximo que debe recuperar antes de poder volver a correr, una vez se agota del todo.")]
+
+    [SerializeField, Range(0f, 1f)]
+    [Tooltip(
+        "Fracción del máximo que debe recuperar antes de poder " +
+        "volver a correr después de agotarse."
+    )]
     private float recoveryThresholdFraction = 0.5f;
 
-
-    [SyncVar]
-    private float currentStamina;
-
-    private CharacterStatsProvider statsProvider;
-    private PlayerSprintController sprintController;
-    private float maxStamina;
-    private float regenPerSecond;
-    private bool isExhausted;
-
-    /// <summary>Controlado por PlayerSprintController: true mientras el jugador está corriendo activamente.</summary>
-    public bool IsSprinting { get; set; }
-
-    public float CurrentStamina => currentStamina;
-    public float MaxStamina => maxStamina;
-    public bool HasStamina => currentStamina > 0f;
-
-    /// <summary>
-    /// True si puede correr ahora mismo. Distinto de HasStamina: si se agotó del
-    /// todo, se queda bloqueado hasta recuperar el umbral de recuperación, no
-    /// apenas tenga stamina > 0 (evita oscilar encendido/apagado en el límite).
-    /// </summary>
-    public bool CanSprint => currentStamina > 0f && !isExhausted;
-
     [Header("Audio")]
-    [SerializeField, Tooltip("Jadeo pesado al quedarse sin aire.")]
+
+    [SerializeField]
+    [Tooltip("Jadeo pesado al quedarse sin aire.")]
     private AudioClip exhaustedGaspClip;
 
     [SerializeField, Range(0f, 1f)]
     private float gaspVolume = 0.7f;
 
-    [SerializeField, Tooltip("AudioSource dedicado, distinto del de pasos, para que no se corten entre sí.")]
+    [SerializeField]
+    [Tooltip(
+        "AudioSource dedicado, separado del AudioSource de pasos."
+    )]
     private AudioSource audioSource;
+
+    /*
+     * Ambos valores deben sincronizarse.
+     *
+     * Sin maxStamina sincronizada, el cliente podría conocer la
+     * stamina actual pero no tendría el máximo correcto para calcular
+     * el porcentaje de la barra del HUD.
+     */
+    [SyncVar(hook = nameof(HandleMaxStaminaSynced))]
+    private float maxStamina;
+
+    [SyncVar(hook = nameof(HandleStaminaSynced))]
+    private float currentStamina;
+
+    private CharacterStatsProvider statsProvider;
+    private PlayerSprintController sprintController;
+
+    private float regenPerSecond;
+    private bool isExhausted;
+
+    /// <summary>
+    /// Controlado por PlayerSprintController.
+    /// True mientras el servidor considera que el jugador está corriendo.
+    /// </summary>
+    public bool IsSprinting
+    {
+        get;
+        set;
+    }
+
+    public float CurrentStamina => currentStamina;
+
+    public float MaxStamina => maxStamina;
+
+    public bool HasStamina => currentStamina > 0f;
+
+    /// <summary>
+    /// Indica si el jugador puede comenzar o continuar corriendo.
+    ///
+    /// Si agotó completamente su stamina, permanece bloqueado hasta
+    /// alcanzar el umbral de recuperación.
+    /// </summary>
+    public bool CanSprint =>
+        currentStamina > 0f &&
+        !isExhausted;
+
+    /// <summary>
+    /// Notifica al HUD cuando cambia la stamina actual o máxima.
+    ///
+    /// Primer parámetro: stamina actual.
+    /// Segundo parámetro: stamina máxima.
+    /// </summary>
+    public event Action<float, float> OnStaminaChanged;
 
     private void Awake()
     {
-        statsProvider = GetComponent<CharacterStatsProvider>();
-        sprintController = GetComponent<PlayerSprintController>();
+        statsProvider =
+            GetComponent<CharacterStatsProvider>();
+
+        sprintController =
+            GetComponent<PlayerSprintController>();
 
         if (audioSource != null)
         {
             audioSource.spatialBlend = 0f;
             audioSource.playOnAwake = false;
         }
-    }
-
-    public override void OnStartServer()
-    {
-        base.OnStartServer();
     }
 
     private void Start()
@@ -94,16 +135,37 @@ public sealed class PlayerStamina : NetworkBehaviour
     }
 
     /// <summary>
-    /// Llamado por EOSNetworkManager justo después de asignar el personaje,
-    /// para que la Stamina use el multiplicador real.
+    /// Llamado por EOSNetworkManager después de asignar el personaje,
+    /// para calcular la stamina usando el multiplicador correspondiente.
     /// </summary>
+    [Server]
     public void RecalculateFromStats()
     {
-        float staminaMultiplier = statsProvider.StaminaMultiplier;
-        maxStamina = baseMaxStamina * staminaMultiplier;
-        regenPerSecond = baseRegenPerSecond * staminaMultiplier;
+        if (statsProvider == null)
+        {
+            Debug.LogError(
+                "PlayerStamina: no se encontró CharacterStatsProvider.",
+                this
+            );
+
+            return;
+        }
+
+        float staminaMultiplier =
+            statsProvider.StaminaMultiplier;
+
+        maxStamina =
+            baseMaxStamina *
+            staminaMultiplier;
+
+        regenPerSecond =
+            baseRegenPerSecond *
+            staminaMultiplier;
+
         currentStamina = maxStamina;
         isExhausted = false;
+
+        NotifyStaminaChanged();
     }
 
     private void Update()
@@ -113,10 +175,10 @@ public sealed class PlayerStamina : NetworkBehaviour
             return;
         }
 
-        // Revisa CADA FRAME si sigue teniendo permiso para correr, sin
-        // esperar a que el cliente mande un nuevo Command. Esto es lo que
-        // faltaba: antes solo se evaluaba CanSprint una vez, al momento de
-        // recibir la intención, no mientras seguía corriendo.
+        /*
+         * Se comprueba cada frame para detener el sprint
+         * inmediatamente cuando la stamina se agota.
+         */
         if (IsSprinting && !CanSprint)
         {
             sprintController?.ForceStopSprinting();
@@ -124,34 +186,117 @@ public sealed class PlayerStamina : NetworkBehaviour
 
         if (IsSprinting && currentStamina > 0f)
         {
-            currentStamina = Mathf.Max(0f, currentStamina - drainPerSecond * Time.deltaTime);
-
-            if (currentStamina <= 0f)
-            {
-                if (!isExhausted)
-                {
-                    TargetPlayGaspSound(connectionToClient);
-                }
-                isExhausted = true;
-            }
+            DrainStamina();
         }
-        else if (!IsSprinting && currentStamina < maxStamina)
+        else if (
+            !IsSprinting &&
+            currentStamina < maxStamina
+        )
         {
-            currentStamina = Mathf.Min(maxStamina, currentStamina + regenPerSecond * Time.deltaTime);
+            RegenerateStamina();
         }
 
-        if (isExhausted && currentStamina >= maxStamina * recoveryThresholdFraction)
+        UpdateExhaustionState();
+    }
+
+    [Server]
+    private void DrainStamina()
+    {
+        currentStamina = Mathf.Max(
+            0f,
+            currentStamina -
+            drainPerSecond *
+            Time.deltaTime
+        );
+
+        if (currentStamina > 0f)
+        {
+            return;
+        }
+
+        if (!isExhausted)
+        {
+            TargetPlayGaspSound(connectionToClient);
+        }
+
+        isExhausted = true;
+    }
+
+    [Server]
+    private void RegenerateStamina()
+    {
+        currentStamina = Mathf.Min(
+            maxStamina,
+            currentStamina +
+            regenPerSecond *
+            Time.deltaTime
+        );
+    }
+
+    [Server]
+    private void UpdateExhaustionState()
+    {
+        if (!isExhausted)
+        {
+            return;
+        }
+
+        float recoveryThreshold =
+            maxStamina *
+            recoveryThresholdFraction;
+
+        if (currentStamina >= recoveryThreshold)
         {
             isExhausted = false;
         }
     }
 
-    [TargetRpc]
-    private void TargetPlayGaspSound(NetworkConnectionToClient target)
+    /// <summary>
+    /// Hook ejecutado cuando el cliente recibe un nuevo máximo.
+    /// </summary>
+    private void HandleMaxStaminaSynced(
+        float oldValue,
+        float newValue
+    )
     {
-        if (exhaustedGaspClip != null && audioSource != null)
+        NotifyStaminaChanged();
+    }
+
+    /// <summary>
+    /// Hook ejecutado cuando el cliente recibe una nueva stamina actual.
+    /// </summary>
+    private void HandleStaminaSynced(
+        float oldValue,
+        float newValue
+    )
+    {
+        NotifyStaminaChanged();
+    }
+
+    private void NotifyStaminaChanged()
+    {
+        OnStaminaChanged?.Invoke(
+            currentStamina,
+            maxStamina
+        );
+    }
+
+    [TargetRpc]
+    private void TargetPlayGaspSound(
+        NetworkConnectionToClient target
+    )
+    {
+        if (
+            exhaustedGaspClip == null ||
+            audioSource == null
+        )
         {
-            audioSource.PlayOneShot(exhaustedGaspClip, gaspVolume);
+            return;
         }
+
+        audioSource.PlayOneShot(
+            exhaustedGaspClip,
+            gaspVolume
+        );
     }
 }

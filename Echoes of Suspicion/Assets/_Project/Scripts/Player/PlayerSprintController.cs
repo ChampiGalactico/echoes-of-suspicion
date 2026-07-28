@@ -42,19 +42,24 @@ public sealed class PlayerSprintController : NetworkBehaviour
         }
 
         Keyboard keyboard = Keyboard.current;
-        if (keyboard == null)
+
+        bool isCrouching =
+            crouchController != null &&
+            crouchController.IsCrouching;
+
+        bool wantsToSprint =
+            !GameplayInputBlocker.IsBlocked &&
+            keyboard != null &&
+            keyboard.leftShiftKey.isPressed &&
+            !isCrouching;
+
+        if (wantsToSprint == lastSentIntent)
         {
             return;
         }
 
-        bool isCrouching = crouchController != null && crouchController.IsCrouching;
-        bool wantsToSprint = keyboard.leftShiftKey.isPressed && !isCrouching;
-
-        if (wantsToSprint != lastSentIntent)
-        {
-            lastSentIntent = wantsToSprint;
-            CmdSetSprintIntent(wantsToSprint);
-        }
+        lastSentIntent = wantsToSprint;
+        CmdSetSprintIntent(wantsToSprint);
     }
 
     [Command]

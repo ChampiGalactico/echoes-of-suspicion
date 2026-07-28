@@ -104,32 +104,23 @@ public sealed class PlayerCrouchController : NetworkBehaviour
             return;
         }
 
-        Keyboard keyboard =
-            Keyboard.current;
-
-        if (keyboard == null)
-        {
-            return;
-        }
+        Keyboard keyboard = Keyboard.current;
 
         bool wantsToCrouch =
+            !GameplayInputBlocker.IsBlocked &&
+            keyboard != null &&
             keyboard.leftCtrlKey.isPressed;
 
-        if (wantsToCrouch ==
-            localPredictedCrouching)
+        if (wantsToCrouch == localPredictedCrouching)
         {
             return;
         }
 
         // Respuesta inmediata en el jugador propietario.
-        localPredictedCrouching =
-            wantsToCrouch;
+        localPredictedCrouching = wantsToCrouch;
 
-        ApplyCrouchPresentation(
-            wantsToCrouch);
-
-        CmdSetCrouchIntent(
-            wantsToCrouch);
+        ApplyCrouchPresentation(wantsToCrouch);
+        CmdSetCrouchIntent(wantsToCrouch);
     }
 
     [Command]
