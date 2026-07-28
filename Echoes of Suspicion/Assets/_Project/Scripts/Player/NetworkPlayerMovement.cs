@@ -11,7 +11,7 @@ public sealed class NetworkPlayerMovement : NetworkBehaviour
     private float walkSpeed = 6f;
 
     [SerializeField, Min(0f)]
-    private float crouchSpeed = 2f;
+    private float crouchSpeed =6f;
 
     [SerializeField, Min(0f)]
     private float sprintSpeed = 9f;
@@ -49,9 +49,38 @@ public sealed class NetworkPlayerMovement : NetworkBehaviour
             return;
         }
 
+        /*
+         * Mientras una interfaz bloqueante esté abierta:
+         * - no se lee WASD;
+         * - no se permite saltar;
+         * - se mantiene la gravedad.
+         */
+        if (GameplayInputBlocker.IsBlocked)
+        {
+            ApplyGravity();
+
+            Vector3 verticalMovement =
+                Vector3.up * verticalVelocity;
+
+            characterController.Move(
+                verticalMovement * Time.deltaTime
+            );
+
+            return;
+        }
+
         Keyboard keyboard = Keyboard.current;
+
         if (keyboard == null)
         {
+            ApplyGravity();
+
+            characterController.Move(
+                Vector3.up *
+                verticalVelocity *
+                Time.deltaTime
+            );
+
             return;
         }
 
@@ -61,54 +90,103 @@ public sealed class NetworkPlayerMovement : NetworkBehaviour
         float currentSpeed = GetCurrentSpeed();
 
         Vector3 horizontalMovement =
-            (transform.right * input.x + transform.forward * input.y) * currentSpeed;
+            (
+                transform.right * input.x +
+                transform.forward * input.y
+            ) * currentSpeed;
 
         ApplyGravity();
 
-        Vector3 finalVelocity = horizontalMovement + Vector3.up * verticalVelocity;
-        characterController.Move(finalVelocity * Time.deltaTime);
+        Vector3 finalVelocity =
+            horizontalMovement +
+            Vector3.up * verticalVelocity;
+
+        characterController.Move(
+            finalVelocity * Time.deltaTime
+        );
     }
 
     private float GetCurrentSpeed()
     {
-        bool isCrouching = crouchController != null && crouchController.IsCrouching;
-        bool isSprinting = sprintController != null && sprintController.IsSprinting;
+        bool isCrouching =
+            crouchController != null &&
+            crouchController.IsCrouching;
 
-        float baseSpeed = isCrouching ? crouchSpeed : (isSprinting ? sprintSpeed : walkSpeed);
-        float agility = statsProvider != null ? statsProvider.AgilityMultiplier : 1f;
+        bool isSprinting =
+            sprintController != null &&
+            sprintController.IsSprinting;
 
+        float baseSpeed = isCrouching
+            ? crouchSpeed
+            : isSprinting
+                ? sprintSpeed
+                : walkSpeed;
+
+        float agility = statsProvider != null
+            ? statsProvider.AgilityMultiplier
+            : 1f;
 
         return baseSpeed * agility;
     }
 
     private void HandleJump(Keyboard keyboard)
     {
-        bool isCrouching = crouchController != null && crouchController.IsCrouching;
+        bool isCrouching =
+            crouchController != null &&
+            crouchController.IsCrouching;
 
-        if (keyboard.spaceKey.wasPressedThisFrame &&
+        if (
+            keyboard.spaceKey.wasPressedThisFrame &&
             characterController.isGrounded &&
-            !isCrouching)
+            !isCrouching
+        )
         {
-            verticalVelocity = Mathf.Sqrt(-2f * gravity * jumpHeight);
+            verticalVelocity = Mathf.Sqrt(
+                -2f * gravity * jumpHeight
+            );
         }
     }
 
     private static Vector2 ReadKeyboardInput()
     {
         Keyboard keyboard = Keyboard.current;
+
+        if (keyboard == null)
+        {
+            return Vector2.zero;
+        }
+
         Vector2 input = Vector2.zero;
 
-        if (keyboard.wKey.isPressed) input.y += 1f;
-        if (keyboard.sKey.isPressed) input.y -= 1f;
-        if (keyboard.dKey.isPressed) input.x += 1f;
-        if (keyboard.aKey.isPressed) input.x -= 1f;
+        if (keyboard.wKey.isPressed)
+        {
+            input.y += 1f;
+        }
+
+        if (keyboard.sKey.isPressed)
+        {
+            input.y -= 1f;
+        }
+
+        if (keyboard.dKey.isPressed)
+        {
+            input.x += 1f;
+        }
+
+        if (keyboard.aKey.isPressed)
+        {
+            input.x -= 1f;
+        }
 
         return Vector2.ClampMagnitude(input, 1f);
     }
 
     private void ApplyGravity()
     {
-        if (characterController.isGrounded && verticalVelocity < 0f)
+        if (
+            characterController.isGrounded &&
+            verticalVelocity < 0f
+        )
         {
             verticalVelocity = groundedVerticalVelocity;
         }

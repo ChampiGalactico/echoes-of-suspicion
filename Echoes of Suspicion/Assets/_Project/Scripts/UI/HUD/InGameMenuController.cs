@@ -4,14 +4,24 @@ using UnityEngine.InputSystem;
 public sealed class InGameMenuController : MonoBehaviour
 {
     [Header("Canvas Groups")]
-    [SerializeField] private CanvasGroup inGameMenuGroup;
-    [SerializeField] private CanvasGroup menuPanelGroup;
-    [SerializeField] private CanvasGroup optionsPanelGroup;
+    [SerializeField]
+    private CanvasGroup inGameMenuGroup;
+
+    [SerializeField]
+    private CanvasGroup menuPanelGroup;
+
+    [SerializeField]
+    private CanvasGroup optionsPanelGroup;
 
     [Header("Startup")]
-    [SerializeField] private bool startOpen;
+    [SerializeField]
+    private bool startOpen;
 
-    public bool IsOpen { get; private set; }
+    public bool IsOpen
+    {
+        get;
+        private set;
+    }
 
     private bool isOptionsOpen;
 
@@ -25,7 +35,10 @@ public sealed class InGameMenuController : MonoBehaviour
     {
         Keyboard keyboard = Keyboard.current;
 
-        if (keyboard == null || !keyboard.escapeKey.wasPressedThisFrame)
+        if (
+            keyboard == null ||
+            !keyboard.escapeKey.wasPressedThisFrame
+        )
         {
             return;
         }
@@ -43,6 +56,18 @@ public sealed class InGameMenuController : MonoBehaviour
         }
 
         CloseMenu();
+    }
+
+    private void OnDisable()
+    {
+        // Evita que el input permanezca bloqueado al cambiar de escena
+        // o destruir el HUD.
+        if (IsOpen)
+        {
+            GameplayInputBlocker.SetBlocked(false);
+        }
+
+        IsOpen = false;
     }
 
     public void OpenMenu()
@@ -82,6 +107,8 @@ public sealed class InGameMenuController : MonoBehaviour
     {
         IsOpen = open;
 
+        GameplayInputBlocker.SetBlocked(open);
+
         SetCanvasGroup(inGameMenuGroup, open);
 
         if (!open)
@@ -96,7 +123,10 @@ public sealed class InGameMenuController : MonoBehaviour
         Cursor.visible = open;
     }
 
-    private static void SetCanvasGroup(CanvasGroup group, bool visible)
+    private static void SetCanvasGroup(
+        CanvasGroup group,
+        bool visible
+    )
     {
         if (group == null)
         {

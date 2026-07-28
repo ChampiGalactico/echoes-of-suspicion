@@ -59,7 +59,7 @@ MonoBehaviour:
   offlineSceneLoadDelay: 0
   transport: {fileID: 8323050256839498260}
   networkAddress: localhost
-  maxConnections: 100
+  maxConnections: 2
   disconnectInactiveConnections: 0
   disconnectInactiveTimeout: 60
   authenticator: {fileID: 0}
@@ -178,7 +178,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c09808776add0942b030af85b71faff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EOSVoiceChatSetup
-  useConcentusEncodeAndDecode: 1
+  concentusEnabled: 1
+  playbackTargetLatency: 0.2
+  playbackPitchMaxCorrection: 0.03
+  playbackPitchGain: 0.3
+  playbackPitchDeadzone: 0.03
+  playbackDownwardPitchScale: 0.1
+  playbackStartSafetyMargin: 0.05
   hostInitCheckDelay: 0.5
   hostInitRetryInterval: 0.3
   hostInitMaxRetries: 6

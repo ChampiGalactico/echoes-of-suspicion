@@ -40,13 +40,20 @@ public sealed class NetworkFirstPersonView : NetworkBehaviour
         playerCamera.enabled = true;
         playerAudioListener.enabled = true;
 
-        // En primera persona no queremos ver el interior de la c�psula.
+        // En primera persona no queremos ver el interior del cuerpo.
         if (bodyRenderer != null)
         {
             bodyRenderer.enabled = false;
         }
 
-        LockCursor();
+        if (GameplayInputBlocker.IsBlocked)
+        {
+            UnlockCursor();
+        }
+        else
+        {
+            LockCursor();
+        }
     }
 
     public override void OnStopLocalPlayer()
@@ -80,7 +87,14 @@ public sealed class NetworkFirstPersonView : NetworkBehaviour
             return;
         }
 
-        HandleCursorState();
+        // Una interfaz bloqueante controla el cursor y detiene la cámara.
+        if (GameplayInputBlocker.IsBlocked)
+        {
+            EnsureCursorUnlocked();
+            return;
+        }
+
+        HandleCursorCapture();
 
         if (Cursor.lockState != CursorLockMode.Locked)
         {
@@ -115,6 +129,7 @@ public sealed class NetworkFirstPersonView : NetworkBehaviour
 
         // Solo el pivote de la cámara rota verticalmente.
         pitch -= pitchDelta;
+
         pitch = Mathf.Clamp(
             pitch,
             minimumPitch,
@@ -125,29 +140,43 @@ public sealed class NetworkFirstPersonView : NetworkBehaviour
             Quaternion.Euler(pitch, 0f, 0f);
     }
 
-    private void HandleCursorState()
+    private static void HandleCursorCapture()
     {
-        Keyboard keyboard = Keyboard.current;
         Mouse mouse = Mouse.current;
 
-        if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+        if (
+            mouse == null ||
+            !mouse.leftButton.wasPressedThisFrame ||
+            Cursor.lockState == CursorLockMode.Locked
+        )
         {
-            UnlockCursor();
+            return;
         }
 
-        if (mouse != null &&
-            mouse.leftButton.wasPressedThisFrame &&
-            Cursor.lockState != CursorLockMode.Locked)
+        LockCursor();
+    }
+
+    private static void EnsureCursorUnlocked()
+    {
+        if (
+            Cursor.lockState == CursorLockMode.None &&
+            Cursor.visible
+        )
         {
-            LockCursor();
+            return;
         }
+
+        UnlockCursor();
     }
 
     private void DisableBootstrapCamera()
     {
         bootstrapCamera = Camera.main;
 
-        if (bootstrapCamera == null || bootstrapCamera == playerCamera)
+        if (
+            bootstrapCamera == null ||
+            bootstrapCamera == playerCamera
+        )
         {
             return;
         }
