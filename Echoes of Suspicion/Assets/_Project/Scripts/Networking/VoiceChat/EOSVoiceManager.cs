@@ -1,12 +1,11 @@
 using UnityEngine;
 using Adrenak.UniMic;
-using Adrenak.UniVoice.Samples;
 
 /// <summary>
 /// Manager custom de voice chat para Echoes of Suspicion.
 ///
-/// NO hereda del sample — coexiste con él en el mismo GameObject.
-/// El sample hace el setup pesado de UniVoice + Mirror.
+/// NO hereda del setup — coexiste con él en el mismo GameObject.
+/// EOSVoiceChatSetup hace el setup pesado de UniVoice + Mirror.
 /// Este manager expone una API limpia (Mute/Unmute/Toggle) para el resto del juego.
 ///
 /// USO desde otros scripts:
@@ -14,9 +13,9 @@ using Adrenak.UniVoice.Samples;
 ///     EOSVoiceManager.Instance.Unmute();
 ///     EOSVoiceManager.Instance.ToggleMute();
 ///
-/// REQUIERE: el GameObject debe tener también un UniVoiceMirrorSetupSample.
+/// REQUIERE: el GameObject debe tener también un EOSVoiceChatSetup.
 /// </summary>
-[RequireComponent(typeof(UniVoiceMirrorSetupSample))]
+[RequireComponent(typeof(EOSVoiceChatSetup))]
 public sealed class EOSVoiceManager : MonoBehaviour
 {
     // ===== SINGLETON =====

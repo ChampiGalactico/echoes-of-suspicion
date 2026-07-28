@@ -10,13 +10,20 @@ using UnityEngine;
 ///   1. El modelo FBX (rig) va como hijo del GameObject con CreatureController.
 ///   2. Este componente va en el MISMO GameObject que el CreatureController (padre).
 ///   3. El Animator va en el hijo que tiene el modelo (el SkinnedMeshRenderer).
-///   4. Crear un Animator Controller con dos parámetros:
-///        - "Speed" (float): controla blend entre Idle/Walk/Run.
-///        - "Attack" (trigger): dispara la animación de ataque.
-///   5. Configurar un Blend Tree 1D con el parámetro "Speed":
-///        - 0.0 → Idle (o Walk con speed 0 si no tienes Idle)
-///        - 0.5 → Walk
-///        - 1.0 → Run
+///   4. Crear un Animator Controller con un parámetro:
+///        - "StateIndex" (int): controla qué animación se reproduce.
+///   5. Crear 4 estados en el Animator Controller:
+///        - "Patrol"     → clip Unsteady Walk        (StateIndex == 0)
+///        - "Alert"      → clip Limping Walk 3        (StateIndex == 1)
+///        - "Chase"      → clip Male Head Down Charge (StateIndex == 2)
+///        - "LookAround" → clip Look Around           (StateIndex == 3)
+///   6. Crear transiciones desde Any State a cada uno, con condición:
+///        - Any State → Patrol:     StateIndex equals 0
+///        - Any State → Alert:      StateIndex equals 1
+///        - Any State → Chase:      StateIndex equals 2
+///        - Any State → LookAround: StateIndex equals 3
+///   7. En cada transición: desactivar "Has Exit Time", poner Transition Duration en ~0.2.
+///   8. Activar Loop Time en todos los clips desde el FBX.
 /// </summary>
 [RequireComponent(typeof(CreatureController))]
 public sealed class CreatureAnimator : MonoBehaviour
@@ -25,15 +32,13 @@ public sealed class CreatureAnimator : MonoBehaviour
     [SerializeField, Tooltip("Animator del modelo hijo. Si no se asigna, lo busca en los hijos.")]
     private Animator animator;
 
-    [Header("Tuning")]
-    [SerializeField, Tooltip("Qué tan rápido transiciona entre animaciones (suavizado).")]
-    private float dampTime = 0.15f;
-
     private CreatureController creature;
 
     // Hashes cacheados para rendimiento.
-    private static readonly int SpeedHash = Animator.StringToHash("Speed");
+    private static readonly int StateIndexHash = Animator.StringToHash("StateIndex");
     private static readonly int AttackHash = Animator.StringToHash("Attack");
+
+    private int lastStateIndex = -1;
 
     private void Awake()
     {
@@ -57,26 +62,44 @@ public sealed class CreatureAnimator : MonoBehaviour
             return;
         }
 
-        float targetSpeed = GetSpeedForState(creature.StateType);
-        animator.SetFloat(SpeedHash, targetSpeed, dampTime, Time.deltaTime);
+        int stateIndex = GetStateIndex(creature);
+
+        // Solo actualizar si cambió, para no interrumpir la animación en curso.
+        if (stateIndex != lastStateIndex)
+        {
+            animator.SetInteger(StateIndexHash, stateIndex);
+            lastStateIndex = stateIndex;
+        }
     }
 
     /// <summary>
-    /// Mapea cada estado a un valor de Speed para el Blend Tree.
-    /// 0 = Idle, 0.5 = Walk, 1 = Run.
+    /// Mapea cada estado de la IA a un índice de animación.
+    /// 0 = Patrol     (Unsteady Walk)
+    /// 1 = Alert      (Limping Walk 3 In Place)
+    /// 2 = Chase      (Male Head Down Charge)
+    /// 3 = LookAround (Look Around)
     /// </summary>
-    private static float GetSpeedForState(CreatureStateType state)
+    private static int GetStateIndex(CreatureController creature)
     {
-        return state switch
+        // Caso especial: SearchState tiene dos fases.
+        // Caminando al punto → Limping Walk, detenida mirando → Look Around.
+        if (creature.StateType == CreatureStateType.Search &&
+            creature.CurrentState is SearchState search &&
+            search.IsLookingAround)
         {
-            CreatureStateType.Patrol   => 0.5f, // Walk
-            CreatureStateType.Alert    => 0.5f, // Walk
-            CreatureStateType.Search   => 0.5f, // Walk
-            CreatureStateType.Chase    => 1.0f, // Run
-            CreatureStateType.Enraged  => 1.0f, // Run
-            CreatureStateType.Attacking => 0.0f, // Se detiene para atacar
-            CreatureStateType.Stunned  => 0.0f, // Detenida
-            _                          => 0.0f
+            return 3; // Look Around
+        }
+
+        return creature.StateType switch
+        {
+            CreatureStateType.Patrol    => 0, // Unsteady Walk
+            CreatureStateType.Alert     => 1, // Limping Walk 3
+            CreatureStateType.Search    => 1, // Limping Walk 3 (caminando al punto)
+            CreatureStateType.Chase     => 2, // Male Head Down Charge
+            CreatureStateType.Enraged   => 2, // Male Head Down Charge
+            CreatureStateType.Attacking => 2, // Se queda en charge mientras ataca
+            CreatureStateType.Stunned   => 0, // Vuelve a Unsteady Walk (detenida)
+            _                           => 0
         };
     }
 
