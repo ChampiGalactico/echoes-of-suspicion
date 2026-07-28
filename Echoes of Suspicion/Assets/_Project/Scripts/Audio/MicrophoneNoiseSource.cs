@@ -137,10 +137,12 @@ public sealed class MicrophoneNoiseSource : NetworkBehaviour
 
         ResetHudState();
         SubscribeToUniVoiceMic();
+        SubscribeToDeviceChanged();
     }
 
     public override void OnStopLocalPlayer()
     {
+        UnsubscribeFromDeviceChanged();
         UnsubscribeFromUniVoiceMic();
         ResetHudState();
 
@@ -218,16 +220,64 @@ public sealed class MicrophoneNoiseSource : NetworkBehaviour
         }
     }
 
-    private void SubscribeToUniVoiceMic()
+    private void SubscribeToDeviceChanged()
     {
-        var devices = Mic.AvailableDevices;
+        var setup = FindAnyObjectByType<EOSVoiceChatSetup>();
 
-        if (devices == null || devices.Count == 0)
+        if (setup != null)
+        {
+            setup.OnDeviceChanged += OnMicDeviceChanged;
+        }
+    }
+
+    private void UnsubscribeFromDeviceChanged()
+    {
+        var setup = FindAnyObjectByType<EOSVoiceChatSetup>();
+
+        if (setup != null)
+        {
+            setup.OnDeviceChanged -= OnMicDeviceChanged;
+        }
+    }
+
+    /// <summary>
+    /// Callback de EOSVoiceChatSetup.OnDeviceChanged.
+    /// Se desuscribe del mic viejo y se suscribe al nuevo.
+    /// </summary>
+    private void OnMicDeviceChanged(Mic.Device newDevice)
+    {
+        if (!isLocalPlayer)
         {
             return;
         }
 
-        var device = devices[0];
+        UnsubscribeFromUniVoiceMic();
+
+        if (newDevice != null)
+        {
+            SubscribeToUniVoiceMic(newDevice);
+        }
+    }
+
+    private void SubscribeToUniVoiceMic(Mic.Device specificDevice = null)
+    {
+        Mic.Device device;
+
+        if (specificDevice != null)
+        {
+            device = specificDevice;
+        }
+        else
+        {
+            var devices = Mic.AvailableDevices;
+
+            if (devices == null || devices.Count == 0)
+            {
+                return;
+            }
+
+            device = devices[0];
+        }
 
         // Ya estamos suscritos al mismo dispositivo.
         if (subscribedDevice == device)

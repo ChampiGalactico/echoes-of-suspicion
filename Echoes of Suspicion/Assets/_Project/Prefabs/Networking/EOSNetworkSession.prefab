@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 4757041507534513929}
   - component: {fileID: 8323050256839498260}
   - component: {fileID: 1693662165243539282}
-  - component: {fileID: 7527053053381702975}
   - component: {fileID: 2525830314225995973}
   - component: {fileID: -1231181474743760879}
+  - component: {fileID: 1721079791570023406}
   m_Layer: 0
   m_Name: EOSNetworkSession
   m_TagString: Untagged
@@ -126,21 +126,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Mirror::Mirror.NetworkManagerHUD
   offsetX: 0
   offsetY: 0
---- !u!114 &7527053053381702975
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2263125043491632432}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0dec1d2df214b44f8cb106b071695ce, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Adrenak.UniVoice.Samples::Adrenak.UniVoice.Samples.UniVoiceMirrorSetupSample
-  useRNNoise4UnityIfAvailable: 1
-  useConcentusEncodeAndDecode: 1
-  useVad: 0
 --- !u!114 &2525830314225995973
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -181,3 +166,19 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 107f8f8b36b42a549a8271e36a3903ed, type: 2}
   - {fileID: 11400000, guid: f76167a6805536043a4b7c6009cbc523, type: 2}
   - {fileID: 11400000, guid: c1e0e678bcf210c4f9d345a00c2cfe16, type: 2}
+--- !u!114 &1721079791570023406
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2263125043491632432}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c09808776add0942b030af85b71faff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EOSVoiceChatSetup
+  useConcentusEncodeAndDecode: 1
+  hostInitCheckDelay: 0.5
+  hostInitRetryInterval: 0.3
+  hostInitMaxRetries: 6
