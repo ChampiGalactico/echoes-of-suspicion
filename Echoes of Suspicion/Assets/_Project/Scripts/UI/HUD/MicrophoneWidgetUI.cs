@@ -1,18 +1,34 @@
+using Mirror;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// Controla el medidor visual de ruido.
+///
+/// Runner:
+/// muestra el nivel de su propio micrófono.
+///
+/// Guide:
+/// muestra por red el nivel del micrófono del Runner.
+///
+/// El objeto MicrophoneNoiseSource se busca después de que Mirror haya
+/// creado al jugador local y sincronizado los roles.
+/// </summary>
 public sealed class MicrophoneWidgetUI : MonoBehaviour
 {
     [Header("Segmentos: de abajo hacia arriba")]
+
     [SerializeField]
     private Image[] noiseSegments = new Image[7];
 
     [Header("Indicador de peligro")]
+
     [SerializeField]
     private Image dangerThresholdLine;
 
     [SerializeField]
-    private Color dangerLineColor = new(1f, 0.188f, 0.188f, 1f);
+    private Color dangerLineColor =
+        new(1f, 0.188f, 0.188f, 1f);
 
     [SerializeField]
     [Range(0f, 1f)]
@@ -27,16 +43,21 @@ public sealed class MicrophoneWidgetUI : MonoBehaviour
     private float dangerPulseSpeed = 5f;
 
     [Header("Colores")]
-    [SerializeField]
-    private Color greenColor = new(0f, 1f, 0.333f, 1f);
 
     [SerializeField]
-    private Color yellowColor = new(1f, 0.831f, 0f, 1f);
+    private Color greenColor =
+        new(0f, 1f, 0.333f, 1f);
 
     [SerializeField]
-    private Color redColor = new(1f, 0.188f, 0.188f, 1f);
+    private Color yellowColor =
+        new(1f, 0.831f, 0f, 1f);
+
+    [SerializeField]
+    private Color redColor =
+        new(1f, 0.188f, 0.188f, 1f);
 
     [Header("Transparencia")]
+
     [SerializeField]
     [Range(0f, 1f)]
     private float inactiveFillAlpha = 0.05f;
@@ -50,6 +71,7 @@ public sealed class MicrophoneWidgetUI : MonoBehaviour
     private float activeOutlineAlpha = 1f;
 
     [Header("Respuesta visual")]
+
     [SerializeField]
     [Min(0.1f)]
     private float fillResponseSpeed = 12f;
@@ -59,6 +81,7 @@ public sealed class MicrophoneWidgetUI : MonoBehaviour
     private float fallResponseSpeed = 5f;
 
     [Header("Depuración")]
+
     [SerializeField]
     private bool useDebugValues;
 
@@ -77,13 +100,22 @@ public sealed class MicrophoneWidgetUI : MonoBehaviour
 
     private void Awake()
     {
+        displayedLevel = 0f;
+        targetLevel = 0f;
+        isDangerous = false;
+
         RefreshSegments();
         RefreshDangerLine();
     }
 
     private void OnEnable()
     {
+        displayedLevel = 0f;
+        targetLevel = 0f;
+        isDangerous = false;
+
         TryFindNoiseSource();
+
         RefreshSegments();
         RefreshDangerLine();
     }
@@ -91,21 +123,35 @@ public sealed class MicrophoneWidgetUI : MonoBehaviour
     private void OnDisable()
     {
         UnsubscribeFromNoiseSource();
+
+        displayedLevel = 0f;
+        targetLevel = 0f;
+        isDangerous = false;
     }
 
     private void Update()
     {
         if (useDebugValues)
         {
-            targetLevel = debugNoiseLevel;
-            isDangerous = debugDanger;
-        }
-        else if (noiseSource == null)
-        {
-            targetLevel = 0f;
-            isDangerous = false;
+            targetLevel =
+                Mathf.Clamp01(debugNoiseLevel);
 
-            TryFindNoiseSource();
+            isDangerous =
+                debugDanger;
+        }
+        else
+        {
+            /*
+             * Unity considera null un componente destruido,
+             * incluso si todavía existe una referencia C#.
+             */
+            if (noiseSource == null)
+            {
+                targetLevel = 0f;
+                isDangerous = false;
+
+                TryFindNoiseSource();
+            }
         }
 
         float responseSpeed =
@@ -113,16 +159,27 @@ public sealed class MicrophoneWidgetUI : MonoBehaviour
                 ? fillResponseSpeed
                 : fallResponseSpeed;
 
-        displayedLevel = Mathf.MoveTowards(
-            displayedLevel,
-            targetLevel,
-            responseSpeed * Time.unscaledDeltaTime
-        );
+        displayedLevel =
+            Mathf.MoveTowards(
+                displayedLevel,
+                targetLevel,
+                responseSpeed *
+                Time.unscaledDeltaTime
+            );
 
         RefreshSegments();
         RefreshDangerLine();
     }
 
+    /// <summary>
+    /// Busca la fuente de micrófono que debe observar este HUD.
+    ///
+    /// Runner:
+    /// utiliza MicrophoneNoiseSource del jugador local.
+    ///
+    /// Guide:
+    /// busca MicrophoneNoiseSource del jugador con rol Runner.
+    /// </summary>
     private void TryFindNoiseSource()
     {
         if (noiseSource != null)
@@ -130,6 +187,48 @@ public sealed class MicrophoneWidgetUI : MonoBehaviour
             return;
         }
 
+        NetworkIdentity localPlayerIdentity =
+            NetworkClient.localPlayer;
+
+        if (localPlayerIdentity == null)
+        {
+            return;
+        }
+
+        CharacterStatsProvider localStatsProvider =
+            localPlayerIdentity.GetComponent<CharacterStatsProvider>();
+
+        if (localStatsProvider == null)
+        {
+            return;
+        }
+
+        /*
+         * Espera hasta que Mirror haya sincronizado
+         * el personaje y su rol.
+         */
+        if (localStatsProvider.Character == null)
+        {
+            return;
+        }
+
+        if (localStatsProvider.Role == PlayerRole.Runner)
+        {
+            MicrophoneNoiseSource localNoiseSource =
+                localPlayerIdentity.GetComponent<MicrophoneNoiseSource>();
+
+            if (localNoiseSource != null)
+            {
+                BindToNoiseSource(localNoiseSource);
+            }
+
+            return;
+        }
+
+        /*
+         * El jugador local es Guide.
+         * Debemos encontrar el micrófono del Runner remoto.
+         */
         MicrophoneNoiseSource[] sources =
             FindObjectsByType<MicrophoneNoiseSource>(
                 FindObjectsInactive.Exclude,
@@ -138,7 +237,25 @@ public sealed class MicrophoneWidgetUI : MonoBehaviour
 
         foreach (MicrophoneNoiseSource source in sources)
         {
-            if (!source.isLocalPlayer)
+            if (source == null)
+            {
+                continue;
+            }
+
+            CharacterStatsProvider sourceStatsProvider =
+                source.GetComponent<CharacterStatsProvider>();
+
+            if (sourceStatsProvider == null)
+            {
+                continue;
+            }
+
+            if (sourceStatsProvider.Character == null)
+            {
+                continue;
+            }
+
+            if (sourceStatsProvider.Role != PlayerRole.Runner)
             {
                 continue;
             }
@@ -148,42 +265,81 @@ public sealed class MicrophoneWidgetUI : MonoBehaviour
         }
     }
 
-    private void BindToNoiseSource(MicrophoneNoiseSource source)
+    private void BindToNoiseSource(
+        MicrophoneNoiseSource source
+    )
     {
+        if (source == null)
+        {
+            return;
+        }
+
         UnsubscribeFromNoiseSource();
 
         noiseSource = source;
-        targetLevel = noiseSource.CurrentHudLevel;
-        isDangerous = noiseSource.IsNoiseDangerous;
 
-        noiseSource.HudLevelChanged += HandleHudLevelChanged;
-        noiseSource.DangerStateChanged += HandleDangerStateChanged;
+        /*
+         * DisplayHudLevel y DisplayDangerState escogen
+         * automáticamente entre:
+         *
+         * - Valor local inmediato para Carmen.
+         * - Valor sincronizado por Mirror para Carlos.
+         */
+        targetLevel =
+            Mathf.Clamp01(
+                noiseSource.DisplayHudLevel
+            );
+
+        isDangerous =
+            noiseSource.DisplayDangerState;
+
+        noiseSource.HudLevelChanged +=
+            HandleHudLevelChanged;
+
+        noiseSource.DangerStateChanged +=
+            HandleDangerStateChanged;
+
+        Debug.Log(
+            noiseSource.isLocalPlayer
+                ? "[MicrophoneWidgetUI] Vinculado al micrófono local."
+                : "[MicrophoneWidgetUI] Vinculado al micrófono remoto del Runner.",
+            this
+        );
     }
 
     private void UnsubscribeFromNoiseSource()
     {
         if (noiseSource == null)
         {
+            noiseSource = null;
             return;
         }
 
-        noiseSource.HudLevelChanged -= HandleHudLevelChanged;
-        noiseSource.DangerStateChanged -= HandleDangerStateChanged;
+        noiseSource.HudLevelChanged -=
+            HandleHudLevelChanged;
+
+        noiseSource.DangerStateChanged -=
+            HandleDangerStateChanged;
 
         noiseSource = null;
     }
 
-    private void HandleHudLevelChanged(float level)
+    private void HandleHudLevelChanged(
+        float level
+    )
     {
         if (useDebugValues)
         {
             return;
         }
 
-        targetLevel = Mathf.Clamp01(level);
+        targetLevel =
+            Mathf.Clamp01(level);
     }
 
-    private void HandleDangerStateChanged(bool danger)
+    private void HandleDangerStateChanged(
+        bool danger
+    )
     {
         if (useDebugValues)
         {
@@ -195,46 +351,74 @@ public sealed class MicrophoneWidgetUI : MonoBehaviour
 
     private void RefreshSegments()
     {
-        if (noiseSegments == null || noiseSegments.Length == 0)
+        if (
+            noiseSegments == null ||
+            noiseSegments.Length == 0
+        )
         {
             return;
         }
 
-        float clampedLevel = Mathf.Clamp01(displayedLevel);
+        float clampedLevel =
+            Mathf.Clamp01(displayedLevel);
 
-        int activeSegmentCount = clampedLevel <= 0f
-            ? 0
-            : Mathf.CeilToInt(clampedLevel * noiseSegments.Length);
+        int activeSegmentCount =
+            clampedLevel <= 0f
+                ? 0
+                : Mathf.CeilToInt(
+                    clampedLevel *
+                    noiseSegments.Length
+                );
 
-        for (int index = 0; index < noiseSegments.Length; index++)
+        for (
+            int index = 0;
+            index < noiseSegments.Length;
+            index++
+        )
         {
-            Image segment = noiseSegments[index];
+            Image segment =
+                noiseSegments[index];
 
             if (segment == null)
             {
                 continue;
             }
 
-            bool isActive = index < activeSegmentCount;
-            Color segmentColor = GetSegmentColor(index);
+            bool isActive =
+                index < activeSegmentCount;
 
-            Color fillColor = segmentColor;
-            fillColor.a = isActive ? 1f : inactiveFillAlpha;
-            segment.color = fillColor;
+            Color segmentColor =
+                GetSegmentColor(index);
 
-            Outline segmentOutline = segment.GetComponent<Outline>();
+            Color fillColor =
+                segmentColor;
+
+            fillColor.a =
+                isActive
+                    ? 1f
+                    : inactiveFillAlpha;
+
+            segment.color =
+                fillColor;
+
+            Outline segmentOutline =
+                segment.GetComponent<Outline>();
 
             if (segmentOutline == null)
             {
                 continue;
             }
 
-            Color outlineColor = segmentColor;
-            outlineColor.a = isActive
-                ? activeOutlineAlpha
-                : inactiveOutlineAlpha;
+            Color outlineColor =
+                segmentColor;
 
-            segmentOutline.effectColor = outlineColor;
+            outlineColor.a =
+                isActive
+                    ? activeOutlineAlpha
+                    : inactiveOutlineAlpha;
+
+            segmentOutline.effectColor =
+                outlineColor;
         }
     }
 
@@ -245,30 +429,38 @@ public sealed class MicrophoneWidgetUI : MonoBehaviour
             return;
         }
 
-        Color lineColor = dangerLineColor;
+        Color lineColor =
+            dangerLineColor;
 
         if (isDangerous)
         {
-            float pulse = Mathf.PingPong(
-                Time.unscaledTime * dangerPulseSpeed,
-                1f
-            );
+            float pulse =
+                Mathf.PingPong(
+                    Time.unscaledTime *
+                    dangerPulseSpeed,
+                    1f
+                );
 
-            lineColor.a = Mathf.Lerp(
-                minimumDangerPulseAlpha,
-                1f,
-                pulse
-            );
+            lineColor.a =
+                Mathf.Lerp(
+                    minimumDangerPulseAlpha,
+                    1f,
+                    pulse
+                );
         }
         else
         {
-            lineColor.a = normalDangerLineAlpha;
+            lineColor.a =
+                normalDangerLineAlpha;
         }
 
-        dangerThresholdLine.color = lineColor;
+        dangerThresholdLine.color =
+            lineColor;
     }
 
-    private Color GetSegmentColor(int index)
+    private Color GetSegmentColor(
+        int index
+    )
     {
         if (index <= 2)
         {
@@ -285,21 +477,33 @@ public sealed class MicrophoneWidgetUI : MonoBehaviour
 
     private void OnValidate()
     {
-        inactiveFillAlpha = Mathf.Clamp01(inactiveFillAlpha);
-        inactiveOutlineAlpha = Mathf.Clamp01(inactiveOutlineAlpha);
-        activeOutlineAlpha = Mathf.Clamp01(activeOutlineAlpha);
-        normalDangerLineAlpha = Mathf.Clamp01(normalDangerLineAlpha);
-        minimumDangerPulseAlpha = Mathf.Clamp01(
-            minimumDangerPulseAlpha
-        );
+        inactiveFillAlpha =
+            Mathf.Clamp01(inactiveFillAlpha);
+
+        inactiveOutlineAlpha =
+            Mathf.Clamp01(inactiveOutlineAlpha);
+
+        activeOutlineAlpha =
+            Mathf.Clamp01(activeOutlineAlpha);
+
+        normalDangerLineAlpha =
+            Mathf.Clamp01(normalDangerLineAlpha);
+
+        minimumDangerPulseAlpha =
+            Mathf.Clamp01(
+                minimumDangerPulseAlpha
+            );
 
         if (!Application.isPlaying)
         {
-            displayedLevel = useDebugValues
-                ? debugNoiseLevel
-                : 0f;
+            displayedLevel =
+                useDebugValues
+                    ? debugNoiseLevel
+                    : 0f;
 
-            isDangerous = useDebugValues && debugDanger;
+            isDangerous =
+                useDebugValues &&
+                debugDanger;
 
             RefreshSegments();
             RefreshDangerLine();
