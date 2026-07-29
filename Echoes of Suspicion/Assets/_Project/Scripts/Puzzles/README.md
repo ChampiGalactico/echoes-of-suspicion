@@ -1,248 +1,161 @@
-# Sistema de Puzzles — Echoes of Suspicion
+# Puzzle System — Echoes of Suspicion
 
-## Arquitectura general
+## Architecture
 
-El sistema usa un patrón de **árbol** con dos tipos de nodo que comparten la misma interfaz (`IPuzzleNode`):
+Everything is a **Puzzle**. One universal component handles both leaf and parent roles.
 
 ```
-CompositePuzzle "Bioma Cocina" (Rule: All)
-├── LeafPuzzle "Colocar ingredientes" (Matches)
-│   ├── SlotActor (recibe item A)
-│   └── SlotActor (recibe item B)
-├── CompositePuzzle "Reparar motor" (InOrder)
-│   ├── LeafPuzzle "Paso 1: activar válvula" (Matches)
-│   │   └── ToggleActor
-│   └── LeafPuzzle "Paso 2: ajustar presión" (InRange)
-│       └── DialActor
-└── LeafPuzzle "Sintonizar radio" (InRange)
-    └── DialActor
+Puzzle "Car Repair" (CompletionRule: InOrder)
+├── Puzzle "Step 1: Wrench" + PuzzleInteractable (ToolUse)
+├── Puzzle "Step 2: Gasoline" + PuzzleInteractable (ToolUse)
+└── Puzzle "Step 3: Spark Plug" + PuzzleInteractable (ToolUse)
 ```
 
-Esto permite anidar puzzles dentro de puzzles sin límite. Un `CompositePuzzle` puede contener `LeafPuzzles` u otros `CompositePuzzles`.
+A **Puzzle** validates. A **PuzzleInteractable** captures player input and feeds it to the Puzzle.
 
 ---
 
-## Piezas del sistema
+## Components
 
-### Interfaces
+### Core
 
-| Interfaz | Archivo | Qué hace |
+| Class | File | Description |
 |---|---|---|
-| `IPuzzleNode` | `Core/IPuzzleNode.cs` | Contrato compartido entre LeafPuzzle y CompositePuzzle. Expone `NodeId`, `IsSolved` y el evento `OnSolved`. |
-| `IPuzzleActor` | `Core/IPuzzleActor.cs` | Contrato para objetos interactuables. Expone `ActorId`, `CanInteract`, `GetValue()` y `OnValueChanged`. |
+| `Puzzle` | `Core/Puzzle.cs` | Universal puzzle node. Can be leaf (validates input), parent (combines children), or both. Has built-in feedback (VFX, sound, light), health impact, freeze/unfreeze, and retry/reset. |
+| `PuzzleInteractable` | `Core/PuzzleInteractable.cs` | Optional companion (extends `RatInteractable`). Modes: ToolUse, SlotPlace, Toggle, Keypad, Dial. Captures player input and calls `Puzzle.SubmitValue()`. |
+| `PuzzleDoor` | `Core/PuzzleDoor.cs` | Listens to any `IPuzzleNode` and unlocks when solved. |
+| `PuzzleEvents` | `Core/PuzzleEvents.cs` | Static event bus. Connects puzzles to creature (`OnNoiseGenerated`) and guide health (`OnGuideHealthPenalty`). |
+| `PuzzleValidation` | `Core/PuzzleValidation.cs` | Pure comparison functions (no Unity/Mirror dependencies). |
+| `IPuzzleNode` | `Core/IPuzzleNode.cs` | Interface: `NodeId`, `IsSolved`, `OnSolved`. Used by PuzzleDoor. |
 
-### Nodos (Core)
+### Data
 
-| Clase | Archivo | Descripción |
+| Asset | File | Description |
 |---|---|---|
-| `LeafPuzzle` | `Core/LeafPuzzle.cs` | Puzzle simple. Lee los valores de sus actores y los valida contra un `PuzzleAnswer`. |
-| `CompositePuzzle` | `Core/CompositePuzzle.cs` | Puzzle compuesto. No tiene actores propios; combina el estado `IsSolved` de sus hijos con una regla. |
-| `PuzzleDoor` | `Core/PuzzleDoor.cs` | Escucha a cualquier `IPuzzleNode` (leaf o composite) y se desbloquea cuando se resuelve. |
-| `PuzzleActorBase` | `Core/PuzzleActorBase.cs` | Clase base abstracta de todos los actores. Maneja identidad, estado de interacción y propagación de cambios por red. |
-| `PuzzleEvents` | `Core/PuzzleEvents.cs` | Bus de eventos estático. Conecta puzzles con la criatura (`OnNoiseGenerated`) y la vida del Guía (`OnGuideHealthPenalty`). |
-| `PuzzleValidation` | `Core/PuzzleValidation.cs` | Funciones de comparación puras (sin dependencias de Unity ni Mirror). |
+| `PuzzleAnswer` | `Data/PuzzleAnswer.cs` | ScriptableObject defining the correct answer. Has ValidationType and expected values. |
+| `PuzzleItemData` | `Data/PuzzleItemData.cs` | ScriptableObject with item data: `ItemId`, `DisplayName`, `ItemTag`, `NumericValue`, `Icon`. |
 
-### Actores (Actors)
+### Items
 
-Todos extienden `PuzzleActorBase` y por lo tanto implementan `IPuzzleActor`.
-
-| Actor | Valor que expone | Uso típico |
+| Class | File | Description |
 |---|---|---|
-| `SlotActor` | `PuzzleItemData` del item colocado (o `null`) | Recibir un objeto del inventario: llave, herramienta, ingrediente. |
-| `ToggleActor` | `bool` | Palanca, botón, interruptor, trampa de presión. |
-| `DialActor` | `float` | Perilla, válvula, sintonizador de frecuencia. |
-| `PatternActor` | `string` (secuencia acumulada) | Teclado numérico, secuencia de botones. |
+| `PickableItem` | `Actors/PickableItem.cs` | Companion to `NetworkPickupItem`. Holds `PuzzleItemData`. |
 
-Componentes auxiliares de los actores:
+---
 
-| Componente | Archivo | Descripción |
+## Puzzle Fields
+
+**Leaf puzzle** (receives direct input):
+- `_answer`: PuzzleAnswer ScriptableObject
+- `_healthImpact`: negative = damage runner, positive = heal
+- `_useDelay`: seconds to wait before validating (for animation/sound)
+- `_allowRetry` / `_resetDelay`: retry behavior
+- Feedback: `_successVFX`, `_failVFX`, `_successSound`, `_failSound`, `_explosionSound`, `_redLight`
+- Events: `OnPuzzleSolved`, `OnPuzzleFailed`, `OnPuzzleReset`
+
+**Parent puzzle** (combines children):
+- `_children`: child Puzzle array
+- `_completionRule`: All, InOrder, Any, NOfM
+- `_answer` (optional): for value-level validation of children's submitted values
+
+**Hierarchy:**
+- `_parent`: reference to parent Puzzle (leave empty for root)
+
+---
+
+## Validation Types (PuzzleAnswer)
+
+| Type | What it checks | Example |
 |---|---|---|
-| `SlotActorInteractable` | `Actors/SlotActorInteractable.cs` | Companion de SlotActor. Lo conecta al sistema de raycast (`RatInteractable`) para que el jugador pueda colocar items con E. |
-| `PickableItem` | `Actors/PickableItem.cs` | Companion de `NetworkPickupItem`. Solo guarda `PuzzleItemData`. Se agrega a items que participan en puzzles. |
+| `Matches` | One value matches exactly | "Is this the correct wrench?" |
+| `SumEquals` | Sum of numeric values = target | "Do these 3 items cost $18,500 total?" |
+| `SequenceMatches` | Values match in order | "Are the 4 switches in the right sequence?" |
+| `InRange` | Float between min and max | "Is the dial between 97.0 and 97.5?" |
+| `TimeWindow` | Action within a time window | "Did you do it in the first 30 seconds?" |
+| `ContinuousGuard` | Fails on "true" value | "Navigate without stepping on any trap." |
 
-### Datos (Data)
+## Completion Rules (Parent Puzzles)
 
-| Asset | Archivo | Descripción |
-|---|---|---|
-| `PuzzleAnswer` | `Data/PuzzleAnswer.cs` | ScriptableObject que define la respuesta correcta de un LeafPuzzle. Contiene el tipo de validación y los valores esperados. |
-| `PuzzleItemData` | `Data/PuzzleItemData.cs` | ScriptableObject con los datos de un item de puzzle: `ItemId`, `DisplayName`, `ItemTag`, `NumericValue`, `Icon`. |
-
-### Tipos de validación
-
-Se configuran en el `PuzzleAnswer`. El `LeafPuzzle` usa `PuzzleValidation` para evaluarlos.
-
-| Tipo | Qué compara | Ejemplo |
-|---|---|---|
-| `Matches` | Un valor exacto contra un string esperado | "¿El SlotActor tiene el destornillador correcto?" |
-| `SumEquals` | La suma de varios valores numéricos = objetivo | "¿Los precios de los 3 productos suman $18,500?" |
-| `SequenceMatches` | Array de valores en orden exacto | "¿Los 4 switches están en la secuencia correcta?" |
-| `InRange` | Un float entre min y max | "¿La frecuencia del dial está entre 97.0 y 97.5?" |
-| `TimeWindow` | Una acción ocurre dentro de una ventana de tiempo | "¿Lo hiciste en los primeros 30 segundos?" |
-| `ContinuousGuard` | Falla apenas algún actor entra en estado malo | "Navega sin pisar ninguna trampa" (no espera confirmación). |
-
-### Reglas de combinación (CompositePuzzle)
-
-| Regla | Condición para resolverse |
+| Rule | Condition |
 |---|---|
-| `All` | Todos los hijos resueltos (cualquier orden) |
-| `InOrder` | Todos resueltos, pero en el orden en que aparecen en la lista. Los hijos que "no les toca" se desactivan automáticamente. |
-| `Any` | Basta con que uno se resuelva |
-| `NOfM` | Al menos N de M hijos resueltos |
+| `All` | All children solved (any order) |
+| `InOrder` | All solved in array order. Wrong order = child gets forced failure. |
+| `Any` | Any one child solved |
+| `NOfM` | At least N children solved |
 
 ---
 
-## Cómo se conecta con el inventario
+## PuzzleInteractable Modes
 
-1. El jugador recoge un item con `NetworkPickupItem` → el objeto se oculta y se guarda en el inventario.
-2. Si el item tiene un `PickableItem` companion, el slot del inventario se marca como `isPuzzle = true`.
-3. El jugador mira un `SlotActorInteractable` y presiona E → el sistema verifica que el slot activo sea de puzzle.
-4. `SlotActor.TryPlace()` valida el `ItemTag` del `PickableItem` contra sus tags aceptados.
-5. Si pasa, el item se coloca (se mueve al snap point, sigue oculto) y se remueve del inventario.
-6. `SlotActor` llama `RaiseValueChanged()` → el `LeafPuzzle` que lo escucha re-evalúa su `PuzzleAnswer`.
+| Mode | Behavior |
+|---|---|
+| `ToolUse` | Tool stays in player's hand. Sound plays. Puzzle validates. |
+| `SlotPlace` | Item removed from inventory, snapped to point. Puzzle validates. |
+| `Toggle` | Press E to flip boolean state. |
+| `Keypad` | (Future) Enter a code via UI. |
+| `Dial` | (Future) Rotate to a numeric value. |
 
----
-
-## Ejemplo 1: Puzzle simple (LeafPuzzle solo)
-
-**Escenario:** Una puerta se abre cuando el jugador coloca la llave correcta en una cerradura.
-
-### Paso 1 — Crear los datos
-
-1. **PuzzleItemData** (Create > EOS > Puzzles > PuzzleItemData):
-   - `ItemId`: `"llave_cocina"`
-   - `ItemTag`: `"Key"`
-   - `DisplayName`: `"Llave de la cocina"`
-
-2. **ItemData** (Create > Echoes > Inventory > Item Data):
-   - `itemName`: `"Llave de la cocina"`
-   - `worldPrefab`: el prefab del modelo 3D de la llave
-
-3. **PuzzleAnswer** (Create > EOS > Puzzles > PuzzleAnswer):
-   - `Type`: `Matches`
-   - `ExpectedValues[0]`: `"llave_cocina"` (debe coincidir con el `ItemId` del PuzzleItemData)
-
-### Paso 2 — Configurar el prefab de la llave
-
-En el prefab de la llave, agregar:
-- `NetworkIdentity`
-- `NetworkTransform`
-- `Rigidbody`
-- `Collider`
-- `NetworkPickupItem` → asignar el **ItemData**
-- `PickableItem` → asignar el **PuzzleItemData**
-
-Registrar el **ItemData** en el `ItemRegistry` de la escena.
-
-### Paso 3 — Configurar la cerradura (SlotActor)
-
-Crear un GameObject "Cerradura" en la escena:
-- `NetworkIdentity`
-- `SlotActor`:
-  - `_snapPoint`: un Transform hijo donde se posiciona la llave visualmente
-  - `_acceptedTags`: `["Key"]`
-- `SlotActorInteractable` (se agrega automáticamente por el RequireComponent)
-- Un `Collider` para que el raycast del jugador lo detecte
-
-### Paso 4 — Configurar el LeafPuzzle
-
-Crear un GameObject vacío "Puzzle_Cerradura":
-- `NetworkIdentity`
-- `LeafPuzzle`:
-  - `_nodeId`: `"puzzle_cerradura_cocina"`
-  - `_actorRefs`: arrastrar el GameObject "Cerradura" (su SlotActor)
-  - `_answer`: asignar el PuzzleAnswer creado en el paso 1
-
-### Paso 5 — Configurar la puerta
-
-En el GameObject de la puerta:
-- `PuzzleDoor`:
-  - `_nodeRef`: arrastrar el GameObject "Puzzle_Cerradura" (su LeafPuzzle)
-  - `OnDoorOpened`: conectar la animación de abrir o el método que desbloquea la puerta
-
-### Resultado
-
-Jugador recoge llave → llave se oculta, entra al inventario → jugador mira la cerradura → presiona E → SlotActor valida tag "Key" → acepta → LeafPuzzle evalúa Matches("llave_cocina") → resuelto → PuzzleDoor se desbloquea.
+Fields: `_mode`, `_acceptedTags` (item filter), `_snapPoint` (SlotPlace), `_useSound`.
 
 ---
 
-## Ejemplo 2: Puzzle compuesto (dos sub-puzzles en orden)
+## How It Connects to Inventory
 
-**Escenario:** Para abrir la puerta del laboratorio, el jugador debe primero activar la electricidad (toggle) y luego colocar la tarjeta de acceso (slot). Debe hacerse en ese orden.
+1. Player picks up item with `NetworkPickupItem` → hidden, stored in inventory.
+2. If item has `PickableItem`, inventory slot is marked `isPuzzle = true`.
+3. Player looks at `PuzzleInteractable` and presses E.
+4. PuzzleInteractable checks `_acceptedTags` against the item's `ItemTag`.
+5. For ToolUse: item stays in hand, `SubmitValue(ItemId, NumericValue)` sent to Puzzle.
+6. For SlotPlace: item placed at snap point, removed from inventory, value submitted.
+7. Puzzle validates against its PuzzleAnswer → success or failure.
 
-### Paso 1 — Crear los datos
+---
 
-1. **PuzzleItemData** para la tarjeta:
-   - `ItemId`: `"tarjeta_lab"`
-   - `ItemTag`: `"AccessCard"`
+## Example: Car Repair Puzzle (InOrder, ToolUse)
 
-2. **ItemData** para la tarjeta (igual que en el ejemplo anterior).
+### Step 1 — Create PuzzleAnswer assets
 
-3. **PuzzleAnswer A** — para el toggle de electricidad:
-   - `Type`: `Matches`
-   - `ExpectedValues[0]`: `"True"` (el ToggleActor expone un bool, se compara como string)
+For each step, create a PuzzleAnswer (Create > EOS > Puzzles > PuzzleAnswer):
+- Step 1: Type = `Matches`, ExpectedValues[0] = `"wrench"`
+- Step 2: Type = `Matches`, ExpectedValues[0] = `"gasoline"`
+- Step 3: Type = `Matches`, ExpectedValues[0] = `"sparkplug"`
 
-4. **PuzzleAnswer B** — para el slot de la tarjeta:
-   - `Type`: `Matches`
-   - `ExpectedValues[0]`: `"tarjeta_lab"`
+### Step 2 — Create child puzzles (one per repair slot)
 
-### Paso 2 — Configurar los actores en la escena
-
-**Interruptor eléctrico:**
+For each slot on the car, create a GameObject:
 - `NetworkIdentity`
-- `ToggleActor`:
-  - `_actorId`: `"switch_lab"`
-- Un `Collider` + algún script que llame `toggleActor.Interact()` al presionar E (o conectarlo via `RatInteractable`)
+- `Puzzle`:
+  - `_nodeId`: `"car_step_1"` (etc.)
+  - `_answer`: the matching PuzzleAnswer
+  - `_parent`: the parent Car puzzle (set in Step 3)
+  - `_healthImpact`: `-33`
+  - `_useDelay`: `2`
+  - `_successVFX` / `_failVFX`: assign particle systems
+  - `_successSound` / `_failSound`: assign audio clips
+- `PuzzleInteractable`:
+  - `_mode`: `ToolUse`
+  - `_acceptedTags`: `["Tool"]` (or empty for any)
+- `Collider` on Interactable layer
 
-**Lector de tarjetas:**
+### Step 3 — Create parent puzzle
+
+Create a GameObject "CarPuzzle":
 - `NetworkIdentity`
-- `SlotActor`:
-  - `_acceptedTags`: `["AccessCard"]`
-  - `_snapPoint`: donde aparece la tarjeta visualmente
-- `SlotActorInteractable`
-- `Collider`
+- `Puzzle`:
+  - `_nodeId`: `"car_repair"`
+  - `_children`: drag all 3 child puzzles **in order**
+  - `_completionRule`: `InOrder`
+  - (no `_answer` needed — just uses CompletionRule)
 
-### Paso 3 — Crear los dos LeafPuzzles
-
-**LeafPuzzle A** — "Activar electricidad":
-- `_nodeId`: `"puzzle_switch_lab"`
-- `_actorRefs`: arrastrar el ToggleActor
-- `_answer`: PuzzleAnswer A
-
-**LeafPuzzle B** — "Insertar tarjeta":
-- `_nodeId`: `"puzzle_tarjeta_lab"`
-- `_actorRefs`: arrastrar el SlotActor
-- `_answer`: PuzzleAnswer B
-
-### Paso 4 — Crear el CompositePuzzle
-
-Crear un GameObject vacío "Puzzle_Laboratorio":
-- `NetworkIdentity`
-- `CompositePuzzle`:
-  - `_nodeId`: `"puzzle_lab_completo"`
-  - `_childRefs`: arrastrar **en orden** → [LeafPuzzle A, LeafPuzzle B]
-  - `_rule`: `InOrder`
-
-### Paso 5 — Configurar la puerta
+### Step 4 — Connect the door
 
 - `PuzzleDoor`:
-  - `_nodeRef`: arrastrar "Puzzle_Laboratorio" (el CompositePuzzle)
+  - `_nodeRef`: drag the "CarPuzzle" (the parent Puzzle)
+  - `OnDoorOpened`: connect door animation
 
-### Resultado
+### Result
 
-El CompositePuzzle con regla `InOrder` automáticamente **desactiva** el LeafPuzzle B hasta que A se resuelva. Así el jugador no puede insertar la tarjeta antes de activar la electricidad.
-
-1. Jugador activa el interruptor → LeafPuzzle A resuelto
-2. CompositePuzzle desbloquea LeafPuzzle B
-3. Jugador inserta la tarjeta → LeafPuzzle B resuelto
-4. CompositePuzzle evalúa: todos resueltos en orden → resuelto
-5. PuzzleDoor se desbloquea
-
----
-
-## Notas importantes
-
-- Los actores **no saben** en qué puzzle están. Solo exponen su valor y avisan cuando cambia. Esto permite reusar el mismo tipo de actor en cualquier puzzle.
-- Los puzzles **no saben** qué tipo de actor usan. Solo llaman `GetValue()`. Un `LeafPuzzle` con validación `Matches` funciona igual con un `SlotActor`, un `ToggleActor` o cualquier actor futuro.
-- `PuzzleEvents` conecta los puzzles con sistemas externos (criatura, vida del Guía) sin acoplamiento directo. Los puzzles generan ruido al fallar; la criatura escucha ese ruido.
-- Los `_actorRefs` y `_childRefs` se arrastran como `MonoBehaviour[]` en el Inspector porque Unity no puede serializar interfaces. El sistema los convierte a `IPuzzleActor` / `IPuzzleNode` en `OnStartServer()`.
-- Si un actor arrastrado no implementa la interfaz esperada, se ignora silenciosamente.
+- Right tool, right order → success VFX, reports to parent, advances.
+- Right tool, wrong order → parent rejects, fail VFX + damage.
+- Wrong tool → local validation fails, fail VFX + damage.
+- All 3 done in order → parent solves → door opens.
