@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41607d3700537c14792ec6c5ab87bb53, type: 3}
+  m_Name: Battery
+  m_EditorClassIdentifier: Assembly-CSharp::ReadableData
+  Type: 0
+  Title: "INFORME DE DIAGN\xD3STICO"
+  Subtitle: "Taller Mec\xE1nico \"No es Real\""
+  Content: "<size=70%>Av. Industrial 742 \xB7 Tel. 555-0193 \xB7 NIT 830.041.552-7</size>\n\n<b>SISTEMA
+    EL\xC9CTRICO</b> <size=80%>Veh\xEDculo: Chevrolet C10 1972 Placa: XKR-482 Fecha:
+    14/03/2024 Orden N\xBA: 00247</size> \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n<b>Componente
+    evaluado:</b> Bater\xEDa 12V plomo-\xE1cido <b>Estado general:</b>\n<color=#dc2626>CR\xCDTICO</color>\n\nSe
+    detecta corrosi\xF3n severa en ambos terminales (positivo y negativo). Voltaje
+    en reposo medido: 9.3V \u2014 muy por debajo del m\xEDnimo operativo de 12.4V.
+    Prueba de carga: la bater\xEDa no sostiene amperaje bajo demanda, ca\xEDda instant\xE1nea
+    a 6.1V en los primeros 3 segundos.\n\nElectrolito turbio en celdas 2 y 5, posible
+    sulfataci\xF3n avanzada. Carcasa presenta micro-fisura en la base lateral derecha.
+    No se recomienda recarga; reemplazo inmediato necesario.\n\n<b>Nota:</b> Los
+    cables de conexi\xF3n muestran desgaste en el aislante. Revisar antes de instalar
+    bater\xEDa nueva.\n\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+    <size=70%>T\xE9cnico: R. Maldonado                                                   
+    Hoja 2 de 3</size>"
+  ContentImage: {fileID: 0}
+  NoteText: 
+  NoteImage: {fileID: 0}
+  StickyColor: 0
+  InteractionPrompt: Leer

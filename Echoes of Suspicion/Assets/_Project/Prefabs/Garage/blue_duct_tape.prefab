@@ -11,11 +11,12 @@ GameObject:
   - component: {fileID: 2033962788769325468}
   - component: {fileID: 1284005564658227054}
   - component: {fileID: 6868414337993007492}
-  - component: {fileID: 3362553029230783990}
   - component: {fileID: 7785923210724795618}
   - component: {fileID: -698365988971574598}
   - component: {fileID: 265761424014816841}
   - component: {fileID: 6329962010453089947}
+  - component: {fileID: 5420839502956363824}
+  - component: {fileID: 8460352653544829841}
   m_Layer: 6
   m_Name: blue_duct_tape
   m_TagString: Untagged
@@ -95,28 +96,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &3362553029230783990
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7027549110248203888}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4128789661744020797, guid: 3abc31b0351aeb443acd270da906f8d3, type: 3}
 --- !u!54 &7785923210724795618
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -211,8 +190,38 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   interactionPrompt: Interactuar
-  heldLocalPosition: {x: 0, y: 0, z: 0}
-  heldLocalEulerAngles: {x: 0, y: 0, z: 0}
-  itemRigidbody: {fileID: 0}
-  itemColliders: []
-  inheritedPlayerVelocityMultiplier: 0.35
+  itemData: {fileID: 11400000, guid: 79954fb5482987f4594a05f529416899, type: 2}
+--- !u!65 &5420839502956363824
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7027549110248203888}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.13408089, y: 0.043275118, z: 0.1340804}
+  m_Center: {x: 0.000002861023, y: -0.0043284893, z: -0.00000047683713}
+--- !u!114 &8460352653544829841
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7027549110248203888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90d8e3f77d66c65478e68c206dbff438, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EOS.Puzzles.PickableItem
+  _puzzleData: {fileID: 11400000, guid: 425a47ee43e555e4b899edfc39c53b6b, type: 2}

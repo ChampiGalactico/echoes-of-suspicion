@@ -18,10 +18,10 @@ namespace EOS.Puzzles
     }
 
     /// <summary>
-    /// La "respuesta correcta" de un LeafPuzzle, como dato en vez de código.
-    /// Crear un puzzle nuevo casi siempre es crear uno de estos assets y
-    /// llenar los campos relevantes al ValidationType elegido — sin tocar
-    /// ninguna clase de C#.
+    /// The correct answer for a Puzzle, as data instead of code.
+    /// Creating a new puzzle is almost always just creating one of these
+    /// assets and filling in the fields for the chosen ValidationType
+    /// — no C# changes needed.
     /// </summary>
     [CreateAssetMenu(fileName = "NewPuzzleAnswer", menuName = "EOS/Puzzles/PuzzleAnswer")]
     public class PuzzleAnswer : ScriptableObject

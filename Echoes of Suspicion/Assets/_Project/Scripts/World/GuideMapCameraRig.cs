@@ -14,7 +14,9 @@ using UnityEngine;
 /// Requiere en el Editor (una sola vez por bioma, configuración, no arte):
 /// 1. Un Layer dedicado (ej. "MapGeometry") asignado SOLO a las paredes y
 ///    puertas que quieras ver en el mapa (nunca al piso, props, personajes
-///    o criaturas — esos se dibujan aparte como íconos 2D).
+///    o criaturas — esos se dibujan aparte como íconos 2D). Este layer se
+///    configura UNA vez en el campo Geometry Layer de MapBounds — esta
+///    cámara lo lee de ahí, no tiene su propio campo duplicado.
 /// 2. Esa geometría debe verse blanca. Dos formas, de más simple a más
 ///    "automática":
 ///    a) Asignarle a esas paredes un material Unlit blanco compartido
@@ -35,18 +37,12 @@ public sealed class GuideMapCameraRig : MonoBehaviour
     [SerializeField, Tooltip("MapBounds del bioma a encuadrar. Si se deja vacío, usa MapBounds.Current en Start() (el que esté activo en la escena cargada).")]
     private MapBounds bounds;
 
-    [SerializeField, Tooltip("Layer que contiene SOLO la geometría que debe verse en el mapa (paredes, puertas). Todo lo demás debe quedar fuera de este layer.")]
-    private LayerMask mapGeometryLayer;
-
     [SerializeField, Min(1f), Tooltip("Altura sobre el punto más alto del bioma desde la que mira la cámara hacia abajo. Ajusta si alguna pared muy alta queda cortada por el Far Clip Plane.")]
     private float heightAboveScene = 30f;
 
-    [SerializeField, Min(0f), Tooltip("Margen extra (en metros de mundo) alrededor del rectángulo de MapBounds, para que las paredes justo en el borde no queden cortadas por el encuadre.")]
-    private float framingPadding = 1f;
-
     [Header("Debug")]
-    [SerializeField]
-    private bool showDebugLogs = true;
+    [SerializeField, Tooltip("Deja en false salvo que estés depurando el encuadre de la cámara del mapa.")]
+    private bool showDebugLogs = false;
 
     private Camera cam;
 
@@ -82,11 +78,17 @@ public sealed class GuideMapCameraRig : MonoBehaviour
 
     private void ConfigureCamera(MapBounds activeBounds)
     {
+        // WorldMin/WorldMax ya incluyen el padding definido en MapBounds —
+        // NO se le agrega padding propio acá, para garantizar que este
+        // encuadre sea idéntico, byte a byte, al que usa WorldToMapUV para
+        // posicionar los íconos. Si cada uno calculara su propio margen por
+        // separado, cualquier diferencia futura entre ambos volvería a
+        // desalinear el ícono del Corredor respecto a las paredes del mapa.
         Vector3 min = activeBounds.WorldMin;
         Vector3 max = activeBounds.WorldMax;
 
-        float worldWidth = Mathf.Abs(max.x - min.x) + framingPadding * 2f;
-        float worldDepth = Mathf.Abs(max.z - min.z) + framingPadding * 2f;
+        float worldWidth = Mathf.Abs(max.x - min.x);
+        float worldDepth = Mathf.Abs(max.z - min.z);
 
         if (worldWidth <= 0f || worldDepth <= 0f)
         {
@@ -104,11 +106,31 @@ public sealed class GuideMapCameraRig : MonoBehaviour
         // eso se divide worldDepth entre 2 (el ancho lo controla el aspect).
         cam.orthographicSize = worldDepth * 0.5f;
         cam.aspect = worldWidth / worldDepth;
-        cam.cullingMask = mapGeometryLayer;
+        // El layer viene de MapBounds (única fuente de verdad) — así el
+        // mismo layer que se usa para CALCULAR el bounding box automático
+        // (ComputeBoundsFromGeometry) es exactamente el que la cámara
+        // renderiza. Ya no hay un campo separado acá que pueda quedar
+        // desincronizado del de MapBounds.
+        cam.cullingMask = activeBounds.GeometryLayer;
         cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = Color.black;
+        // Alpha 0, no negro sólido: así el "vacío" del mapa (donde no hay
+        // paredes) queda REALMENTE transparente en la Render Texture, y deja
+        // ver la textura/material real del monitor debajo. Las paredes (que
+        // sí se dibujan, opacas) tapan igual esa transparencia donde
+        // corresponde. Requiere que la Render Texture tenga canal alpha
+        // (el formato "Default" ya lo trae) y que el RawImage use un shader
+        // que respete alpha (el UI/Default de Unity ya lo hace).
+        cam.backgroundColor = new Color(0f, 0f, 0f, 0f);
         cam.nearClipPlane = 0.1f;
         cam.farClipPlane = heightAboveScene + 50f;
+
+        // CRÍTICO: esta cámara mira el nivel desde un ángulo/altura que el
+        // Occlusion Culling horneado del proyecto NUNCA contempló (está
+        // pensado para cámaras a altura de jugador moviéndose por el suelo).
+        // Sin desactivar esto, Unity puede ocultar la mayoría del laberinto
+        // basándose en datos de visibilidad que no aplican aquí, dejando
+        // visible solo la celda/habitación desde la que "cree" que se mira.
+        cam.useOcclusionCulling = false;
 
         if (showDebugLogs)
         {

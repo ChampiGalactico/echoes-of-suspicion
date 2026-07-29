@@ -18,12 +18,12 @@ MonoBehaviour:
   chaseSpeed: 6
   hearingRadius: 40
   minNoiseIntensity: 0.1
-  visionRadius: 10
+  visionRadius: 5
   visionAngle: 160
   investigationTime: 3
   searchDuration: 4
   targetCommitmentTime: 2
-  visionLossGracePeriod: 5
+  visionLossGracePeriod: 6
   loseTargetTime: 5
   chaseVisionRadiusBonus: 5
   stunDuration: 2

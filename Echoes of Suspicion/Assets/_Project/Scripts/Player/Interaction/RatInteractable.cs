@@ -8,7 +8,7 @@ public abstract class RatInteractable : NetworkBehaviour
 {
     [Header("Interaction")]
     [SerializeField]
-    private string interactionPrompt = "Interactuar";
+    protected string interactionPrompt = "Interactuar";
 
     public string InteractionPrompt => interactionPrompt;
 

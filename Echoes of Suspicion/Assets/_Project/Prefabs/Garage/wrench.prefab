@@ -11,11 +11,12 @@ GameObject:
   - component: {fileID: 2998328536369091294}
   - component: {fileID: 7194759993094028628}
   - component: {fileID: 7513360724420250289}
-  - component: {fileID: 6695816403466068575}
   - component: {fileID: -2196755802526110884}
   - component: {fileID: -655271221322018045}
   - component: {fileID: -298314167002030728}
   - component: {fileID: -1355319359551576427}
+  - component: {fileID: -6381914870448445132}
+  - component: {fileID: 7807966509637328485}
   m_Layer: 6
   m_Name: wrench
   m_TagString: Untagged
@@ -95,28 +96,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &6695816403466068575
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8206153585010649582}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -613980898719869101, guid: 3abc31b0351aeb443acd270da906f8d3, type: 3}
 --- !u!54 &-2196755802526110884
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -160,11 +139,7 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   interactionPrompt: Interactuar
-  heldLocalPosition: {x: 0, y: 0, z: 0}
-  heldLocalEulerAngles: {x: 0, y: 0, z: 0}
-  itemRigidbody: {fileID: 0}
-  itemColliders: []
-  inheritedPlayerVelocityMultiplier: 0.35
+  itemData: {fileID: 11400000, guid: c1e0e678bcf210c4f9d345a00c2cfe16, type: 2}
 --- !u!114 &-298314167002030728
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -216,3 +191,37 @@ MonoBehaviour:
   rotationSensitivity: 0.01
   positionPrecision: 0.01
   scalePrecision: 0.01
+--- !u!65 &-6381914870448445132
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8206153585010649582}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.38947022, y: 0.011152637, z: 0.0807411}
+  m_Center: {x: -0.008205137, y: 0.005079161, z: 0.0009728129}
+--- !u!114 &7807966509637328485
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8206153585010649582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90d8e3f77d66c65478e68c206dbff438, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EOS.Puzzles.PickableItem
+  _puzzleData: {fileID: 11400000, guid: e08d39e2df31fe24e92da95d37804ab5, type: 2}
