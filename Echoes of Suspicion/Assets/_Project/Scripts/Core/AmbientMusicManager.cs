@@ -20,7 +20,7 @@ public sealed class AmbientMusicManager : MonoBehaviour
     private AudioClip ambientTrack;
 
     [SerializeField, Range(0f, 1f)]
-    private float ambientVolume = 0.5f;
+    private float ambientVolume = 0.02f;
 
     [Header("Fade Timings")]
     [SerializeField, Min(0f)]
