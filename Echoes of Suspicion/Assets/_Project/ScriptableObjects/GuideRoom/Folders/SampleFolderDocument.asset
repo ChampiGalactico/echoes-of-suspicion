@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41607d3700537c14792ec6c5ab87bb53, type: 3}
+  m_Name: SampleFolderDocument
+  m_EditorClassIdentifier: Assembly-CSharp::ReadableData
+  Type: 0
+  Title: REGISTRO DE MANTENIMIENTO
+  Subtitle: "SISTEMA DE VENTILACI\xD3N // ARCHIVO 01"
+  Content: "Documento de prueba para validar la bandeja-esc\xE1ner. Sustituye este
+    contenido por los archivos reales del puzzle."
+  ContentImage: {fileID: 0}
+  NoteText: 
+  NoteImage: {fileID: 0}
+  StickyColor: 0
+  InteractionPrompt: Leer documento
