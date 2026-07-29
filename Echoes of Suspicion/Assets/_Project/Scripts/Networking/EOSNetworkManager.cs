@@ -107,8 +107,21 @@ public class EOSNetworkManager : NetworkManager
     public override void OnServerAddPlayer(NetworkConnectionToClient conn)
     {
         // TODO: reemplazar por selección real de rol/personaje cuando exista el lobby.
-        PlayerRole role = conn.connectionId == 0 ? PlayerRole.Guide : PlayerRole.Runner;
-        int characterIndex = conn.connectionId == 0 ? 0 : 1;
+        bool isHostPlayer =
+            conn.connectionId == 0;
+
+        PlayerRole role =
+            isHostPlayer
+                ? PlayerRole.Guide
+                : PlayerRole.Runner;
+
+        // Demo fija:
+        // Guide  → Carlos → índice 1
+        // Runner → Carmen → índice 0
+        int characterIndex =
+            role == PlayerRole.Guide
+                ? 1
+                : 0;
 
         var biomeSpawner = FindAnyObjectByType<BiomeSpawner>();
         Transform spawnPoint = role == PlayerRole.Guide
