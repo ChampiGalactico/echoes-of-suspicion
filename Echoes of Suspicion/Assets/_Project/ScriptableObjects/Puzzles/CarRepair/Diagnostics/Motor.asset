@@ -15,10 +15,10 @@ MonoBehaviour:
   Type: 0
   Title: "INFORME DE DIAGN\xD3STICO"
   Subtitle: "Taller Mec\xE1nico \"Despierta\""
-  Content: "<size=70%>Av. Industrial 742 \xB7 Tel. 555-0193 \xB7 NIT 830.041.552-7</size>\n\n<b>MOTOR</b>
+  Content: "<size=70%>Av. Industrial 742 \xB7 Tel. 555-0193 \xB7 NIT 830.041.552-7<size>\n\n<b>MOTOR</b>
     <size=80%>Veh\xEDculo: Chevrolet C10 1972 Placa: XKR-482 Fecha: 14/03/2024 Orden
-    N\xBA: 00247</size> \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n<b>Componente
-    evaluado:</b> Motor 6 cil. en l\xEDnea, 250 CID <b>Estado general:</b> <color=\n#dc2626>CR\xCDTICO</color>\n\nPrueba
+    N\xBA: 00247</size> \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n<b>Componente
+    evaluado:</b> Motor 6 cil. en l\xEDnea, 250 CID <b>Estado general:</b> <color=#dc2626>CR\xCDTICO</color>\n\nPrueba
     de compresi\xF3n: cilindros 2 y 3 registran 68 y 72 PSI respectivamente (m\xEDnimo
     aceptable: 120 PSI). Los cilindros restantes operan entre 135\u2013142 PSI, dentro
     del rango normal.\n\nInspecci\xF3n visual de la culata revela empaque (junta)
@@ -27,8 +27,9 @@ MonoBehaviour:
     dep\xF3sito calc\xE1reo.\n\nSe recomienda desmontaje de culata, rectificado de
     superficie y reemplazo de empaque. Verificar alabeo de culata antes de rearmar.\n\n<b>Nota:</b>
     El perno del tensor de la correa de accesorios est\xE1 vencido. No intentar girar
-    sin herramienta adecuada.\n\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-    <size=70%>T\xE9cnico: R. Maldonado Hoja 2 de 3</size>"
+    sin herramienta adecuada.\n\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+    <size=70%>T\xE9cnico: R. Maldonado                                                   
+    Hoja 2 de 3</size>"
   ContentImage: {fileID: 0}
   NoteText: 
   NoteImage: {fileID: 0}

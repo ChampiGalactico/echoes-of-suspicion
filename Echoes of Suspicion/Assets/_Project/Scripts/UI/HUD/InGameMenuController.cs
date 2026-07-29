@@ -44,6 +44,12 @@ public sealed class InGameMenuController : MonoBehaviour
             return;
         }
 
+        // Don't open pause menu if the player is reading a document.
+        if (!IsOpen && ReadableUI.Instance != null && ReadableUI.Instance.IsOpen)
+        {
+            return;
+        }
+
         if (!IsOpen)
         {
             OpenMenu();

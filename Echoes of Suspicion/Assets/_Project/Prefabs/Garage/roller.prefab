@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1524554284914653204}
   - component: {fileID: 2284088630193923042}
   - component: {fileID: 4159338384842787970}
-  - component: {fileID: 6575042816563785389}
+  - component: {fileID: 8248421291188402994}
   m_Layer: 0
   m_Name: roller
   m_TagString: Untagged
@@ -91,8 +91,8 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &6575042816563785389
-MeshCollider:
+--- !u!65 &8248421291188402994
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -109,7 +109,6 @@ MeshCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 5314789677753811493, guid: 3abc31b0351aeb443acd270da906f8d3, type: 3}
+  serializedVersion: 3
+  m_Size: {x: 0.10108566, y: 3.4768102, z: 3.9999995}
+  m_Center: {x: -4.9456253, y: 1.7384051, z: -0.010911494}

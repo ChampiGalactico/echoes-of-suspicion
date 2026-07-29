@@ -5,9 +5,8 @@ using UnityEngine.Events;
 namespace EOS.Puzzles
 {
     /// <summary>
-    /// Puerta que escucha a UN IPuzzleNode — puede ser un LeafPuzzle simple
-    /// o un CompositePuzzle entero (ej: "todos los puzzles del bioma").
-    /// La puerta no sabe ni le importa cuál de los dos es.
+    /// Door that listens to a single Puzzle (via IPuzzleNode).
+    /// Can be a leaf or a parent — the door doesn't care.
     /// </summary>
     public class PuzzleDoor : NetworkBehaviour
     {

@@ -3,11 +3,9 @@ using System;
 namespace EOS.Puzzles
 {
     /// <summary>
-    /// Contrato compartido entre un puzzle simple (LeafPuzzle) y un puzzle
-    /// compuesto (CompositePuzzle). Gracias a esto, un CompositePuzzle puede
-    /// tener como hijo tanto a un LeafPuzzle como a OTRO CompositePuzzle,
-    /// sin ningún caso especial — así es como se anidan puzzles dentro de
-    /// puzzles, y puzzles dentro de biomas, con la misma pieza.
+    /// Contract implemented by Puzzle. Allows PuzzleDoor and other
+    /// listeners to react to any puzzle being solved without knowing
+    /// whether it's a leaf or a parent.
     /// </summary>
     public interface IPuzzleNode
     {
