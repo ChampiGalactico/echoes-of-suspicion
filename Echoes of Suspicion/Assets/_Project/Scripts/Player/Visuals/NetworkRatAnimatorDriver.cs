@@ -183,6 +183,31 @@ public sealed class NetworkRatAnimatorDriver : NetworkBehaviour
         }
     }
 
+    public void SetAnimator(
+        Animator targetAnimator)
+    {
+        animator = targetAnimator;
+
+        ResetPositionSampling();
+
+        if (animator == null)
+        {
+            return;
+        }
+
+        bool isCrouching =
+            crouchController != null &&
+            crouchController.IsCrouching;
+
+        animator.SetBool(
+            crouchHash,
+            isCrouching);
+
+        animator.SetFloat(
+            moveSpeedHash,
+            0f);
+    }
+
     private void OnDisable()
     {
         hasPreviousPosition = false;
