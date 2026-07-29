@@ -3,15 +3,15 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Renderiza el contenido de un ReadableData dentro de un Canvas en
-/// World Space que TÚ posicionas y dimensionas manualmente.
+/// Renderiza el contenido de un StickyNoteData o DocumentData dentro de
+/// un Canvas en World Space que TÚ posicionas y dimensionas manualmente.
 ///
 /// ── Configuración ────────────────────────────────────────────────
 ///
 ///   1. Crear un hijo Canvas (Render Mode: World Space).
 ///   2. Ajustar su RectTransform para que cubra la hoja/nota.
 ///   3. Arrastrar el Canvas al campo _targetCanvas.
-///   4. Asignar ReadableData y fuente TMP.
+///   4. Asignar uno de los dos: _documentData o _stickyData.
 ///   5. El script pone UN SOLO TextMeshProUGUI que llena el canvas.
 ///
 /// ──────────────────────────────────────────────────────────────────
@@ -19,14 +19,15 @@ using TMPro;
 [ExecuteInEditMode]
 public class ReadableWorldDisplay : MonoBehaviour
 {
-    [Header("Datos")]
-    [SerializeField] private ReadableData _readableData;
+    [Header("Contenido (asignar UNO de los dos)")]
+    [SerializeField] private DocumentData _documentData;
+    [SerializeField] private StickyNoteData _stickyData;
 
     [Header("Canvas")]
     [Tooltip("Canvas hijo en World Space. Crearlo y posicionarlo manualmente.")]
     [SerializeField] private Canvas _targetCanvas;
 
-    [Header("Fuentes TMP")]
+    [Header("Fuentes TMP (fallback si el data no tiene font)")]
     [SerializeField] private TMP_FontAsset _documentFont;
     [SerializeField] private TMP_FontAsset _handwrittenFont;
 
@@ -40,6 +41,9 @@ public class ReadableWorldDisplay : MonoBehaviour
     [Tooltip("Máximo de caracteres del contenido a mostrar en el mundo. " +
              "El resto se lee con E en el overlay. -1 = todo.")]
     [SerializeField] private int _maxPreviewChars = 80;
+
+    private bool IsDocument => _documentData != null;
+    private bool HasData => _documentData != null || _stickyData != null;
 
     private const string GENERATED_NAME = "__ReadableText__";
 
@@ -56,18 +60,36 @@ public class ReadableWorldDisplay : MonoBehaviour
     }
 #endif
 
+    [ContextMenu("Force Rebuild")]
     private void Rebuild()
     {
         if (this == null) return;
-        if (_targetCanvas == null || _readableData == null) return;
+
+        if (_targetCanvas == null || !HasData) return;
 
 #if UNITY_EDITOR
-        // No modificar prefab assets — solo instancias en escena.
         if (UnityEditor.PrefabUtility.IsPartOfPrefabAsset(gameObject)) return;
 #endif
 
         ClearGenerated();
         CreateTextElement();
+    }
+
+    /// <summary>
+    /// Agregar o ajustar un CanvasScaler con Dynamic Pixels Per Unit alto.
+    /// Usar solo en notas donde el texto no se ve por escala pequeña.
+    /// </summary>
+    [ContextMenu("Fix: Add CanvasScaler (small notes)")]
+    private void AddCanvasScaler()
+    {
+        if (_targetCanvas == null) return;
+
+        CanvasScaler scaler = _targetCanvas.GetComponent<CanvasScaler>();
+        if (scaler == null)
+            scaler = _targetCanvas.gameObject.AddComponent<CanvasScaler>();
+
+        scaler.dynamicPixelsPerUnit = 100f;
+        Debug.Log("[ReadableWorldDisplay] CanvasScaler agregado con dynamicPixelsPerUnit = 100.", this);
     }
 
     private void ClearGenerated()
@@ -83,7 +105,6 @@ public class ReadableWorldDisplay : MonoBehaviour
 
     private void CreateTextElement()
     {
-        // Un solo GameObject con TextMeshProUGUI que llena todo el canvas.
         GameObject go = new GameObject(GENERATED_NAME);
         go.transform.SetParent(_targetCanvas.transform, false);
 
@@ -106,60 +127,66 @@ public class ReadableWorldDisplay : MonoBehaviour
         tmp.richText = true;
         tmp.margin = new Vector4(_margins, _margins, _margins, _margins);
 
-        bool isSticky = _readableData.Type == ReadableType.StickyNote;
-        TMP_FontAsset font = isSticky
-            ? (_handwrittenFont != null ? _handwrittenFont : _documentFont)
-            : _documentFont;
+        // Determinar fuente.
+        TMP_FontAsset font = null;
+
+        if (IsDocument)
+        {
+            font = _documentData.DefaultFont != null
+                ? _documentData.DefaultFont
+                : _documentFont;
+        }
+        else
+        {
+            font = _stickyData.NoteFont != null
+                ? _stickyData.NoteFont
+                : (_handwrittenFont != null ? _handwrittenFont : _documentFont);
+
+            tmp.alignment = TextAlignmentOptions.Center;
+        }
 
         if (font != null)
             tmp.font = font;
-
-        if (isSticky)
-            tmp.alignment = TextAlignmentOptions.Center;
     }
 
     private string BuildFormattedText()
     {
-        if (_readableData.Type == ReadableType.StickyNote)
-            return _readableData.NoteText ?? "";
+        if (!IsDocument)
+            return _stickyData.NoteText ?? "";
 
-        // Documento: construir todo con rich text tags.
+        // Documento: construir preview con rich text de todas las secciones.
         var sb = new System.Text.StringBuilder();
+        int totalChars = 0;
 
-        if (!string.IsNullOrEmpty(_readableData.Title))
+        if (_documentData.Sections == null) return "";
+
+        foreach (var section in _documentData.Sections)
         {
-            sb.Append("<b>");
-            sb.Append(_readableData.Title);
-            sb.AppendLine("</b>");
-        }
+            if (string.IsNullOrEmpty(section.Text)) continue;
 
-        if (!string.IsNullOrEmpty(_readableData.Subtitle))
-        {
-            sb.Append("<i><color=#555555>");
-            sb.Append(_readableData.Subtitle);
-            sb.AppendLine("</color></i>");
-        }
-
-        if (!string.IsNullOrEmpty(_readableData.Title) ||
-            !string.IsNullOrEmpty(_readableData.Subtitle))
-        {
-            sb.AppendLine("──────────────────");
-        }
-
-        if (!string.IsNullOrEmpty(_readableData.Content))
-        {
-            sb.AppendLine();
-
-            string content = _readableData.Content;
-
-            // Truncar para que solo se vea un preview en el mundo.
-            // El jugador lee el texto completo con E (overlay).
-            if (_maxPreviewChars >= 0 && content.Length > _maxPreviewChars)
+            // Aplicar estilo según SectionType.
+            string styled = section.Type switch
             {
-                content = content.Substring(0, _maxPreviewChars) + "...";
-            }
+                SectionType.Title    => $"<b>{section.Text}</b>",
+                SectionType.Subtitle => $"<i><color=#555555>{section.Text}</color></i>",
+                SectionType.Footer   => $"<size=80%><color=#666666>{section.Text}</color></size>",
+                SectionType.Caption  => $"<size=85%><color=#777777>{section.Text}</color></size>",
+                _                    => section.Text,
+            };
 
-            sb.Append(content);
+            sb.AppendLine(styled);
+
+            if (section.ShowDivider)
+                sb.AppendLine("──────────────────");
+
+            totalChars += section.Text.Length;
+
+            // Truncar el preview si excede el máximo.
+            if (_maxPreviewChars >= 0 && totalChars >= _maxPreviewChars)
+            {
+                sb.Append("...");
+                break;
+            }
         }
 
         return sb.ToString();

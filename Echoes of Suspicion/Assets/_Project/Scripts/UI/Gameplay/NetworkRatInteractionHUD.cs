@@ -91,8 +91,10 @@ public sealed class NetworkRatInteractionHUD : NetworkBehaviour
         {
             SetCrosshair(true);
 
-            SetPrompt(
-                $"[E] {interactor.CurrentInteractionPrompt}");
+            string prompt = ResolvePromptTokens(
+                interactor.CurrentInteractionPrompt);
+
+            SetPrompt($"[E] {prompt}");
 
             return;
         }
@@ -141,6 +143,43 @@ public sealed class NetworkRatInteractionHUD : NetworkBehaviour
         {
             promptText.gameObject.SetActive(false);
         }
+    }
+
+    /// <summary>
+    /// Reemplaza tokens especiales en el prompt:
+    ///   {item} → DisplayName del item activo (o itemName si no tiene PuzzleItemData)
+    /// </summary>
+    private string ResolvePromptTokens(string raw)
+    {
+        if (!raw.Contains("{item}")) return raw;
+
+        string itemName = GetActiveItemDisplayName();
+        return raw.Replace("{item}", itemName ?? "???");
+    }
+
+    private string GetActiveItemDisplayName()
+    {
+        if (inventory == null) return null;
+
+        InventorySlot slot = inventory.ActiveSlot;
+        if (slot.IsEmpty) return null;
+
+        // Intentar PuzzleItemData.DisplayName primero.
+        if (slot.itemNetId != 0 &&
+            NetworkClient.spawned.TryGetValue(slot.itemNetId, out NetworkIdentity identity))
+        {
+            var pickable = identity.GetComponent<EOS.Puzzles.PickableItem>();
+            if (pickable != null &&
+                pickable.PuzzleData != null &&
+                !string.IsNullOrEmpty(pickable.PuzzleData.DisplayName))
+            {
+                return pickable.PuzzleData.DisplayName;
+            }
+        }
+
+        // Fallback: ItemData.itemName del registro.
+        ItemData data = inventory.ActiveItemData;
+        return data != null ? data.itemName : null;
     }
 
     private void SetHudVisible(bool isVisible)
