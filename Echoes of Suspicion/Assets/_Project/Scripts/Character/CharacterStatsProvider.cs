@@ -31,6 +31,7 @@ public sealed class CharacterStatsProvider : NetworkBehaviour
     public float PerceptionMultiplier => currentCharacter != null ? currentCharacter.perceptionMultiplier : 1f;
     public CharacterData Character => currentCharacter;
     public PlayerRole Role => currentRole;
+    public int SelectedCharacterIndex => selectedCharacterIndex;
 
     public override void OnStartServer()
     {
