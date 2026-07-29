@@ -6,13 +6,15 @@ using TMPro;
 /// <summary>
 /// Editor utility that builds the ReadableUI hierarchy automatically.
 /// Use via menu: Tools > Echoes > Setup ReadableUI
+///
+/// El DocumentPanel ahora genera sus secciones dinámicamente en runtime,
+/// así que solo necesitamos un contenedor vacío con VerticalLayoutGroup.
 /// </summary>
 public static class ReadableUISetup
 {
     [MenuItem("Tools/Echoes/Setup ReadableUI")]
     public static void Setup()
     {
-        // Find or create the ReadableUI GameObject.
         ReadableUI existing = Object.FindFirstObjectByType<ReadableUI>();
         GameObject root;
 
@@ -23,7 +25,6 @@ public static class ReadableUISetup
         }
         else
         {
-            // Create as child of an existing Screen Space canvas, or make one.
             Canvas screenCanvas = FindScreenSpaceCanvas();
             if (screenCanvas == null)
             {
@@ -35,7 +36,6 @@ public static class ReadableUISetup
             root = new GameObject("ReadableUI");
             root.transform.SetParent(screenCanvas.transform, false);
 
-            // Stretch to fill.
             RectTransform rootRect = root.AddComponent<RectTransform>();
             StretchFull(rootRect);
 
@@ -64,58 +64,32 @@ public static class ReadableUISetup
         docRect.offsetMin = Vector2.zero;
         docRect.offsetMax = Vector2.zero;
 
-        // Add a VerticalLayoutGroup for auto-stacking.
-        VerticalLayoutGroup docLayout = docPanel.AddComponent<VerticalLayoutGroup>();
+        // DocContentParent — contenedor donde ReadableUI genera secciones.
+        GameObject docContentParent = CreateChild(docPanel, "DocContentParent");
+        StretchFull(docContentParent.GetComponent<RectTransform>());
+
+        VerticalLayoutGroup docLayout = docContentParent.AddComponent<VerticalLayoutGroup>();
         docLayout.padding = new RectOffset(30, 30, 25, 25);
         docLayout.spacing = 8f;
         docLayout.childAlignment = TextAnchor.UpperLeft;
         docLayout.childControlWidth = true;
-        docLayout.childControlHeight = false;
+        docLayout.childControlHeight = true;
         docLayout.childForceExpandWidth = true;
         docLayout.childForceExpandHeight = false;
 
-        // DocTitle
-        GameObject docTitle = CreateTMPChild(docPanel, "DocTitle", "Título del Documento",
-            fontSize: 28, bold: true, height: 40);
-
-        // DocSubtitle
-        GameObject docSubtitle = CreateTMPChild(docPanel, "DocSubtitle", "Subtítulo",
-            fontSize: 18, italic: true, height: 30, color: HexColor("#888888"));
-
-        // DocSeparator
-        GameObject docSep = CreateChild(docPanel, "DocSeparator");
-        Image sepImg = docSep.AddComponent<Image>();
-        sepImg.color = HexColor("#444444");
-        LayoutElement sepLE = docSep.AddComponent<LayoutElement>();
-        sepLE.preferredHeight = 2f;
-        sepLE.flexibleWidth = 1f;
-
-        // DocContent — this takes the remaining space.
-        GameObject docContent = CreateTMPChild(docPanel, "DocContent", "Contenido del documento...",
-            fontSize: 16, height: 400);
-        LayoutElement contentLE = docContent.GetComponent<LayoutElement>();
-        if (contentLE == null) contentLE = docContent.AddComponent<LayoutElement>();
-        contentLE.flexibleHeight = 1f;
-
-        // Enable scrolling for long content
-        TMP_Text contentTMP = docContent.GetComponent<TMP_Text>();
-        contentTMP.textWrappingMode = TextWrappingModes.Normal;
-        contentTMP.overflowMode = TextOverflowModes.ScrollRect;
-        contentTMP.richText = true;
-
-        // DocImage
+        // DocImage (fuera del content parent, al final del panel).
         GameObject docImage = CreateChild(docPanel, "DocImage");
         Image docImg = docImage.AddComponent<Image>();
         docImg.preserveAspect = true;
         docImg.raycastTarget = false;
         LayoutElement imgLE = docImage.AddComponent<LayoutElement>();
         imgLE.preferredHeight = 150f;
-        docImage.SetActive(false); // Off by default.
+        docImage.SetActive(false);
 
         // ── Sticky Note Panel ──────────────────────────────────────
         GameObject stickyPanel = CreateChild(root, "StickyNotePanel");
         Image stickyBg = stickyPanel.AddComponent<Image>();
-        stickyBg.color = new Color(1f, 0.95f, 0.6f); // Yellow.
+        stickyBg.color = new Color(1f, 0.95f, 0.6f);
         RectTransform stickyRect = stickyPanel.GetComponent<RectTransform>();
         stickyRect.anchorMin = new Vector2(0.3f, 0.2f);
         stickyRect.anchorMax = new Vector2(0.7f, 0.8f);
@@ -145,9 +119,8 @@ public static class ReadableUISetup
         noteImg.raycastTarget = false;
         LayoutElement noteImgLE = noteImage.AddComponent<LayoutElement>();
         noteImgLE.preferredHeight = 100f;
-        noteImage.SetActive(false); // Off by default.
+        noteImage.SetActive(false);
 
-        // Hide StickyNotePanel by default (DocumentPanel shows first).
         stickyPanel.SetActive(false);
 
         // ── Wire SerializedObject references ───────────────────────
@@ -156,10 +129,7 @@ public static class ReadableUISetup
 
         so.FindProperty("_canvasGroup").objectReferenceValue = cg;
         so.FindProperty("_documentPanel").objectReferenceValue = docPanel;
-        so.FindProperty("_docTitle").objectReferenceValue = docTitle.GetComponent<TMP_Text>();
-        so.FindProperty("_docSubtitle").objectReferenceValue = docSubtitle.GetComponent<TMP_Text>();
-        so.FindProperty("_docSeparator").objectReferenceValue = docSep;
-        so.FindProperty("_docContent").objectReferenceValue = docContent.GetComponent<TMP_Text>();
+        so.FindProperty("_docContentParent").objectReferenceValue = docContentParent.transform;
         so.FindProperty("_docImage").objectReferenceValue = docImg;
         so.FindProperty("_stickyNotePanel").objectReferenceValue = stickyPanel;
         so.FindProperty("_stickyNoteBackground").objectReferenceValue = stickyBg;

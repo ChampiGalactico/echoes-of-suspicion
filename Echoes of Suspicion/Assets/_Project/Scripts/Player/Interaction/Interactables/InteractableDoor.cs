@@ -1,4 +1,5 @@
 using System.Collections;
+using EOS.Puzzles;
 using Mirror;
 using UnityEngine;
 using UnityEngine.AI;
@@ -50,8 +51,11 @@ public class InteractableDoor : RatInteractable
 
     // --- RequiresItem ---
     [Header("Requiere Item (solo si DoorMode = RequiresItem)")]
-    [Tooltip("Referencia al ScriptableObject del item necesario.")]
-    [SerializeField] private ScriptableObject requiredItem; // Cambiar a ItemData cuando exista
+    [Tooltip("El PuzzleItemData que el jugador debe tener. Filtra por ItemId y opcionalmente por ItemTag.")]
+    [SerializeField] private PuzzleItemData requiredItem;
+
+    [Tooltip("Si está activo, además del ItemId se valida que el ItemTag coincida.")]
+    [SerializeField] private bool filterByTag = true;
 
     // --- PuzzleLinked ---
     [Header("Vinculada a Puzzle (solo si DoorMode = PuzzleLinked)")]
@@ -216,28 +220,61 @@ public class InteractableDoor : RatInteractable
     [Server]
     private void ServerTryOpenWithItem(NetworkIdentity interactor)
     {
-        // TODO: Validar inventario del jugador en el server.
-        // Ejemplo:
-        // var inventory = interactor.GetComponent<RunnerInventory>();
-        // if (inventory == null || !inventory.HasItem(requiredItem as ItemData))
-        // {
-        //     RpcPlayDeniedEffect();
-        //     return;
-        // }
-        // if (consumeItemOnUse) inventory.RemoveItem(requiredItem as ItemData);
-
-        if (requiredItem != null)
+        if (requiredItem == null)
         {
-            Debug.LogWarning(
-                $"[InteractableDoor] TODO: Validar que {interactor.name} " +
-                $"tiene '{requiredItem.name}' en su inventario.");
+            ServerToggleDoor(interactor);
+            return;
+        }
 
-            // Placeholder: denegar hasta conectar con el inventario real
+        var inventory = interactor.GetComponent<NetworkInventory>();
+        if (inventory == null)
+        {
             RpcPlayDeniedEffect();
             return;
         }
 
+        int foundSlot = FindMatchingSlot(inventory);
+
+        if (foundSlot < 0)
+        {
+            RpcPlayDeniedEffect();
+            return;
+        }
+
+        if (consumeItemOnUse)
+            inventory.ServerRemoveItem(foundSlot);
+
         ServerToggleDoor(interactor);
+    }
+
+    /// <summary>
+    /// Busca en el inventario un slot cuyo PickableItem coincida con el
+    /// requiredItem por ItemId y opcionalmente por ItemTag.
+    /// </summary>
+    [Server]
+    private int FindMatchingSlot(NetworkInventory inventory)
+    {
+        for (int i = 0; i < NetworkInventory.SlotCount; i++)
+        {
+            InventorySlot slot = inventory.GetSlot(i);
+            if (slot.IsEmpty || slot.itemNetId == 0) continue;
+
+            if (!NetworkServer.spawned.TryGetValue(slot.itemNetId, out NetworkIdentity identity))
+                continue;
+
+            PickableItem pickable = identity.GetComponent<PickableItem>();
+            if (pickable == null || pickable.PuzzleData == null) continue;
+
+            PuzzleItemData data = pickable.PuzzleData;
+
+            if (data.ItemId != requiredItem.ItemId) continue;
+
+            if (filterByTag && data.ItemTag != requiredItem.ItemTag) continue;
+
+            return i;
+        }
+
+        return -1;
     }
 
     private void HandlePuzzleSolved()

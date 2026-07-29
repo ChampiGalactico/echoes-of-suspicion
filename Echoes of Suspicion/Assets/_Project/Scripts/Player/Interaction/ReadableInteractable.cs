@@ -6,27 +6,34 @@ using UnityEngine;
 /// Cuando el Runner pulsa E, el servidor valida la distancia y envía
 /// un TargetRpc al cliente para que abra la UI de lectura.
 ///
+/// Asignar UNO de los dos campos: _documentData o _stickyData.
+/// El que esté asignado determina qué panel abre ReadableUI.
+///
 /// Requiere un Collider (no trigger) en el mismo GameObject o hijos
 /// para que el spherecast de NetworkRatInteractor lo detecte.
 /// </summary>
 public class ReadableInteractable : RatInteractable
 {
-    [Header("Contenido")]
-    [SerializeField] private ReadableData _readableData;
+    [Header("Contenido (asignar UNO de los dos)")]
+    [SerializeField] private DocumentData _documentData;
+    [SerializeField] private StickyNoteData _stickyData;
+
+    private bool IsDocument => _documentData != null;
+    private bool HasData => _documentData != null || _stickyData != null;
 
     private void Awake()
     {
-        // Copiar el prompt del asset al campo base para que el HUD
-        // lo lea correctamente (InteractionPrompt no es virtual).
-        if (_readableData != null && !string.IsNullOrEmpty(_readableData.InteractionPrompt))
-            interactionPrompt = _readableData.InteractionPrompt;
+        // Copiar el prompt del asset al campo base.
+        if (IsDocument && !string.IsNullOrEmpty(_documentData.InteractionPrompt))
+            interactionPrompt = _documentData.InteractionPrompt;
+        else if (_stickyData != null && !string.IsNullOrEmpty(_stickyData.InteractionPrompt))
+            interactionPrompt = _stickyData.InteractionPrompt;
     }
 
     public override bool CanPreviewInteraction(GameObject interactor)
     {
-        if (_readableData == null) return false;
+        if (!HasData) return false;
 
-        // No mostrar prompt si la UI de lectura ya está abierta.
         if (ReadableUI.Instance != null && ReadableUI.Instance.IsOpen)
             return false;
 
@@ -36,24 +43,18 @@ public class ReadableInteractable : RatInteractable
     [Server]
     public override bool CanServerInteract(NetworkIdentity interactor)
     {
-        if (_readableData == null) return false;
+        if (!HasData) return false;
         return base.CanServerInteract(interactor);
     }
 
     [Server]
     public override void ServerInteract(NetworkIdentity interactor)
     {
-        // Solo enviar al cliente que interactuó.
         NetworkConnectionToClient conn = interactor.connectionToClient;
         if (conn != null)
             TargetShowReadable(conn);
     }
 
-    /// <summary>
-    /// Se ejecuta SOLO en el cliente del jugador que interactuó.
-    /// Abre la UI de lectura con los datos locales del ScriptableObject
-    /// (que es idéntico en todas las máquinas).
-    /// </summary>
     [TargetRpc]
     private void TargetShowReadable(NetworkConnectionToClient target)
     {
@@ -63,6 +64,9 @@ public class ReadableInteractable : RatInteractable
             return;
         }
 
-        ReadableUI.Instance.Show(_readableData);
+        if (IsDocument)
+            ReadableUI.Instance.ShowDocument(_documentData);
+        else
+            ReadableUI.Instance.ShowStickyNote(_stickyData);
     }
 }
