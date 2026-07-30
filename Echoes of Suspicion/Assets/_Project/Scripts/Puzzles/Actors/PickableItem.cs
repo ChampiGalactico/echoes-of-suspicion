@@ -19,6 +19,11 @@ namespace EOS.Puzzles
         [SerializeField]
         private PuzzleItemData _puzzleData;
 
+        [Header("Document (optional)")]
+        [SerializeField, Tooltip("Optional DocumentData for items that carry readable content " +
+                                 "(e.g. receipts). Used by FaxMachine to send document info to the Guide.")]
+        private DocumentData _documentData;
+
         /// <summary>Primary accessor for the puzzle data.</summary>
         public PuzzleItemData PuzzleData => _puzzleData;
 
@@ -27,5 +32,11 @@ namespace EOS.Puzzles
         /// filtering and value evaluation.
         /// </summary>
         public PuzzleItemData ItemData => _puzzleData;
+
+        /// <summary>
+        /// Optional document content carried by this item.
+        /// Null for non-document items.
+        /// </summary>
+        public DocumentData DocumentData => _documentData;
     }
 }
