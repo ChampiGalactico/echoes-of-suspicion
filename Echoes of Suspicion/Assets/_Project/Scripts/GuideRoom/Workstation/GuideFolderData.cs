@@ -5,14 +5,36 @@ namespace EOS.GuideRoom
     /// <summary>
     /// Datos de una carpeta física del Guía.
     ///
-    /// Cada entrada reutiliza ReadableData, el formato de documentos
-    /// ya utilizado por los papeles y notas del proyecto.
+    /// Cada entrada reutiliza el modelo de documentos legibles ya existente
+    /// en el proyecto: <see cref="DocumentData"/> (documentos con secciones)
+    /// o <see cref="StickyNoteData"/> (notas simples). Una entrada puede
+    /// contener uno u otro; si ambos están asignados, se prioriza el documento.
     /// </summary>
     [CreateAssetMenu(
         fileName = "NewGuideFolder",
         menuName = "EOS/Guide Room/Guide Folder Data")]
     public sealed class GuideFolderData : ScriptableObject
     {
+        /// <summary>
+        /// Una entrada de la carpeta. Envuelve el modelo real de readables
+        /// del proyecto para no duplicar formatos de documento.
+        /// </summary>
+        [System.Serializable]
+        public struct FolderDocument
+        {
+            [Tooltip("Documento con secciones. Prioritario si está asignado.")]
+            public DocumentData document;
+
+            [Tooltip("Nota simple. Se usa si no hay documento asignado.")]
+            public StickyNoteData note;
+
+            public bool HasDocument => document != null;
+
+            public bool HasNote => note != null;
+
+            public bool IsEmpty => document == null && note == null;
+        }
+
         [Header("Identidad")]
 
         [SerializeField]
@@ -28,8 +50,8 @@ namespace EOS.GuideRoom
         [Header("Contenido")]
 
         [SerializeField]
-        private ReadableData[] documents =
-            System.Array.Empty<ReadableData>();
+        private FolderDocument[] documents =
+            System.Array.Empty<FolderDocument>();
 
         public string FolderId => folderId;
 
@@ -45,14 +67,14 @@ namespace EOS.GuideRoom
                 ? documents.Length
                 : 0;
 
-        public ReadableData GetDocument(int index)
+        public FolderDocument GetDocument(int index)
         {
             if (
                 documents == null ||
                 documents.Length == 0
             )
             {
-                return null;
+                return default;
             }
 
             int safeIndex =

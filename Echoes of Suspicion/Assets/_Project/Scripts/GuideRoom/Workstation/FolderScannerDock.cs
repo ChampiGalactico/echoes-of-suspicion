@@ -408,10 +408,10 @@ namespace EOS.GuideRoom
                 return;
             }
 
-            ReadableData document =
+            GuideFolderData.FolderDocument entry =
                 folderData.GetDocument(0);
 
-            if (document == null)
+            if (entry.IsEmpty)
             {
                 terminalView.ShowError(
                     "CARPETA VACÍA"
@@ -423,32 +423,21 @@ namespace EOS.GuideRoom
             string documentTitle;
             string documentBody;
 
-            if (
-                document.Type ==
-                ReadableType.StickyNote
-            )
+            if (entry.HasDocument)
             {
-                documentTitle =
-                    string.IsNullOrWhiteSpace(
-                        document.Title
-                    )
-                        ? "NOTA"
-                        : document.Title;
-
-                documentBody =
-                    document.NoteText ?? string.Empty;
+                ExtractDocument(
+                    entry.document,
+                    out documentTitle,
+                    out documentBody
+                );
             }
             else
             {
-                documentTitle =
-                    string.IsNullOrWhiteSpace(
-                        document.Title
-                    )
-                        ? "DOCUMENTO"
-                        : document.Title;
-
-                documentBody =
-                    document.Content ?? string.Empty;
+                ExtractNote(
+                    entry.note,
+                    out documentTitle,
+                    out documentBody
+                );
             }
 
             terminalView.ShowDocument(
@@ -462,6 +451,106 @@ namespace EOS.GuideRoom
                         folderData.DocumentCount
                     )
             );
+        }
+
+        private static void ExtractDocument(
+            DocumentData document,
+            out string title,
+            out string body
+        )
+        {
+            title = "DOCUMENTO";
+            body = string.Empty;
+
+            if (
+                document == null ||
+                document.Sections == null ||
+                document.Sections.Length == 0
+            )
+            {
+                return;
+            }
+
+            bool titleFound = false;
+
+            System.Text.StringBuilder bodyBuilder =
+                new();
+
+            foreach (
+                DocumentSection section
+                in document.Sections
+            )
+            {
+                if (
+                    section == null ||
+                    string.IsNullOrWhiteSpace(section.Text)
+                )
+                {
+                    continue;
+                }
+
+                if (
+                    !titleFound &&
+                    section.Type == SectionType.Title
+                )
+                {
+                    title = section.Text.Trim();
+                    titleFound = true;
+
+                    continue;
+                }
+
+                if (bodyBuilder.Length > 0)
+                {
+                    bodyBuilder.Append("\n\n");
+                }
+
+                bodyBuilder.Append(section.Text.Trim());
+            }
+
+            // Si no había sección de tipo Title, usa la primera
+            // sección de texto como encabezado.
+            if (!titleFound)
+            {
+                foreach (
+                    DocumentSection section
+                    in document.Sections
+                )
+                {
+                    if (
+                        section != null &&
+                        !string.IsNullOrWhiteSpace(section.Text)
+                    )
+                    {
+                        title = section.Text.Trim();
+                        break;
+                    }
+                }
+            }
+
+            body = bodyBuilder.ToString();
+        }
+
+        private static void ExtractNote(
+            StickyNoteData note,
+            out string title,
+            out string body
+        )
+        {
+            title = "NOTA";
+            body = string.Empty;
+
+            if (note == null)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(note.name))
+            {
+                title = note.name;
+            }
+
+            body = note.NoteText ?? string.Empty;
         }
 
         private void RefreshInteractionPrompt()
