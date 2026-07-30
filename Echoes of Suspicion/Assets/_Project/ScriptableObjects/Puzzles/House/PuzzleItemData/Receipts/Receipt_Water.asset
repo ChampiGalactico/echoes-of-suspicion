@@ -9,11 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a27f7163dab90ef4eb0244c1533660b9, type: 3}
+  m_Script: {fileID: 11500000, guid: ee4647d33abe18a44bab259991437fa6, type: 3}
   m_Name: Receipt_Water
-  m_EditorClassIdentifier: Assembly-CSharp::DocumentData
-  DefaultFont: {fileID: 0}
-  VerticalAlignment: 0
-  Sections: []
-  ContentImage: {fileID: 0}
-  InteractionPrompt: Leer
+  m_EditorClassIdentifier: Assembly-CSharp::EOS.Puzzles.PuzzleItemData
+  ItemId: WaterReceipt
+  DisplayName: Recibo de agua
+  ItemTag: WaterReceipt
+  NumericValue: 0
+  Icon: {fileID: 0}
+  WorldModel: {fileID: 0}

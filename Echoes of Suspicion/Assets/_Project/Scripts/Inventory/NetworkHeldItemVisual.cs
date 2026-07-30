@@ -1,5 +1,6 @@
 using Mirror;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Spawns a visual model in the player's hand based on the active inventory slot.
@@ -181,13 +182,16 @@ public class NetworkHeldItemVisual : NetworkBehaviour
         foreach (EOS.Puzzles.PickableItem pi in obj.GetComponentsInChildren<EOS.Puzzles.PickableItem>(true))
             DestroyImmediate(pi);
 
-        // 2. Then: remaining MonoBehaviours EXCEPT NetworkIdentity
-        //    (NetworkIdentity inherits MonoBehaviour and would be caught here,
-        //     but it must be removed AFTER its dependents are gone).
+        // 2. Then: remaining MonoBehaviours EXCEPT:
+        //    - NetworkIdentity (must be removed AFTER its dependents)
+        //    - UI components (TextMeshProUGUI, Image, etc.) that provide
+        //      visual content on World Space Canvases (e.g. receipt text)
         foreach (MonoBehaviour mb in obj.GetComponentsInChildren<MonoBehaviour>(true))
         {
             if (mb == null) continue;
             if (mb is Mirror.NetworkIdentity) continue;
+            if (mb is TMPro.TMP_Text) continue;          // TextMeshProUGUI
+            if (mb is UnityEngine.UI.Graphic) continue;   // Image, RawImage, etc.
             DestroyImmediate(mb);
         }
 

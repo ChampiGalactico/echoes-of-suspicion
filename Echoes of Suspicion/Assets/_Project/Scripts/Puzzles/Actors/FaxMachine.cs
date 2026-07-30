@@ -9,14 +9,19 @@ namespace EOS.Puzzles
     ///
     /// Flow:
     /// 1. Runner approaches with a receipt in active inventory slot.
-    /// 2. Prompt shows "Enviar [receipt name]".
-    /// 3. On interact: receipt is removed from inventory, paper model slides
-    ///    into the machine, fax sound plays, noise is generated.
-    /// 4. After sendDuration, the server raises OnReceiptSent so
-    ///    BillsPuzzleCoordinator can notify the Guide.
+    /// 2. Prompt shows "Enviar [DisplayName]".
+    /// 3. On interact: receipt removed from inventory, tag checked.
+    ///    - Tag matches current round → send animation, OnReceiptSent fires,
+    ///      receipt destroyed.
+    ///    - Tag mismatch → reject animation (red light), receipt drops
+    ///      on the floor near the fax for the Runner to pick up.
     ///
-    /// If no FaxMachineModel child exists at Awake, a procedural model is
-    /// built from primitives (box body + paper slot + indicator light).
+    /// BillsPuzzleCoordinator calls SetAcceptedTag() each round. While no
+    /// tag is set the fax is inactive (no prompt, no interaction).
+    ///
+    /// Item filter uses receiptTagPrefix ("Receipt") for broad prompt
+    /// visibility — any item with ItemTag starting with "Receipt" shows
+    /// the insert prompt. The exact tag match happens server-side.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(NetworkIdentity))]
@@ -33,6 +38,27 @@ namespace EOS.Puzzles
         [SerializeField]
         private AudioClip faxCompleteSound;
 
+        [Header("Reject Settings")]
+
+        [SerializeField, Min(0.5f)]
+        private float rejectDuration = 1.5f;
+
+        [SerializeField]
+        private AudioClip faxRejectSound;
+
+        [SerializeField]
+        private Color rejectColor = new Color(1f, 0.1f, 0.1f);
+
+        [SerializeField, Tooltip("Where the receipt drops after rejection. " +
+                                 "Falls back to fax front if unassigned.")]
+        private Transform rejectDropPoint;
+
+        [Header("Item Filter")]
+
+        [SerializeField, Tooltip("Tag suffix for receipt items (e.g. 'Receipt'). " +
+                                 "Items with ItemTag containing this can be inserted.")]
+        private string receiptTagFilter = "Receipt";
+
         [Header("Paper Animation")]
 
         [SerializeField, Tooltip("Transform where the paper starts (above the slot). " +
@@ -43,7 +69,7 @@ namespace EOS.Puzzles
                                  "Auto-created if null.")]
         private Transform paperEndPoint;
 
-        [SerializeField, Tooltip("Paper visual used for the send animation. " +
+        [SerializeField, Tooltip("Paper visual used for animations. " +
                                  "Auto-created if null.")]
         private Transform paperVisual;
 
@@ -63,25 +89,86 @@ namespace EOS.Puzzles
         [SerializeField]
         private NoiseLevel sendNoiseLevel = NoiseLevel.Medium;
 
+        [SerializeField]
+        private NoiseLevel rejectNoiseLevel = NoiseLevel.Low;
+
         // ── State ────────────────────────────────────────────
 
         [SyncVar]
         private bool _isSending;
 
-        private AudioSource _audioSource;
-        private Coroutine _sendRoutine;
+        /// <summary>
+        /// The exact tag accepted this round (e.g. "ReceiptElectric").
+        /// Set by the coordinator. Synced so clients hide the prompt
+        /// when the fax is inactive (tag is null/empty).
+        /// </summary>
+        [SyncVar]
+        private string _currentAcceptedTag;
 
-        // Cached receipt id from last send (server only).
-        private string _lastSentReceiptId;
-        private ReceiptData _lastSentReceiptData;
+        private AudioSource _audioSource;
+        private Coroutine _activeRoutine;
+
+        // Cached from last interaction (server only).
+        private string _lastSentItemId;
+        private PuzzleItemData _lastSentPuzzleData;
+        private DocumentData _lastSentDocumentData;
+
+        // ── Events ───────────────────────────────────────────
 
         /// <summary>
-        /// Fired on the server when a receipt finishes sending.
+        /// Fired on server when a receipt is successfully sent.
+        /// Parameters: itemId, puzzleData, documentData (may be null).
         /// BillsPuzzleCoordinator subscribes to this.
         /// </summary>
-        public event System.Action<string, ReceiptData> OnReceiptSent;
+        public event System.Action<string, PuzzleItemData, DocumentData> OnReceiptSent;
+
+        /// <summary>
+        /// Fired on server when the fax rejects a receipt (wrong tag).
+        /// Parameter: rejected itemId.
+        /// </summary>
+        public event System.Action<string> OnReceiptRejectedByFax;
+
+        // ── Public API ───────────────────────────────────────
+
+        /// <summary>
+        /// Set the exact tag accepted for the current round.
+        /// Called by BillsPuzzleCoordinator each round.
+        /// Pass null/empty to deactivate the fax.
+        /// </summary>
+        [Server]
+        public void SetAcceptedTag(string tag)
+        {
+            _currentAcceptedTag = tag;
+        }
 
         // ── Lifecycle ────────────────────────────────────────
+
+        private void Reset()
+        {
+            if (paperVisual == null && paperStartPoint == null && paperEndPoint == null)
+                BuildProceduralModel();
+        }
+
+        [ContextMenu("Generate Fax Model")]
+        private void EditorGenerateModel()
+        {
+            for (int i = transform.childCount - 1; i >= 0; i--)
+            {
+                var child = transform.GetChild(i);
+                if (child.name is "FaxBody" or "FaxTray" or "FaxPaper"
+                    or "PaperStart" or "PaperEnd" or "FaxIndicator")
+                {
+                    DestroyImmediate(child.gameObject);
+                }
+            }
+
+            paperVisual = null;
+            paperStartPoint = null;
+            paperEndPoint = null;
+            indicatorLight = null;
+
+            BuildProceduralModel();
+        }
 
         private void Awake()
         {
@@ -99,7 +186,7 @@ namespace EOS.Puzzles
             if (paperVisual != null)
                 paperVisual.gameObject.SetActive(false);
 
-            RefreshPrompt(null);
+            interactionPrompt = "Fax";
         }
 
         // ── Interaction ──────────────────────────────────────
@@ -107,6 +194,7 @@ namespace EOS.Puzzles
         public override bool CanPreviewInteraction(GameObject interactor)
         {
             if (_isSending) return false;
+            if (string.IsNullOrEmpty(_currentAcceptedTag)) return false;
             return FindActiveReceipt(interactor) != null;
         }
 
@@ -114,9 +202,9 @@ namespace EOS.Puzzles
         {
             if (_isSending) return "Enviando...";
 
-            var receipt = FindActiveReceipt(interactor);
-            if (receipt != null)
-                return $"Enviar {receipt.ReceiptDisplayName}";
+            var pickable = FindActiveReceipt(interactor);
+            if (pickable != null)
+                return $"Enviar {pickable.PuzzleData.DisplayName}";
 
             return "Fax (necesitas un recibo)";
         }
@@ -125,6 +213,7 @@ namespace EOS.Puzzles
         public override bool CanServerInteract(NetworkIdentity interactor)
         {
             if (_isSending || interactor == null) return false;
+            if (string.IsNullOrEmpty(_currentAcceptedTag)) return false;
             return FindActiveReceiptServer(interactor) != null;
         }
 
@@ -136,66 +225,103 @@ namespace EOS.Puzzles
             var inventory = interactor.GetComponent<NetworkInventory>();
             if (inventory == null) return;
 
-            // Find the receipt in the active slot.
             InventorySlot slot = inventory.ActiveSlot;
             if (slot.IsEmpty || slot.itemNetId == 0) return;
 
             if (!NetworkServer.spawned.TryGetValue(slot.itemNetId, out NetworkIdentity itemIdentity))
                 return;
 
-            ReceiptData receipt = itemIdentity.GetComponent<ReceiptData>();
-            if (receipt == null) return;
+            PickableItem pickable = itemIdentity.GetComponent<PickableItem>();
+            if (pickable == null || pickable.PuzzleData == null) return;
 
-            // Cache receipt info before removing from inventory.
-            _lastSentReceiptId = receipt.ReceiptId;
-            _lastSentReceiptData = receipt;
+            // Cache info before removing from inventory.
+            _lastSentItemId = pickable.PuzzleData.ItemId;
+            _lastSentPuzzleData = pickable.PuzzleData;
+            _lastSentDocumentData = pickable.DocumentData;
 
-            // Remove from inventory (the world object stays hidden).
+            // Remove from inventory.
             inventory.ServerRemoveItem(inventory.ActiveSlotIndex);
 
-            // Start the send sequence.
             _isSending = true;
 
-            if (_sendRoutine != null)
-                StopCoroutine(_sendRoutine);
+            if (_activeRoutine != null)
+                StopCoroutine(_activeRoutine);
 
-            _sendRoutine = StartCoroutine(ServerSendSequence(itemIdentity));
+            // Exact tag match → send. Mismatch → reject with red light.
+            if (pickable.PuzzleData.ItemTag == _currentAcceptedTag)
+                _activeRoutine = StartCoroutine(ServerSendSequence(itemIdentity));
+            else
+                _activeRoutine = StartCoroutine(ServerRejectSequence(itemIdentity));
         }
+
+        // ── Send sequence (tag matched) ──────────────────────
 
         [Server]
         private IEnumerator ServerSendSequence(NetworkIdentity receiptObject)
         {
-            // Notify all clients to play the animation.
             RpcPlaySendAnimation(sendDuration);
-
-            // Generate noise — the fax is loud.
             PuzzleEvents.RaiseNoiseGenerated(transform.position, sendNoiseLevel);
 
             yield return new WaitForSeconds(sendDuration);
 
-            // Send complete.
             _isSending = false;
-
             RpcPlaySendComplete();
 
-            // Destroy the receipt world object — it's been "faxed".
+            // Destroy the receipt — it's been "faxed".
             if (receiptObject != null)
                 NetworkServer.Destroy(receiptObject.gameObject);
 
-            // Notify the coordinator.
-            OnReceiptSent?.Invoke(_lastSentReceiptId, _lastSentReceiptData);
-            _lastSentReceiptId = null;
-            _lastSentReceiptData = null;
-
-            _sendRoutine = null;
+            OnReceiptSent?.Invoke(_lastSentItemId, _lastSentPuzzleData, _lastSentDocumentData);
+            ClearCachedData();
+            _activeRoutine = null;
         }
 
-        // ── Client RPCs ──────────────────────────────────────
+        // ── Reject sequence (wrong tag) ──────────────────────
+
+        [Server]
+        private IEnumerator ServerRejectSequence(NetworkIdentity receiptObject)
+        {
+            RpcPlayRejectAnimation(rejectDuration);
+            PuzzleEvents.RaiseNoiseGenerated(transform.position, rejectNoiseLevel);
+
+            yield return new WaitForSeconds(rejectDuration);
+
+            _isSending = false;
+            RpcPlayRejectComplete();
+
+            // Drop receipt near fax so Runner can pick it up again.
+            if (receiptObject != null)
+            {
+                Vector3 dropPos = rejectDropPoint != null
+                    ? rejectDropPoint.position
+                    : transform.position + transform.forward * 0.5f + Vector3.up * 0.3f;
+
+                receiptObject.transform.position = dropPos;
+                receiptObject.transform.rotation = Quaternion.identity;
+
+                var pickup = receiptObject.GetComponent<NetworkPickupItem>();
+                if (pickup != null)
+                    pickup.SetVisibility(true);
+            }
+
+            OnReceiptRejectedByFax?.Invoke(_lastSentItemId);
+            ClearCachedData();
+            _activeRoutine = null;
+        }
+
+        private void ClearCachedData()
+        {
+            _lastSentItemId = null;
+            _lastSentPuzzleData = null;
+            _lastSentDocumentData = null;
+        }
+
+        // ── Client RPCs (send) ───────────────────────────────
 
         [ClientRpc]
         private void RpcPlaySendAnimation(float duration)
         {
-            StartCoroutine(ClientPaperAnimation(duration));
+            StartCoroutine(ClientSendAnimation(duration));
 
             if (faxSendSound != null)
                 _audioSource.PlayOneShot(faxSendSound);
@@ -217,7 +343,36 @@ namespace EOS.Puzzles
                 paperVisual.gameObject.SetActive(false);
         }
 
-        private IEnumerator ClientPaperAnimation(float duration)
+        // ── Client RPCs (reject) ─────────────────────────────
+
+        [ClientRpc]
+        private void RpcPlayRejectAnimation(float duration)
+        {
+            StartCoroutine(ClientRejectAnimation(duration));
+
+            if (faxRejectSound != null)
+                _audioSource.PlayOneShot(faxRejectSound);
+
+            if (indicatorLight != null)
+                indicatorLight.color = rejectColor;
+        }
+
+        [ClientRpc]
+        private void RpcPlayRejectComplete()
+        {
+            if (indicatorLight != null)
+            {
+                indicatorLight.color = idleColor;
+                indicatorLight.intensity = 1f;
+            }
+
+            if (paperVisual != null)
+                paperVisual.gameObject.SetActive(false);
+        }
+
+        // ── Client animations ────────────────────────────────
+
+        private IEnumerator ClientSendAnimation(float duration)
         {
             if (paperVisual == null || paperStartPoint == null || paperEndPoint == null)
                 yield break;
@@ -242,7 +397,6 @@ namespace EOS.Puzzles
                     paperEndPoint.rotation,
                     t);
 
-                // Blink indicator light.
                 if (indicatorLight != null)
                 {
                     float blink = Mathf.Sin(elapsed * 8f) > 0f ? 1f : 0.3f;
@@ -258,10 +412,80 @@ namespace EOS.Puzzles
                 indicatorLight.intensity = 1f;
         }
 
+        private IEnumerator ClientRejectAnimation(float duration)
+        {
+            if (paperVisual == null || paperStartPoint == null || paperEndPoint == null)
+                yield break;
+
+            paperVisual.gameObject.SetActive(true);
+            paperVisual.position = paperStartPoint.position;
+            paperVisual.rotation = paperStartPoint.rotation;
+
+            float half = duration * 0.5f;
+            Vector3 midPos = Vector3.Lerp(
+                paperStartPoint.position,
+                paperEndPoint.position,
+                0.5f);
+            Quaternion midRot = Quaternion.Slerp(
+                paperStartPoint.rotation,
+                paperEndPoint.rotation,
+                0.5f);
+
+            // Paper goes halfway in.
+            float elapsed = 0f;
+            while (elapsed < half)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.SmoothStep(0f, 1f, elapsed / half);
+
+                paperVisual.position = Vector3.Lerp(
+                    paperStartPoint.position, midPos, t);
+                paperVisual.rotation = Quaternion.Slerp(
+                    paperStartPoint.rotation, midRot, t);
+
+                if (indicatorLight != null)
+                {
+                    float blink = Mathf.Sin(elapsed * 12f) > 0f ? 1f : 0.3f;
+                    indicatorLight.intensity = blink;
+                }
+
+                yield return null;
+            }
+
+            // Paper comes back out.
+            elapsed = 0f;
+            while (elapsed < half)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.SmoothStep(0f, 1f, elapsed / half);
+
+                paperVisual.position = Vector3.Lerp(midPos,
+                    paperStartPoint.position, t);
+                paperVisual.rotation = Quaternion.Slerp(midRot,
+                    paperStartPoint.rotation, t);
+
+                if (indicatorLight != null)
+                {
+                    float blink = Mathf.Sin(elapsed * 12f) > 0f ? 1f : 0.3f;
+                    indicatorLight.intensity = blink;
+                }
+
+                yield return null;
+            }
+
+            paperVisual.gameObject.SetActive(false);
+
+            if (indicatorLight != null)
+                indicatorLight.intensity = 1f;
+        }
+
         // ── Helpers ──────────────────────────────────────────
 
-        /// <summary>Client-side receipt lookup (for prompt display).</summary>
-        private ReceiptData FindActiveReceipt(GameObject interactor)
+        /// <summary>
+        /// Client-side: find PickableItem with receipt tag prefix
+        /// in active inventory slot.
+        /// </summary>
+        private PickableItem FindActiveReceipt(GameObject interactor)
         {
             if (interactor == null) return null;
 
@@ -274,12 +498,22 @@ namespace EOS.Puzzles
             if (!NetworkClient.spawned.TryGetValue(slot.itemNetId, out NetworkIdentity identity))
                 return null;
 
-            return identity.GetComponent<ReceiptData>();
+            var pickable = identity.GetComponent<PickableItem>();
+            if (pickable == null || pickable.PuzzleData == null) return null;
+
+            string tag = pickable.PuzzleData.ItemTag;
+            if (string.IsNullOrEmpty(tag) || !tag.Contains(receiptTagFilter))
+                return null;
+
+            return pickable;
         }
 
-        /// <summary>Server-side receipt lookup.</summary>
+        /// <summary>
+        /// Server-side: find PickableItem with receipt tag prefix
+        /// in active inventory slot.
+        /// </summary>
         [Server]
-        private ReceiptData FindActiveReceiptServer(NetworkIdentity interactor)
+        private PickableItem FindActiveReceiptServer(NetworkIdentity interactor)
         {
             var inventory = interactor.GetComponent<NetworkInventory>();
             if (inventory == null) return null;
@@ -290,20 +524,27 @@ namespace EOS.Puzzles
             if (!NetworkServer.spawned.TryGetValue(slot.itemNetId, out NetworkIdentity identity))
                 return null;
 
-            return identity.GetComponent<ReceiptData>();
-        }
+            var pickable = identity.GetComponent<PickableItem>();
+            if (pickable == null || pickable.PuzzleData == null) return null;
 
-        private void RefreshPrompt(ReceiptData receipt)
-        {
-            interactionPrompt = receipt != null
-                ? $"Enviar {receipt.ReceiptDisplayName}"
-                : "Fax";
+            string tag = pickable.PuzzleData.ItemTag;
+            if (string.IsNullOrEmpty(tag) || !tag.Contains(receiptTagFilter))
+                return null;
+
+            return pickable;
         }
 
         // ── Procedural Model ─────────────────────────────────
-        //
-        // Builds a basic fax machine from Unity primitives if no
-        // model is assigned. Good enough for programmer art / MVP.
+
+        private static void SafeDestroy(Object obj)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                DestroyImmediate(obj);
+            else
+#endif
+                Destroy(obj);
+        }
 
         private void BuildProceduralModel()
         {
@@ -321,9 +562,8 @@ namespace EOS.Puzzles
                 bodyRenderer.material.color = new Color(0.25f, 0.25f, 0.28f);
             }
 
-            // Remove collider from child — the parent should have its own.
             var bodyCol = body.GetComponent<Collider>();
-            if (bodyCol != null) Destroy(bodyCol);
+            if (bodyCol != null) SafeDestroy(bodyCol);
 
             // ── Paper tray (back raised section) ──
             GameObject tray = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -341,7 +581,7 @@ namespace EOS.Puzzles
             }
 
             var trayCol = tray.GetComponent<Collider>();
-            if (trayCol != null) Destroy(trayCol);
+            if (trayCol != null) SafeDestroy(trayCol);
 
             // ── Paper visual (thin white quad) ──
             GameObject paper = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -357,7 +597,7 @@ namespace EOS.Puzzles
             }
 
             var paperCol = paper.GetComponent<Collider>();
-            if (paperCol != null) Destroy(paperCol);
+            if (paperCol != null) SafeDestroy(paperCol);
 
             paperVisual = paper.transform;
             paper.SetActive(false);
@@ -385,7 +625,6 @@ namespace EOS.Puzzles
             indicatorLight.intensity = 1f;
             indicatorLight.color = idleColor;
 
-            // Small sphere to visualize the light.
             GameObject bulb = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             bulb.name = "Bulb";
             bulb.transform.SetParent(lightObj.transform, false);
@@ -401,7 +640,7 @@ namespace EOS.Puzzles
             }
 
             var bulbCol = bulb.GetComponent<Collider>();
-            if (bulbCol != null) Destroy(bulbCol);
+            if (bulbCol != null) SafeDestroy(bulbCol);
 
             // ── Main collider on parent ──
             if (GetComponent<Collider>() == null)
