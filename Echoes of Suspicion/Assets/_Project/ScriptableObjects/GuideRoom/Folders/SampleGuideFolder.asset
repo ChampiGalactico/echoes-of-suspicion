@@ -16,4 +16,5 @@ MonoBehaviour:
   displayName: MANTENIMIENTO
   folderColor: {r: 0.27, g: 0.38, b: 0.2, a: 1}
   documents:
-  - {fileID: 11400000, guid: 31847cf63bc388e4e90bc4ade723f738, type: 2}
+  - document: {fileID: 11400000, guid: 31847cf63bc388e4e90bc4ade723f738, type: 2}
+    note: {fileID: 0}
