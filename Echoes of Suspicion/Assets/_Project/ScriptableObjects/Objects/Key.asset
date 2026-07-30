@@ -22,3 +22,5 @@ MonoBehaviour:
   worldPrefab: {fileID: 8831318836077398194, guid: 911c9af51d7929d40a44a2849e0dd024, type: 3}
   heldModelPrefab: {fileID: 0}
   heldScale: 1
+  heldRotationOffset: {x: -90, y: 90, z: 0}
+  heldPositionOffset: {x: 0, y: 0, z: 0}

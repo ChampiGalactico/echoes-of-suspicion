@@ -14,8 +14,8 @@ GameObject:
   - component: {fileID: 5948089703409836477}
   - component: {fileID: 3221365095934028242}
   - component: {fileID: 8141052905691832672}
-  - component: {fileID: 2081248637373253749}
   - component: {fileID: -4911272825351544434}
+  - component: {fileID: -1428754050232957283}
   m_Layer: 6
   m_Name: wire_brush
   m_TagString: Untagged
@@ -156,40 +156,6 @@ MonoBehaviour:
   serverOnly: 0
   visibility: 0
   hasSpawned: 0
---- !u!114 &2081248637373253749
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1642033129895230824}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ff3ba0becae47b8b9381191598957c8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Mirror.Components::Mirror.NetworkTransformReliable
-  syncDirection: 1
-  syncMode: 0
-  syncInterval: 0
-  target: {fileID: 5593288865163755839}
-  syncPosition: 1
-  syncRotation: 1
-  syncScale: 0
-  onlySyncOnChange: 1
-  compressRotation: 1
-  interpolatePosition: 1
-  interpolateRotation: 1
-  interpolateScale: 1
-  coordinateSpace: 0
-  timelineOffset: 1
-  showGizmos: 0
-  showOverlay: 0
-  overlayColor: {r: 0, g: 0, b: 0, a: 0.5}
-  onlySyncOnChangeCorrectionMultiplier: 2
-  useFixedUpdate: 0
-  rotationSensitivity: 0.01
-  positionPrecision: 0.01
-  scalePrecision: 0.01
 --- !u!65 &-4911272825351544434
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -211,3 +177,16 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.061264034, y: 0.32841313, z: 0.05790007}
   m_Center: {x: 0.000043869015, y: 0.08601719, z: 0.014601409}
+--- !u!114 &-1428754050232957283
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1642033129895230824}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90d8e3f77d66c65478e68c206dbff438, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EOS.Puzzles.PickableItem
+  _puzzleData: {fileID: 11400000, guid: a9a4476f0f3aa9448950baa3d3c4930a, type: 2}

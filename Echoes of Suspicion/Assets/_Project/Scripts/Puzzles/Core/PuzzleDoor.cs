@@ -37,7 +37,9 @@ namespace EOS.Puzzles
 
         private void OnUnlockedChanged(bool oldVal, bool newVal)
         {
-            if (newVal) OnDoorOpened?.Invoke();
+            // Only fire on the server — OpenDoor() is [Server] only.
+            // Clients receive the door state via InteractableDoor's own SyncVar.
+            if (newVal && isServer) OnDoorOpened?.Invoke();
         }
     }
 }

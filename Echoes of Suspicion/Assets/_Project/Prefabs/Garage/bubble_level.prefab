@@ -14,8 +14,8 @@ GameObject:
   - component: {fileID: 6310649902974295781}
   - component: {fileID: 286947288650103036}
   - component: {fileID: 6193855749210953953}
-  - component: {fileID: -1380184658898607351}
   - component: {fileID: -5071591211495289238}
+  - component: {fileID: -6477018272739898897}
   m_Layer: 6
   m_Name: bubble_level
   m_TagString: Untagged
@@ -156,40 +156,6 @@ MonoBehaviour:
   syncInterval: 0
   interactionPrompt: Interactuar
   itemData: {fileID: 11400000, guid: 84971377447f1dd4cb772dd4e08b27de, type: 2}
---- !u!114 &-1380184658898607351
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1664128144771859059}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ff3ba0becae47b8b9381191598957c8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Mirror.Components::Mirror.NetworkTransformReliable
-  syncDirection: 1
-  syncMode: 0
-  syncInterval: 0
-  target: {fileID: 1816272879044296717}
-  syncPosition: 1
-  syncRotation: 1
-  syncScale: 0
-  onlySyncOnChange: 1
-  compressRotation: 1
-  interpolatePosition: 1
-  interpolateRotation: 1
-  interpolateScale: 1
-  coordinateSpace: 0
-  timelineOffset: 1
-  showGizmos: 0
-  showOverlay: 0
-  overlayColor: {r: 0, g: 0, b: 0, a: 0.5}
-  onlySyncOnChangeCorrectionMultiplier: 2
-  useFixedUpdate: 0
-  rotationSensitivity: 0.01
-  positionPrecision: 0.01
-  scalePrecision: 0.01
 --- !u!65 &-5071591211495289238
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -211,3 +177,16 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.031751648, y: 0.8907835, z: 0.093527}
   m_Center: {x: -0.000019073495, y: 0.016440986, z: 0.000119985154}
+--- !u!114 &-6477018272739898897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1664128144771859059}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90d8e3f77d66c65478e68c206dbff438, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EOS.Puzzles.PickableItem
+  _puzzleData: {fileID: 11400000, guid: eb554f6b83bf74847a9267f7fa4d23ee, type: 2}

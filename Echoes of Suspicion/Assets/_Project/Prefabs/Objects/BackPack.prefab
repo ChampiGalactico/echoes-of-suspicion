@@ -82,16 +82,8 @@ PrefabInstance:
       addedObject: {fileID: 4773198417108433264}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7bdbe8643085a394fb777d4d300ec794, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 6565660819742202825}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7bdbe8643085a394fb777d4d300ec794, type: 3}
-      insertIndex: -1
       addedObject: {fileID: -440582613523627809}
   m_SourcePrefab: {fileID: 100100000, guid: 7bdbe8643085a394fb777d4d300ec794, type: 3}
---- !u!4 &504800100817875210 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 7bdbe8643085a394fb777d4d300ec794, type: 3}
-  m_PrefabInstance: {fileID: 39354240365876961}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &885724412121508784 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 7bdbe8643085a394fb777d4d300ec794, type: 3}
@@ -179,40 +171,6 @@ MonoBehaviour:
   syncInterval: 0
   interactionPrompt: Interactuar
   itemData: {fileID: 11400000, guid: 0c59fa12c49e7da469cc30f7715bd040, type: 2}
---- !u!114 &6565660819742202825
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 885724412121508784}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ff3ba0becae47b8b9381191598957c8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Mirror.Components::Mirror.NetworkTransformReliable
-  syncDirection: 1
-  syncMode: 0
-  syncInterval: 0
-  target: {fileID: 504800100817875210}
-  syncPosition: 1
-  syncRotation: 1
-  syncScale: 0
-  onlySyncOnChange: 1
-  compressRotation: 1
-  interpolatePosition: 1
-  interpolateRotation: 1
-  interpolateScale: 1
-  coordinateSpace: 0
-  timelineOffset: 1
-  showGizmos: 0
-  showOverlay: 0
-  overlayColor: {r: 0, g: 0, b: 0, a: 0.5}
-  onlySyncOnChangeCorrectionMultiplier: 2
-  useFixedUpdate: 0
-  rotationSensitivity: 0.01
-  positionPrecision: 0.01
-  scalePrecision: 0.01
 --- !u!114 &-440582613523627809
 MonoBehaviour:
   m_ObjectHideFlags: 0

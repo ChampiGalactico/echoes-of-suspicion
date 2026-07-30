@@ -47,4 +47,12 @@ public class ItemData : ScriptableObject
              "Reduce for large items like boxes.")]
     [Min(0.01f)]
     public float heldScale = 1f;
+
+    [Tooltip("Rotación del modelo en la mano (Euler angles). " +
+             "Usa el preview del Inspector para ajustar visualmente.")]
+    public Vector3 heldRotationOffset = Vector3.zero;
+
+    [Tooltip("Offset de posición del modelo en la mano. " +
+             "Ajusta si el pivot del modelo no está centrado.")]
+    public Vector3 heldPositionOffset = Vector3.zero;
 }

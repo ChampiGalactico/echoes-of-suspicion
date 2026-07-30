@@ -75,11 +75,11 @@ public sealed class NetworkPlayerVisualMode : NetworkBehaviour
 
     private void ApplyRemoteVisuals()
     {
-        // Los demás jugadores no deben ver las patas flotantes
-        // que pertenecen a la cámara de primera persona.
+        // Los demï¿½s jugadores no deben ver las patas flotantes
+        // que pertenecen a la cï¿½mara de primera persona.
         SetActiveSafely(firstPersonRig, false);
 
-        // El modelo completo sí debe verse para jugadores remotos.
+        // El modelo completo sï¿½ debe verse para jugadores remotos.
         SetActiveSafely(thirdPersonModel, true);
 
         RestoreThirdPersonShadowModes();
@@ -127,8 +127,10 @@ public sealed class NetworkPlayerVisualMode : NetworkBehaviour
     }
 
 #if UNITY_EDITOR
-    private void OnValidate()
+    protected override void OnValidate()
     {
+        base.OnValidate();
+
         if (firstPersonRig != null &&
             firstPersonRig == thirdPersonModel)
         {

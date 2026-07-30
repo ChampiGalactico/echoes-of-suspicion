@@ -145,8 +145,8 @@ public class NetworkHeldItemVisual : NetworkBehaviour
         StripNonVisual(currentVisualInstance);
 
         // Apply transform after stripping so nothing overrides it.
-        currentVisualInstance.transform.localPosition = Vector3.zero;
-        currentVisualInstance.transform.localRotation = Quaternion.identity;
+        currentVisualInstance.transform.localPosition = data.heldPositionOffset;
+        currentVisualInstance.transform.localRotation = Quaternion.Euler(data.heldRotationOffset);
         currentVisualInstance.transform.localScale = prefab.transform.localScale * data.heldScale;
 
         localVisualItemId = itemId;
@@ -168,6 +168,12 @@ public class NetworkHeldItemVisual : NetworkBehaviour
     /// Uses DestroyImmediate in reverse dependency order so
     /// RequireComponent constraints don't block removal.
     /// Safe because this is a freshly instantiated clone, not a scene object.
+    ///
+    /// IMPORTANT: GetComponentsInChildren&lt;MonoBehaviour&gt; also returns
+    /// NetworkIdentity (it inherits MonoBehaviour). If Unity iterates
+    /// NetworkIdentity before NetworkPickupItem, the RequireComponent
+    /// constraint blocks removal. We skip NetworkIdentity in the
+    /// MonoBehaviour pass and handle it in its own dedicated step.
     /// </summary>
     private static void StripNonVisual(GameObject obj)
     {
@@ -175,17 +181,29 @@ public class NetworkHeldItemVisual : NetworkBehaviour
         foreach (EOS.Puzzles.PickableItem pi in obj.GetComponentsInChildren<EOS.Puzzles.PickableItem>(true))
             DestroyImmediate(pi);
 
-        // 2. Then: remaining MonoBehaviours (NetworkPickupItem, etc.)
+        // 2. Then: remaining MonoBehaviours EXCEPT NetworkIdentity
+        //    (NetworkIdentity inherits MonoBehaviour and would be caught here,
+        //     but it must be removed AFTER its dependents are gone).
         foreach (MonoBehaviour mb in obj.GetComponentsInChildren<MonoBehaviour>(true))
+        {
+            if (mb == null) continue;
+            if (mb is Mirror.NetworkIdentity) continue;
             DestroyImmediate(mb);
+        }
 
-        // 3. Then: NetworkIdentity (NetworkPickupItem required it, but it's gone now)
+        // 3. Then: NetworkIdentity (all dependents are gone now)
         foreach (Mirror.NetworkIdentity ni in obj.GetComponentsInChildren<Mirror.NetworkIdentity>(true))
+        {
+            if (ni == null) continue;
             DestroyImmediate(ni);
+        }
 
-        // 4. Finally: Rigidbody (NetworkPickupItem required it, but it's gone now)
+        // 4. Finally: Rigidbody
         foreach (Rigidbody rb in obj.GetComponentsInChildren<Rigidbody>(true))
+        {
+            if (rb == null) continue;
             DestroyImmediate(rb);
+        }
 
         // Disable colliders so the visual doesn't block raycasts.
         foreach (Collider col in obj.GetComponentsInChildren<Collider>(true))

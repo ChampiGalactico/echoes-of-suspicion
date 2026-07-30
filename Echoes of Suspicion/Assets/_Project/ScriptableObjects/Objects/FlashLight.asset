@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ccd229622a3e284497e1b518a4fd108, type: 3}
   m_Name: FlashLight
   m_EditorClassIdentifier: Assembly-CSharp::FlashlightData
-  maxBattery: 60
+  maxBattery: 200
   drainPerSecond: 1
   lightRange: 25
   lightIntensity: 5

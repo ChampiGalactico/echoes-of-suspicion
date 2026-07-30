@@ -16,7 +16,7 @@ MonoBehaviour:
   patrolSpeed: 0.3
   alertSpeed: 6
   chaseSpeed: 10
-  hearingRadius: 50
+  hearingRadius: 100
   minNoiseIntensity: 0.1
   visionRadius: 5
   visionAngle: 160
@@ -27,6 +27,6 @@ MonoBehaviour:
   loseTargetTime: 5
   chaseVisionRadiusBonus: 5
   stunDuration: 2
-  attackRadius: 2
+  attackRadius: 3
   attackDamage: 20
   attackCooldown: 1

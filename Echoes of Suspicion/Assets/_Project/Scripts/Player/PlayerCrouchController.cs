@@ -190,8 +190,10 @@ public sealed class PlayerCrouchController : NetworkBehaviour
                 Time.deltaTime);
     }
 #if UNITY_EDITOR
-    private void OnValidate()
+    protected override void OnValidate()
     {
+        base.OnValidate();
+
         crouchingHeight =
             Mathf.Min(
                 crouchingHeight,

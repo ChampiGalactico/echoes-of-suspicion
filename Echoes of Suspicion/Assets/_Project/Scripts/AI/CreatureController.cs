@@ -6,9 +6,13 @@ using UnityEngine.AI;
 /// Componente principal de una criatura.
 ///
 /// - Vive en el servidor (Server Authority): los cálculos de IA se hacen aquí.
-/// - Sincroniza posición a los clientes automáticamente vía NetworkTransform.
+/// - Sincroniza el destino del NavMeshAgent a los clientes para que cada uno
+///   navegue localmente (movimiento 100% fluido, sin depender de NetworkTransform).
 /// - Sincroniza el estado actual como SyncVar para que los clientes puedan
 ///   reproducir animaciones o efectos distintos según el estado.
+///
+/// IMPORTANTE: quitar NetworkTransformReliable del prefab. La posición se
+/// sincroniza vía NavMeshAgent local en cada cliente.
 ///
 /// La lógica real está en las clases de estado (PatrolState, AlertState, etc.).
 /// Este componente solo orquesta.
@@ -29,8 +33,36 @@ public sealed class CreatureController : NetworkBehaviour
     /// Estado actual sincronizado por red. Los clientes lo usan para
     /// reproducir animaciones o efectos distintos.
     /// </summary>
-    [SyncVar]
+    [SyncVar(hook = nameof(OnStateTypeChanged))]
     private CreatureStateType CurrentStateType = CreatureStateType.Patrol;
+
+    /// <summary>
+    /// NetId del jugador objetivo actual. Sincronizado para que los clientes
+    /// puedan saber si ellos son el target (efectos de pantalla, etc.).
+    /// Se usa uint porque Mirror no soporta uint? como SyncVar; 0 = sin target.
+    /// </summary>
+    [SyncVar]
+    private uint syncTargetNetId;
+
+    // ── Destination sync ─────────────────────────────────────
+    // El servidor sincroniza el destino y la velocidad del agente.
+    // Los clientes navegan localmente al mismo punto.
+
+    [SyncVar(hook = nameof(OnDestinationChanged))]
+    private Vector3 syncDestination;
+
+    [SyncVar(hook = nameof(OnAgentSpeedChanged))]
+    private float syncAgentSpeed;
+
+    [SyncVar(hook = nameof(OnAgentStoppedChanged))]
+    private bool syncAgentStopped;
+
+    private Vector3 lastSentDestination;
+    private float lastSentSpeed;
+    private bool lastSentStopped;
+
+    // Distancia mínima para considerar un cambio de destino.
+    private const float DestinationSyncThreshold = 0.05f;
 
     /// <summary>
     /// Flag que indica si la criatura puede ser aturdida ahora mismo.
@@ -41,7 +73,7 @@ public sealed class CreatureController : NetworkBehaviour
     // Acceso a los datos y componentes (los estados los necesitan).
     public CreatureData Data => data;
 
-    /// <summary>Acceso público al estado sincronizado, usado por RunnerCreatureAwareness al armar los CreatureMapBlip del mapa del Guía.</summary>
+    /// <summary>Acceso público al estado sincronizado.</summary>
     public CreatureStateType StateType => CurrentStateType;
 
     public NavMeshAgent Agent { get; private set; }
@@ -54,15 +86,12 @@ public sealed class CreatureController : NetworkBehaviour
     private bool showDebugLogs = true;
 
     /// <summary>
-    /// Se dispara cada vez que CUALQUIER criatura cambia de estado. targetNetId
-    /// es null si el nuevo estado no tiene target (ej. Patrol).
+    /// Se dispara cada vez que CUALQUIER criatura cambia de estado.
     /// </summary>
     public static event System.Action<CreatureController, CreatureStateType, uint?> OnAnyCreatureStateChanged;
 
     /// <summary>
     /// Asigna waypoints a la criatura después de spawneada.
-    /// Debe llamarse ANTES del primer Update — típicamente desde el spawner.
-    /// Solo tiene efecto en el servidor.
     /// </summary>
     public void SetPatrolWaypoints(Transform[] waypoints)
     {
@@ -79,22 +108,130 @@ public sealed class CreatureController : NetworkBehaviour
     {
         base.OnStartServer();
 
-        // Solo el servidor corre la máquina de estados. Los clientes ven la posición
-        // vía NetworkTransform y el estado vía [SyncVar].
         ChangeState(new PatrolState(this));
+
+        // Initialize sync values.
+        syncDestination = transform.position;
+        syncAgentSpeed = Agent.speed;
+        syncAgentStopped = Agent.isStopped;
+        lastSentDestination = syncDestination;
+        lastSentSpeed = syncAgentSpeed;
+        lastSentStopped = syncAgentStopped;
 
         Debug.Log($"[CreatureController] {data.creatureName} spawneada en el servidor.");
     }
 
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
+        // On non-host clients, configure the NavMeshAgent to navigate
+        // locally using synced destinations.
+        if (!isServer)
+        {
+            // Apply the current synced state.
+            Agent.speed = syncAgentSpeed;
+            Agent.isStopped = syncAgentStopped;
+
+            if (!syncAgentStopped)
+            {
+                Agent.SetDestination(syncDestination);
+            }
+        }
+    }
+
     private void Update()
     {
-        // Solo el servidor procesa la lógica de IA.
         if (!isServer)
         {
             return;
         }
 
         CurrentState?.Update();
+
+        // Sync NavMeshAgent state to clients.
+        SyncAgentState();
+    }
+
+    /// <summary>
+    /// Checks if the agent's destination/speed/stopped changed and
+    /// updates the SyncVars so clients can follow.
+    /// </summary>
+    private void SyncAgentState()
+    {
+        // Sync destination.
+        if (Agent.hasPath)
+        {
+            Vector3 dest = Agent.destination;
+            if (Vector3.Distance(dest, lastSentDestination) > DestinationSyncThreshold)
+            {
+                syncDestination = dest;
+                lastSentDestination = dest;
+            }
+        }
+
+        // Sync speed.
+        float speed = Agent.speed;
+        if (!Mathf.Approximately(speed, lastSentSpeed))
+        {
+            syncAgentSpeed = speed;
+            lastSentSpeed = speed;
+        }
+
+        // Sync stopped state.
+        bool stopped = Agent.isStopped;
+        if (stopped != lastSentStopped)
+        {
+            syncAgentStopped = stopped;
+            lastSentStopped = stopped;
+        }
+    }
+
+    // ── SyncVar hooks (clients only) ─────────────────────────
+
+    private void OnDestinationChanged(Vector3 oldVal, Vector3 newVal)
+    {
+        if (isServer) return;
+
+        if (Agent.enabled && !syncAgentStopped)
+        {
+            Agent.SetDestination(newVal);
+        }
+    }
+
+    private void OnAgentSpeedChanged(float oldVal, float newVal)
+    {
+        if (isServer) return;
+
+        if (Agent.enabled)
+        {
+            Agent.speed = newVal;
+        }
+    }
+
+    private void OnStateTypeChanged(CreatureStateType oldVal, CreatureStateType newVal)
+    {
+        // On clients, fire the event so ScreenEffectsController and other
+        // client-side listeners react to state changes.
+        if (isServer) return;
+
+        uint? targetId = syncTargetNetId != 0 ? syncTargetNetId : (uint?)null;
+        OnAnyCreatureStateChanged?.Invoke(this, newVal, targetId);
+    }
+
+    private void OnAgentStoppedChanged(bool oldVal, bool newVal)
+    {
+        if (isServer) return;
+
+        if (Agent.enabled)
+        {
+            Agent.isStopped = newVal;
+
+            if (!newVal)
+            {
+                Agent.SetDestination(syncDestination);
+            }
+        }
     }
 
     /// <summary>
@@ -111,6 +248,12 @@ public sealed class CreatureController : NetworkBehaviour
         CurrentState = newState;
         CurrentState.Enter();
 
+        uint? targetNetId = newState is ITargetedState targeted
+            ? targeted.TargetPlayerNetId
+            : previousTargetNetId;
+
+        // Update synced target BEFORE state type so the hook has the right target.
+        syncTargetNetId = targetNetId ?? 0;
         CurrentStateType = GetStateType(newState);
 
         if (showDebugLogs)
@@ -118,29 +261,15 @@ public sealed class CreatureController : NetworkBehaviour
             Debug.Log($"[CreatureController] Cambio de estado: {CurrentStateType}");
         }
 
-        // Si el nuevo estado no tiene target propio (ej. Patrol), usamos el
-        // target del estado ANTERIOR — así el jugador que estaba siendo
-        // investigado se entera de que la amenaza terminó, en vez de que el
-        // evento se descarte silenciosamente por no tener a quién avisar.
-        uint? targetNetId = newState is ITargetedState targeted
-            ? targeted.TargetPlayerNetId
-            : previousTargetNetId;
-
+        // Fire locally on the server (the SyncVar hook fires on clients).
         OnAnyCreatureStateChanged?.Invoke(this, CurrentStateType, targetNetId);
     }
 
-    /// <summary>
-    /// Marca que la criatura ya no puede ser aturdida (después de un stun exitoso).
-    /// Se resetea cuando la criatura vuelve a Patrol.
-    /// </summary>
     public void ConsumeStunAvailability()
     {
         CanBeStunned = false;
     }
 
-    /// <summary>
-    /// Restaura la capacidad de ser aturdida. Llamado desde PatrolState.Enter().
-    /// </summary>
     public void ResetStunAvailability()
     {
         CanBeStunned = true;
@@ -166,16 +295,12 @@ public sealed class CreatureController : NetworkBehaviour
             return;
         }
 
-        // Radio de audición (amarillo).
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, data.hearingRadius);
 
-        // Radio de "detección cercana" que dispara Chase (naranja).
         Gizmos.color = new Color(1f, 0.5f, 0f);
         Gizmos.DrawWireSphere(transform.position, data.hearingRadius * 0.3f);
 
-        // Radio de visión (rojo) — aún no implementado funcionalmente, pero
-        // lo dejamos visible para cuando construyamos la percepción visual.
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, data.visionRadius);
 
