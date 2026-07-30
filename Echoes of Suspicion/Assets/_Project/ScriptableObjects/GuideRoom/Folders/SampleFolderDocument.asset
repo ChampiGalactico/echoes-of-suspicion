@@ -9,16 +9,36 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 41607d3700537c14792ec6c5ab87bb53, type: 3}
+  m_Script: {fileID: 11500000, guid: a27f7163dab90ef4eb0244c1533660b9, type: 3}
   m_Name: SampleFolderDocument
-  m_EditorClassIdentifier: Assembly-CSharp::ReadableData
-  Type: 0
-  Title: REGISTRO DE MANTENIMIENTO
-  Subtitle: "SISTEMA DE VENTILACI\xD3N // ARCHIVO 01"
-  Content: "Documento de prueba para validar la bandeja-esc\xE1ner. Sustituye este
-    contenido por los archivos reales del puzzle."
+  m_EditorClassIdentifier: Assembly-CSharp::DocumentData
+  DefaultFont: {fileID: 0}
+  VerticalAlignment: 0
+  Sections:
+  - Type: 0
+    Text: REGISTRO DE MANTENIMIENTO
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 0
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 1
+    Text: "SISTEMA DE VENTILACI\xD3N // ARCHIVO 01"
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 1
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 2
+    Text: "Documento de prueba para validar la bandeja-esc\xE1ner. Sustituye este contenido
+      por los archivos reales del puzzle."
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 0
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
   ContentImage: {fileID: 0}
-  NoteText: 
-  NoteImage: {fileID: 0}
-  StickyColor: 0
   InteractionPrompt: Leer documento

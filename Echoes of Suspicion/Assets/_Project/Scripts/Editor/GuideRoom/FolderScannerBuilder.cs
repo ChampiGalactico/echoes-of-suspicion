@@ -13,7 +13,7 @@ namespace EOS.EditorTools.GuideRoom
     /// - La bandeja-escáner industrial bajo FolderSlotAnchor.
     /// - Materiales base.
     /// - Una carpeta física de ejemplo.
-    /// - ItemData, GuideFolderData y ReadableData de ejemplo.
+    /// - ItemData, GuideFolderData y DocumentData de ejemplo.
     ///
     /// El resultado queda completamente editable.
     /// </summary>
@@ -155,29 +155,42 @@ namespace EOS.EditorTools.GuideRoom
             string readablePath =
                 $"{DataFolder}/SampleFolderDocument.asset";
 
-            ReadableData readable =
+            DocumentData readable =
                 AssetDatabase.LoadAssetAtPath<
-                    ReadableData>(readablePath);
+                    DocumentData>(readablePath);
 
             if (readable == null)
             {
                 readable =
                     ScriptableObject.CreateInstance<
-                        ReadableData>();
+                        DocumentData>();
 
-                readable.Type =
-                    ReadableType.Document;
+                readable.VerticalAlignment =
+                    DocumentVerticalAlignment.Top;
 
-                readable.Title =
-                    "REGISTRO DE MANTENIMIENTO";
-
-                readable.Subtitle =
-                    "SISTEMA DE VENTILACIÓN // ARCHIVO 01";
-
-                readable.Content =
-                    "Documento de prueba para validar la " +
-                    "bandeja-escáner. Sustituye este contenido " +
-                    "por los archivos reales del puzzle.";
+                readable.Sections =
+                    new[]
+                    {
+                        new DocumentSection
+                        {
+                            Type = SectionType.Title,
+                            Text = "REGISTRO DE MANTENIMIENTO"
+                        },
+                        new DocumentSection
+                        {
+                            Type = SectionType.Subtitle,
+                            Text =
+                                "SISTEMA DE VENTILACIÓN // ARCHIVO 01"
+                        },
+                        new DocumentSection
+                        {
+                            Type = SectionType.Body,
+                            Text =
+                                "Documento de prueba para validar la " +
+                                "bandeja-escáner. Sustituye este contenido " +
+                                "por los archivos reales del puzzle."
+                        }
+                    };
 
                 readable.InteractionPrompt =
                     "Leer documento";
@@ -1185,7 +1198,7 @@ namespace EOS.EditorTools.GuideRoom
 
         private static void ConfigureFolderData(
             GuideFolderData folderData,
-            ReadableData readable
+            DocumentData readable
         )
         {
             SerializedObject serialized =
@@ -1218,10 +1231,18 @@ namespace EOS.EditorTools.GuideRoom
 
             documents.arraySize = 1;
 
-            documents.GetArrayElementAtIndex(
-                0
+            SerializedProperty firstEntry =
+                documents.GetArrayElementAtIndex(0);
+
+            firstEntry.FindPropertyRelative(
+                "document"
             ).objectReferenceValue =
                 readable;
+
+            firstEntry.FindPropertyRelative(
+                "note"
+            ).objectReferenceValue =
+                null;
 
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
