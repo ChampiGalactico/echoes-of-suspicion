@@ -56,10 +56,13 @@ namespace EOS.GuideRoom
             pageText = page;
             footerText = footer;
             versionText = version;
+
+            ConfigureDocumentBodyLayout();
         }
 
         private void Awake()
         {
+            ConfigureDocumentBodyLayout();
             ShowWaiting();
         }
 
@@ -111,7 +114,17 @@ namespace EOS.GuideRoom
             int safePageIndex = Mathf.Clamp(pageIndex, 0, safePageCount - 1);
 
             SetText(pageText, $"{safePageIndex + 1:00} / {safePageCount:00}");
-            SetText(footerText, "SISTEMA DE CONSULTA  //  ARCHIVO ABIERTO");
+
+            bool hasNextPage =
+                safePageIndex <
+                safePageCount - 1;
+
+            SetText(
+                footerText,
+                hasNextPage
+                    ? "SISTEMA DE CONSULTA  //  SIGUIENTE DOCUMENTO"
+                    : "SISTEMA DE CONSULTA  //  RETIRAR CARPETA"
+            );
         }
 
         public void ShowError(string message)
@@ -137,6 +150,25 @@ namespace EOS.GuideRoom
             {
                 documentPanel.SetActive(!waiting);
             }
+        }
+
+        private void ConfigureDocumentBodyLayout()
+        {
+            if (documentBodyText == null)
+            {
+                return;
+            }
+
+            documentBodyText.enableWordWrapping = true;
+            documentBodyText.enableAutoSizing = true;
+            documentBodyText.fontSizeMin = 14f;
+            documentBodyText.fontSizeMax =
+                Mathf.Max(
+                    18f,
+                    documentBodyText.fontSize
+                );
+            documentBodyText.overflowMode =
+                TextOverflowModes.Truncate;
         }
 
         private static void SetText(TMP_Text target, string value)
