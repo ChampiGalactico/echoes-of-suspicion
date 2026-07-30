@@ -64,6 +64,12 @@ public sealed class PlayerHealth : NetworkBehaviour
     public event Action OnDied;
 
     /// <summary>
+    /// Si se asigna, Die() delega a este callback en vez de llamar a Respawn().
+    /// GameOverManager lo usa para interceptar la muerte y mostrar Game Over.
+    /// </summary>
+    public static Action<PlayerHealth> DeathOverride;
+
+    /// <summary>
     /// Se dispara en el jugador propietario después de reaparecer.
     /// </summary>
     public event Action OnRespawned;
@@ -211,13 +217,29 @@ public sealed class PlayerHealth : NetworkBehaviour
         {
             Debug.Log(
                 $"[PlayerHealth] " +
-                $"{statsProvider.Character?.characterName} murió. " +
-                "Respawneando...",
+                $"{statsProvider.Character?.characterName} murió.",
                 this
             );
         }
 
         TargetNotifyDied(connectionToClient);
+
+        if (DeathOverride != null)
+        {
+            DeathOverride.Invoke(this);
+            return;
+        }
+
+        Respawn();
+    }
+
+    /// <summary>
+    /// Fuerza un respawn manual (usado por GameOverManager en retry).
+    /// </summary>
+    [Server]
+    public void ForceRespawn()
+    {
+        currentHealth = maxHealth;
         Respawn();
     }
 
@@ -328,5 +350,22 @@ public sealed class PlayerHealth : NetworkBehaviour
     {
         TeleportTo(position, rotation);
         OnRespawned?.Invoke();
+    }
+
+    // ── Game Over commands ───────────────────────────────
+
+    /// <summary>
+    /// Command que cualquier cliente puede enviar tras Game Over
+    /// para solicitar reintentar (recarga la escena para todos).
+    /// "Menú principal" se maneja localmente sin Command.
+    /// Vive aquí porque los Commands requieren authority del jugador.
+    /// </summary>
+    [Command]
+    public void CmdRequestGameAction(GameOverAction action)
+    {
+        if (GameOverManager.Instance == null) return;
+
+        if (action == GameOverAction.Retry)
+            GameOverManager.Instance.ServerRetry();
     }
 }
