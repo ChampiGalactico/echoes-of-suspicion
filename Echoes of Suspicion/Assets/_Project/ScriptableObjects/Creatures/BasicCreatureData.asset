@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: BasicCreatureData
   m_EditorClassIdentifier: Assembly-CSharp::CreatureData
   creatureName: Basic Creature
-  patrolSpeed: 2
-  alertSpeed: 4
-  chaseSpeed: 6
-  hearingRadius: 40
+  patrolSpeed: 0.3
+  alertSpeed: 6
+  chaseSpeed: 10
+  hearingRadius: 50
   minNoiseIntensity: 0.1
   visionRadius: 5
   visionAngle: 160

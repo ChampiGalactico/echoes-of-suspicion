@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -16,16 +17,12 @@ using TMPro;
 ///   ReadableUI  (este script + CanvasGroup)
 ///   ├── Overlay              (Image, color #000000, alpha ~0.85)
 ///   │
-///   ├── DocumentPanel        (Image, color crema #FFF8E7, centrado, ~60% pantalla)
-///   │   ├── DocTitle         (TMP_Text — 28pt, bold)
-///   │   ├── DocSubtitle      (TMP_Text — 18pt, italic, color gris)
-///   │   ├── DocSeparator     (Image, height 2px, color gris oscuro)
-///   │   ├── DocContent       (TMP_Text — 16pt, line spacing 1.4)
-///   │   └── DocImage         (Image — preserveAspect, desactivado por defecto)
+///   ├── DocumentPanel        (Image, color crema #FFF8E7, centrado)
+///   │   └── DocScrollContent (contenedor vertical — secciones se generan aquí)
 ///   │
-///   └── StickyNotePanel      (Image, color amarillo, centrado, ~35% pantalla)
-///       ├── NoteText         (TMP_Text — 20pt, handwritten font, centrado)
-///       └── NoteImage        (Image — preserveAspect, desactivado por defecto)
+///   └── StickyNotePanel      (Image, color amarillo, centrado)
+///       ├── NoteText         (TMP_Text)
+///       └── NoteImage        (Image, preserveAspect)
 ///
 /// ──────────────────────────────────────────────────────────────────
 /// </summary>
@@ -39,11 +36,11 @@ public class ReadableUI : MonoBehaviour
 
     [Header("Document Panel")]
     [SerializeField] private GameObject _documentPanel;
-    [SerializeField] private TMP_Text _docTitle;
-    [SerializeField] private TMP_Text _docSubtitle;
-    [SerializeField] private GameObject _docSeparator;
-    [SerializeField] private TMP_Text _docContent;
+    [SerializeField] private Transform _docContentParent;
     [SerializeField] private Image _docImage;
+
+    [Header("Document Defaults")]
+    [SerializeField] private float _dividerHeight = 2f;
 
     [Header("Sticky Note Panel")]
     [SerializeField] private GameObject _stickyNotePanel;
@@ -67,10 +64,12 @@ public class ReadableUI : MonoBehaviour
 
     // Fade
     private float _fadeTarget;
-    private float _fadeVelocity;
 
     // Prevenir que la misma pulsación de E que abre también cierre.
     private bool _justOpened;
+
+    // Elementos generados dinámicamente para documentos.
+    private readonly List<GameObject> _generatedElements = new List<GameObject>();
 
     private void Awake()
     {
@@ -99,15 +98,12 @@ public class ReadableUI : MonoBehaviour
                 _fadeTarget,
                 Time.unscaledDeltaTime / Mathf.Max(_fadeDuration, 0.01f));
 
-            // Desactivar el GO al terminar el fade-out para ahorrar draw calls.
             if (_canvasGroup.alpha <= 0f && _fadeTarget <= 0f)
                 _canvasGroup.gameObject.SetActive(false);
         }
 
         if (!IsOpen) return;
 
-        // El primer frame después de abrir se ignora para que la E
-        // que abrió la UI no la cierre inmediatamente.
         if (_justOpened)
         {
             _justOpened = false;
@@ -125,28 +121,33 @@ public class ReadableUI : MonoBehaviour
 
     // ─── API Pública ───────────────────────────────────────────────
 
-    public void Show(ReadableData data)
+    public void ShowDocument(DocumentData data)
     {
         if (data == null || IsOpen) return;
 
         IsOpen = true;
         _justOpened = true;
 
-        // Mostrar el panel correcto.
-        bool isDocument = data.Type == ReadableType.Document;
-        _documentPanel.SetActive(isDocument);
-        _stickyNotePanel.SetActive(!isDocument);
+        _documentPanel.SetActive(true);
+        _stickyNotePanel.SetActive(false);
 
-        if (isDocument)
-            PopulateDocument(data);
-        else
-            PopulateStickyNote(data);
+        PopulateDocument(data);
+        FadeIn();
+        FreezePlayer();
+    }
 
-        // Fade in.
-        _canvasGroup.gameObject.SetActive(true);
-        _fadeTarget = 1f;
-        _canvasGroup.blocksRaycasts = true;
+    public void ShowStickyNote(StickyNoteData data)
+    {
+        if (data == null || IsOpen) return;
 
+        IsOpen = true;
+        _justOpened = true;
+
+        _documentPanel.SetActive(false);
+        _stickyNotePanel.SetActive(true);
+
+        PopulateStickyNote(data);
+        FadeIn();
         FreezePlayer();
     }
 
@@ -169,45 +170,194 @@ public class ReadableUI : MonoBehaviour
 
     // ─── Poblar contenido ──────────────────────────────────────────
 
-    private void PopulateDocument(ReadableData data)
+    private void PopulateDocument(DocumentData data)
     {
-        _docTitle.text = data.Title;
+        ClearGeneratedElements();
 
-        bool hasSubtitle = !string.IsNullOrEmpty(data.Subtitle);
-        _docSubtitle.gameObject.SetActive(hasSubtitle);
-        if (hasSubtitle) _docSubtitle.text = data.Subtitle;
+        // Quitar ContentSizeFitter si existe (impide que funcione el vertical alignment).
+        ContentSizeFitter fitter = _docContentParent.GetComponent<ContentSizeFitter>();
+        if (fitter != null) Destroy(fitter);
 
-        _docSeparator.SetActive(hasSubtitle);
+        // Alineación vertical del contenido dentro del panel.
+        VerticalLayoutGroup layout = _docContentParent.GetComponent<VerticalLayoutGroup>();
+        if (layout != null)
+        {
+            layout.childAlignment = data.VerticalAlignment switch
+            {
+                DocumentVerticalAlignment.Top    => TextAnchor.UpperLeft,
+                DocumentVerticalAlignment.Center => TextAnchor.MiddleLeft,
+                DocumentVerticalAlignment.Bottom => TextAnchor.LowerLeft,
+                _                                => TextAnchor.UpperLeft,
+            };
+        }
 
-        _docContent.text = data.Content;
+        if (data.Sections != null)
+        {
+            // Separar secciones normales de las ancladas al fondo.
+            foreach (var section in data.Sections)
+            {
+                if (string.IsNullOrEmpty(section.Text)) continue;
+
+                if (section.AnchorToBottom)
+                {
+                    // Se crea como hijo directo del panel, anclado abajo.
+                    GameObject bottomGo = CreateBottomAnchoredElement(
+                        section.Text,
+                        section.EffectiveFontSize,
+                        section.Font != null ? section.Font : data.DefaultFont,
+                        section.Alignment);
+
+                    _generatedElements.Add(bottomGo);
+                    continue;
+                }
+
+                GameObject textGo = CreateTextElement(
+                    section.Text,
+                    section.EffectiveFontSize,
+                    section.Font != null ? section.Font : data.DefaultFont,
+                    section.Alignment);
+
+                _generatedElements.Add(textGo);
+
+                if (section.ShowDivider)
+                {
+                    GameObject divider = CreateDivider(section.DividerColor);
+                    _generatedElements.Add(divider);
+                }
+            }
+        }
 
         bool hasImage = data.ContentImage != null;
         _docImage.gameObject.SetActive(hasImage);
         if (hasImage) _docImage.sprite = data.ContentImage;
     }
 
-    private void PopulateStickyNote(ReadableData data)
+    private void PopulateStickyNote(StickyNoteData data)
     {
         _noteText.text = data.NoteText;
 
-        // Color de la nota.
+        if (data.FontSize > 0f)
+            _noteText.fontSize = data.FontSize;
+
+        if (data.NoteFont != null)
+            _noteText.font = data.NoteFont;
+
         _stickyNoteBackground.color = data.StickyColor switch
         {
             NoteColor.Yellow => _yellowColor,
-            NoteColor.Pink => _pinkColor,
-            NoteColor.Blue => _blueColor,
-            NoteColor.Green => _greenColor,
-            _ => _yellowColor,
+            NoteColor.Pink   => _pinkColor,
+            NoteColor.Blue   => _blueColor,
+            NoteColor.Green  => _greenColor,
+            _                => _yellowColor,
         };
 
-        // Inclinación casual.
         float tilt = Random.Range(-_stickyTiltAngle, _stickyTiltAngle);
         _stickyNotePanel.transform.localRotation = Quaternion.Euler(0f, 0f, tilt);
 
-        // Imagen opcional.
         bool hasImage = data.NoteImage != null;
         _noteImage.gameObject.SetActive(hasImage);
         if (hasImage) _noteImage.sprite = data.NoteImage;
+    }
+
+    // ─── Generación dinámica de elementos ──────────────────────────
+
+    private GameObject CreateTextElement(
+        string text, float fontSize, TMP_FontAsset font,
+        TextAlignmentOptions alignment = TextAlignmentOptions.TopLeft)
+    {
+        GameObject go = new GameObject("Section", typeof(RectTransform));
+        go.transform.SetParent(_docContentParent, false);
+
+        TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
+        tmp.text = text;
+        tmp.fontSize = fontSize;
+        tmp.enableAutoSizing = false;
+        tmp.color = Color.black;
+        tmp.alignment = alignment;
+        tmp.textWrappingMode = TextWrappingModes.Normal;
+        tmp.overflowMode = TextOverflowModes.Overflow;
+        tmp.raycastTarget = false;
+        tmp.richText = true;
+
+        if (font != null)
+            tmp.font = font;
+
+        // LayoutElement para que el VerticalLayoutGroup lo dimensione.
+        LayoutElement le = go.AddComponent<LayoutElement>();
+        le.preferredHeight = -1; // Auto-calculado por ContentSizeFitter.
+        le.flexibleWidth = 1f;
+
+        // ContentSizeFitter para que el alto se ajuste al texto.
+        ContentSizeFitter fitter = go.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        return go;
+    }
+
+    private GameObject CreateDivider(Color color)
+    {
+        GameObject go = new GameObject("Divider", typeof(RectTransform));
+        go.transform.SetParent(_docContentParent, false);
+
+        Image img = go.AddComponent<Image>();
+        img.color = color;
+        img.raycastTarget = false;
+
+        LayoutElement le = go.AddComponent<LayoutElement>();
+        le.preferredHeight = _dividerHeight;
+        le.flexibleWidth = 1f;
+
+        return go;
+    }
+
+    private GameObject CreateBottomAnchoredElement(
+        string text, float fontSize, TMP_FontAsset font,
+        TextAlignmentOptions alignment)
+    {
+        GameObject go = new GameObject("BottomAnchored", typeof(RectTransform));
+        go.transform.SetParent(_documentPanel.transform, false);
+
+        RectTransform rt = go.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0f, 0f);
+        rt.anchorMax = new Vector2(1f, 0f);
+        rt.pivot     = new Vector2(0.5f, 0f);
+        rt.offsetMin = new Vector2(30f, 15f);
+        rt.offsetMax = new Vector2(-30f, 55f);
+
+        TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
+        tmp.text = text;
+        tmp.fontSize = fontSize;
+        tmp.enableAutoSizing = false;
+        tmp.color = Color.black;
+        tmp.alignment = alignment;
+        tmp.textWrappingMode = TextWrappingModes.Normal;
+        tmp.overflowMode = TextOverflowModes.Overflow;
+        tmp.raycastTarget = false;
+        tmp.richText = true;
+
+        if (font != null) tmp.font = font;
+
+        return go;
+    }
+
+    private void ClearGeneratedElements()
+    {
+        foreach (var go in _generatedElements)
+        {
+            if (go != null) Destroy(go);
+        }
+
+        _generatedElements.Clear();
+    }
+
+    // ─── Helpers ───────────────────────────────────────────────────
+
+    private void FadeIn()
+    {
+        _canvasGroup.gameObject.SetActive(true);
+        _fadeTarget = 1f;
+        _canvasGroup.blocksRaycasts = true;
     }
 
     // ─── Congelar / descongelar jugador ────────────────────────────
@@ -230,10 +380,8 @@ public class ReadableUI : MonoBehaviour
 
     private void CachePlayerComponents()
     {
-        // Solo buscar si no están cacheados o si el objeto fue destruido.
         if (_cachedMovement != null) return;
 
-        // Buscar el jugador local. En Mirror, el localPlayer es único.
         var localPlayer = Mirror.NetworkClient.localPlayer;
         if (localPlayer == null) return;
 
