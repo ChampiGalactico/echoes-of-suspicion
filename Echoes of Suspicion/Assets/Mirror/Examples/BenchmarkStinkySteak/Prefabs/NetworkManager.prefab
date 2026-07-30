@@ -25,12 +25,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6902534888765376181}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6902534888765376180
 MonoBehaviour:
@@ -49,8 +50,6 @@ MonoBehaviour:
   headlessStartMode: 1
   editorAutoStart: 0
   sendRate: 20
-  autoStartServerBuild: 0
-  autoConnectClientBuild: 0
   offlineScene: 
   onlineScene: 
   offlineSceneLoadDelay: 0
@@ -60,11 +59,18 @@ MonoBehaviour:
   disconnectInactiveConnections: 0
   disconnectInactiveTimeout: 60
   authenticator: {fileID: 0}
-  playerPrefab: {fileID: 388937345275023605, guid: fc40b1557a4729e4e9cfaad99e1097ff,
-    type: 3}
+  playerPrefab: {fileID: 388937345275023605, guid: fc40b1557a4729e4e9cfaad99e1097ff, type: 3}
   autoCreatePlayer: 1
   playerSpawnMethod: 0
-  spawnPrefabs: []
+  spawnPrefabs:
+  - {fileID: 4664743481761744097, guid: 51a6d7c7a4da2484785f5b5a1e655c35, type: 3}
+  - {fileID: 8435822139914655547, guid: 3372751aa0b6be242b4bb30599af27ec, type: 3}
+  - {fileID: 3922166361023555862, guid: 2b31f796793691f41891714ef9f080bc, type: 3}
+  - {fileID: 1628945202036749639, guid: 2b57b08115c46fc45a7d05133d276ad7, type: 3}
+  - {fileID: 6915180504144621453, guid: 13ba08db2b1abc44f80b58fe7cf76246, type: 3}
+  - {fileID: 1700254541784601775, guid: e60fbf21255dc824ba1fdabcde39625c, type: 3}
+  - {fileID: 4598078798003620988, guid: b857b668e8ca0c448b915f0e1342492d, type: 3}
+  - {fileID: 1997183258893587302, guid: e06104599c712a240b47920670d6e1ac, type: 3}
   exceptionsDisconnect: 1
   snapshotSettings:
     bufferTimeMultiplier: 2

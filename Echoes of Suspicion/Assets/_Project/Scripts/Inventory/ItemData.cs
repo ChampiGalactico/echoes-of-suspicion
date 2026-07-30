@@ -55,4 +55,15 @@ public class ItemData : ScriptableObject
     [Tooltip("Offset de posición del modelo en la mano. " +
              "Ajusta si el pivot del modelo no está centrado.")]
     public Vector3 heldPositionOffset = Vector3.zero;
+
+    [Header("Held Tint (opcional)")]
+    [Tooltip("Si useHeldTint es true, el visual en mano se tiñe con heldTint " +
+             "mediante MaterialPropertyBlock (sin tocar el material compartido). " +
+             "Pensado para carpetas que comparten un mismo PF_GuideFolder_HeldVisual " +
+             "pero deben conservar su color. NO se sincroniza por red: es un " +
+             "metadato local del asset, idéntico en todos los clientes.")]
+    public bool useHeldTint = false;
+
+    [Tooltip("Color de tinte del visual en mano cuando useHeldTint es true.")]
+    public Color heldTint = Color.white;
 }

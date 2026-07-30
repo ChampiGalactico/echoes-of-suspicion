@@ -24,3 +24,5 @@ MonoBehaviour:
   heldScale: 0.72
   heldRotationOffset: {x: 0, y: 0, z: 0}
   heldPositionOffset: {x: 0, y: 0, z: 0}
+  useHeldTint: 1
+  heldTint: {r: 0.62, g: 0.12, b: 0.1, a: 1}
