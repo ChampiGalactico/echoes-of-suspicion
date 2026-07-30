@@ -8,6 +8,11 @@ using UnityEngine;
 /// netId is stored in the inventory slot. On drop or throw, the same object
 /// is revealed at the target position.
 ///
+/// Physics sync strategy: instead of continuous NetworkTransform sync
+/// (which fights with Rigidbody), items send their spawn position and
+/// velocity once via ClientRpc. Each client then simulates physics
+/// locally — gravity is deterministic so results match.
+///
 /// For puzzle items, add a PickableItem companion component alongside this one.
 /// NetworkPickupItem handles all interaction and visibility; PickableItem
 /// only holds PuzzleItemData for the puzzle system.
@@ -122,7 +127,7 @@ public sealed class NetworkPickupItem : RatInteractable
 
         // Hide the world object.
         isPickedUp = true;
-        ServerSetPhysicsEnabled(false);
+        SetPhysicsEnabled(false);
 
         if (isPuzzle)
         {
@@ -142,7 +147,30 @@ public sealed class NetworkPickupItem : RatInteractable
     {
         transform.position = position;
         isPickedUp = false;
-        ServerSetPhysicsEnabled(true);
+        SetPhysicsEnabled(true);
+
+        // Tell clients to start physics from this position.
+        RpcStartPhysics(position, Vector3.zero, Vector3.zero);
+    }
+
+    /// <summary>
+    /// Reveal and apply velocity (called by throw logic).
+    /// </summary>
+    [Server]
+    public void DropWithVelocity(Vector3 position, Vector3 linearVel, Vector3 angularVel)
+    {
+        transform.position = position;
+        isPickedUp = false;
+        SetPhysicsEnabled(true);
+
+        if (itemRigidbody != null)
+        {
+            itemRigidbody.linearVelocity = linearVel;
+            itemRigidbody.angularVelocity = angularVel;
+        }
+
+        // Tell clients to start physics with the same velocity.
+        RpcStartPhysics(position, linearVel, angularVel);
     }
 
     /// <summary>
@@ -154,7 +182,9 @@ public sealed class NetworkPickupItem : RatInteractable
         transform.position = originPosition;
         transform.rotation = originRotation;
         isPickedUp = false;
-        ServerSetPhysicsEnabled(true);
+        SetPhysicsEnabled(true);
+
+        RpcStartPhysics(originPosition, Vector3.zero, Vector3.zero);
     }
 
     /// <summary>
@@ -178,14 +208,12 @@ public sealed class NetworkPickupItem : RatInteractable
 
     // ── Physics helpers ───────────────────────────────────────
 
-    [Server]
-    private void ServerSetPhysicsEnabled(bool enabled)
+    private void SetPhysicsEnabled(bool enabled)
     {
         if (itemRigidbody != null)
         {
             if (!enabled)
             {
-                // Zero out velocity BEFORE going kinematic.
                 itemRigidbody.linearVelocity = Vector3.zero;
                 itemRigidbody.angularVelocity = Vector3.zero;
             }
@@ -195,11 +223,41 @@ public sealed class NetworkPickupItem : RatInteractable
         }
     }
 
+    // ── Network physics sync ─────────────────────────────────
+
+    /// <summary>
+    /// Called on all clients to start local physics simulation
+    /// from the same initial conditions as the server.
+    /// </summary>
+    [ClientRpc]
+    private void RpcStartPhysics(Vector3 position, Vector3 linearVel, Vector3 angularVel)
+    {
+        // Host already simulates via server — skip.
+        if (isServer)
+            return;
+
+        if (itemRigidbody == null)
+            return;
+
+        transform.position = position;
+        itemRigidbody.isKinematic = false;
+        itemRigidbody.useGravity = true;
+        itemRigidbody.linearVelocity = linearVel;
+        itemRigidbody.angularVelocity = angularVel;
+    }
+
     // ── Visual sync (all clients) ─────────────────────────────
 
     private void OnPickedUpChanged(bool oldValue, bool newValue)
     {
         SetVisibility(!newValue);
+
+        // When picked up, freeze physics on clients.
+        if (newValue && !isServer && itemRigidbody != null)
+        {
+            itemRigidbody.isKinematic = true;
+            itemRigidbody.useGravity = false;
+        }
     }
 
     private void SetVisibility(bool visible)

@@ -42,8 +42,16 @@ public sealed class NetworkRatInteractor : NetworkBehaviour
 
     public string CurrentInteractionPrompt =>
         currentTarget != null
-            ? currentTarget.InteractionPrompt
+            ? currentTarget.GetInteractionPrompt(gameObject)
             : string.Empty;
+
+    /// <summary>
+    /// Indica si el target actual es realmente interactuable por este jugador.
+    /// Si es false, el HUD muestra el prompt sin "[E]".
+    /// </summary>
+    public bool IsCurrentTargetInteractable =>
+        currentTarget != null &&
+        currentTarget.IsInteractableBy(gameObject);
 
     /// <summary>Whether the active inventory slot has an item.</summary>
     public bool HasActiveItem

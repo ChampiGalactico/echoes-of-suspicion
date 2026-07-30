@@ -720,7 +720,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
   m_UsePipelineSettings: 1
   m_AdditionalLightsShadowResolutionTier: 2
@@ -1791,7 +1791,7 @@ Transform:
   m_GameObject: {fileID: 4388045523605983251}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.19999999, z: 0.65000004}
+  m_LocalPosition: {x: 0, y: -0.3, z: 0.65000004}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3818,6 +3818,8 @@ MonoBehaviour:
   promptText: {fileID: 4921580863979832788}
   idleCrosshair: "\u2022"
   targetCrosshair: +
+  deniedFeedbackText: {fileID: 0}
+  deniedFeedbackDuration: 2
 --- !u!114 &6150629074409808682
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3854,7 +3856,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d2097dd36e59dc54cb77121703e18816, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkCharacterVisualSelector
   syncDirection: 0
   syncMode: 0
@@ -3881,7 +3883,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4e76c4d6bb1a044fa4427fbf778d4db, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkFlashlight
   syncDirection: 0
   syncMode: 0
@@ -3899,7 +3901,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 55396f4dc53ad024d9fdb469f7dc3938, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkInventory
   syncDirection: 0
   syncMode: 0
@@ -3922,7 +3924,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7b76935e816a6f9499752820c537b73c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventoryInputHandler
   syncDirection: 0
   syncMode: 0
@@ -3942,7 +3944,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 600c1df090aab244593d33ff659b38c8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkHeldItemVisual
   syncDirection: 0
   syncMode: 0

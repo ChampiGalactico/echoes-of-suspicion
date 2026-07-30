@@ -404,41 +404,15 @@ public class NetworkInventory : NetworkBehaviour
             return;
         }
 
-        // Reveal at the player's position.
-        Vector3 spawnPos = transform.position + transform.forward * 0.8f + Vector3.up * 0.3f;
-        pickupItem.Drop(spawnPos);
-
-        ApplyThrowPhysics(pickupItem.gameObject, direction, strengthMul);
-    }
-
-    [Server]
-    private void ApplyThrowPhysics(
-        GameObject obj, Vector3 direction, float strengthMul)
-    {
-        Rigidbody rb = obj.GetComponent<Rigidbody>();
-        if (rb == null)
-        {
-            return;
-        }
-
-        // Ensure physics is active.
-        rb.isKinematic = false;
-        rb.useGravity = true;
-
-        // Add upward bias for a parabolic arc.
+        // Compute throw velocity.
         Vector3 biasedDirection = (direction + Vector3.up * upwardBias).normalized;
-
         float finalSpeed = baseThrowSpeed * strengthMul;
+        Vector3 linearVel = biasedDirection * finalSpeed;
+        Vector3 angularVel = UnityEngine.Random.insideUnitSphere * 5f;
 
-        // VelocityChange ignores mass — consistent feel across items.
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
-        rb.AddForce(biasedDirection * finalSpeed, ForceMode.VelocityChange);
-
-        // Add a bit of spin for visual flair.
-        rb.AddTorque(
-            UnityEngine.Random.insideUnitSphere * 5f,
-            ForceMode.VelocityChange);
+        // Reveal at the player's position with velocity.
+        Vector3 spawnPos = transform.position + transform.forward * 0.8f + Vector3.up * 0.3f;
+        pickupItem.DropWithVelocity(spawnPos, linearVel, angularVel);
     }
 
     private static bool IsFiniteVector(Vector3 v)

@@ -73,9 +73,6 @@ PrefabInstance:
       addedObject: {fileID: 7166396864638822097}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: bd93cd846ec563444a895e39bfb34b68, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 4188371370668940306}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: bd93cd846ec563444a895e39bfb34b68, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 6497255121294734625}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: bd93cd846ec563444a895e39bfb34b68, type: 3}
       insertIndex: -1
@@ -106,40 +103,6 @@ MonoBehaviour:
   serverOnly: 0
   visibility: 0
   hasSpawned: 0
---- !u!114 &4188371370668940306
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7373879929409259892}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ff3ba0becae47b8b9381191598957c8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Mirror.Components::Mirror.NetworkTransformReliable
-  syncDirection: 1
-  syncMode: 0
-  syncInterval: 0
-  target: {fileID: 7862889222550721486}
-  syncPosition: 1
-  syncRotation: 1
-  syncScale: 0
-  onlySyncOnChange: 1
-  compressRotation: 1
-  interpolatePosition: 1
-  interpolateRotation: 1
-  interpolateScale: 1
-  coordinateSpace: 0
-  timelineOffset: 1
-  showGizmos: 0
-  showOverlay: 0
-  overlayColor: {r: 0, g: 0, b: 0, a: 0.5}
-  onlySyncOnChangeCorrectionMultiplier: 2
-  useFixedUpdate: 0
-  rotationSensitivity: 0.01
-  positionPrecision: 0.01
-  scalePrecision: 0.01
 --- !u!54 &6497255121294734625
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -205,8 +168,3 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.018995143, y: 0.008952164, z: 0.007550855}
   m_Center: {x: 0.000010699968, y: 0.000008750009, z: -0.0000063150696}
---- !u!4 &7862889222550721486 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: bd93cd846ec563444a895e39bfb34b68, type: 3}
-  m_PrefabInstance: {fileID: 7679800011590169637}
-  m_PrefabAsset: {fileID: 0}

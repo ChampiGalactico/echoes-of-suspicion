@@ -67,6 +67,15 @@ public class InteractableDoor : RatInteractable
     [SerializeField] private AudioClip closeSound;
     [SerializeField] private AudioClip lockedSound;
 
+    [SerializeField, Min(1f)]
+    [Tooltip("Distancia máxima a la que se escucha el sonido de la puerta.")]
+    private float audioMaxDistance = 15f;
+
+    [Header("Feedback visual (puerta bloqueada)")]
+    [SerializeField]
+    [Tooltip("Mensaje que se muestra cuando el jugador no tiene el item requerido.")]
+    private string deniedMessage = "Necesitas una llave";
+
     // ===== ESTADO SINCRONIZADO =====
 
     [SyncVar(hook = nameof(OnSyncStateChanged))]
@@ -80,9 +89,17 @@ public class InteractableDoor : RatInteractable
 
     // ===== ESTADO LOCAL =====
     private bool isAnimating = false;
+    private bool hasInitialized = false;
     private Quaternion closedRotation;
     private AudioSource audioSource;
     private NavMeshObstacle navObstacle;
+
+    /// <summary>
+    /// Evento estático para que el HUD muestre mensajes de feedback.
+    /// Parámetro: mensaje a mostrar.
+    /// Solo se dispara en el cliente local que intentó interactuar.
+    /// </summary>
+    public static event System.Action<string> OnLocalDeniedFeedback;
 
     // ===== PROPIEDADES =====
     public bool IsOpen => syncState.isOpen;
@@ -124,8 +141,10 @@ public class InteractableDoor : RatInteractable
     public override void OnStartClient()
     {
         base.OnStartClient();
-        // Aplicar el estado correcto para clientes que entren tarde
-        ApplyDoorRotation(syncState);
+        // Snap silencioso al estado actual para clientes que entren tarde.
+        // No animar ni reproducir sonido en el estado inicial.
+        SnapToState(syncState);
+        hasInitialized = true;
     }
 
     private void OnDestroy()
@@ -158,6 +177,69 @@ public class InteractableDoor : RatInteractable
             return false;
 
         return base.CanPreviewInteraction(interactor);
+    }
+
+    /// <summary>
+    /// Devuelve el mensaje contextual según si el jugador tiene la llave o no.
+    /// </summary>
+    public override string GetInteractionPrompt(GameObject interactor)
+    {
+        if (doorMode == DoorMode.RequiresItem &&
+            requiredItem != null &&
+            !HasRequiredItem(interactor))
+        {
+            return deniedMessage;
+        }
+
+        return base.GetInteractionPrompt(interactor);
+    }
+
+    /// <summary>
+    /// Indica si el jugador realmente puede usar esta puerta ahora mismo.
+    /// </summary>
+    public override bool IsInteractableBy(GameObject interactor)
+    {
+        if (doorMode == DoorMode.RequiresItem &&
+            requiredItem != null &&
+            !HasRequiredItem(interactor))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Comprobación client-side de si el jugador tiene el item requerido.
+    /// Los slots del inventario están sincronizados vía SyncList.
+    /// </summary>
+    private bool HasRequiredItem(GameObject interactor)
+    {
+        if (interactor == null) return false;
+
+        var inv = interactor.GetComponent<NetworkInventory>();
+        if (inv == null) return false;
+
+        for (int i = 0; i < NetworkInventory.SlotCount; i++)
+        {
+            InventorySlot slot = inv.GetSlot(i);
+            if (slot.IsEmpty || slot.itemNetId == 0) continue;
+
+            if (!NetworkClient.spawned.TryGetValue(slot.itemNetId, out NetworkIdentity identity))
+                continue;
+
+            var pickable = identity.GetComponent<EOS.Puzzles.PickableItem>();
+            if (pickable == null || pickable.PuzzleData == null) continue;
+
+            EOS.Puzzles.PuzzleItemData data = pickable.PuzzleData;
+
+            if (data.ItemId != requiredItem.ItemId) continue;
+            if (filterByTag && data.ItemTag != requiredItem.ItemTag) continue;
+
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -194,7 +276,7 @@ public class InteractableDoor : RatInteractable
 
             case DoorMode.PuzzleLinked:
             case DoorMode.ExternalOnly:
-                RpcPlayDeniedEffect();
+                ServerPlayDenied(interactor);
                 break;
         }
     }
@@ -229,7 +311,7 @@ public class InteractableDoor : RatInteractable
         var inventory = interactor.GetComponent<NetworkInventory>();
         if (inventory == null)
         {
-            RpcPlayDeniedEffect();
+            ServerPlayDenied(interactor);
             return;
         }
 
@@ -237,7 +319,7 @@ public class InteractableDoor : RatInteractable
 
         if (foundSlot < 0)
         {
-            RpcPlayDeniedEffect();
+            ServerPlayDenied(interactor);
             return;
         }
 
@@ -315,9 +397,13 @@ public class InteractableDoor : RatInteractable
 
     /// <summary>
     /// Hook del SyncVar. Se ejecuta en los clientes cuando el estado cambia.
+    /// Ignora cambios antes de la inicialización para evitar sonidos al arrancar.
     /// </summary>
     private void OnSyncStateChanged(DoorSyncState oldState, DoorSyncState newState)
     {
+        if (!hasInitialized)
+            return;
+
         ApplyDoorRotation(newState);
     }
 
@@ -416,11 +502,66 @@ public class InteractableDoor : RatInteractable
         return (dot > 0) ? -1f : 1f;
     }
 
+    /// <summary>
+    /// Envía feedback de puerta bloqueada solo al jugador que intentó
+    /// interactuar, no a todos los clientes.
+    /// </summary>
+    [Server]
+    private void ServerPlayDenied(NetworkIdentity interactor)
+    {
+        // Sonido espacial para todos los que estén cerca.
+        RpcPlayDeniedSound();
+
+        // Mensaje visual solo para quien interactuó.
+        if (interactor.connectionToClient != null)
+        {
+            TargetShowDeniedMessage(
+                interactor.connectionToClient,
+                deniedMessage
+            );
+        }
+
+        OnDoorDenied?.Invoke();
+    }
+
     [ClientRpc]
-    private void RpcPlayDeniedEffect()
+    private void RpcPlayDeniedSound()
     {
         PlaySound(lockedSound);
-        OnDoorDenied?.Invoke();
+    }
+
+    [TargetRpc]
+    private void TargetShowDeniedMessage(
+        NetworkConnectionToClient target,
+        string message
+    )
+    {
+        OnLocalDeniedFeedback?.Invoke(message);
+    }
+
+    /// <summary>
+    /// Aplica la rotación de la puerta instantáneamente sin
+    /// animación ni sonido. Usado en la inicialización del cliente.
+    /// </summary>
+    private void SnapToState(DoorSyncState state)
+    {
+        StopAllCoroutines();
+
+        if (state.isOpen)
+        {
+            Quaternion targetRotation = closedRotation *
+                Quaternion.AngleAxis(
+                    openAngle * state.openDirection,
+                    rotationAxis
+                );
+            transform.localRotation = targetRotation;
+        }
+        else
+        {
+            transform.localRotation = closedRotation;
+        }
+
+        UpdateNavObstacle(state.isOpen);
     }
 
     private void SetupAudio()
@@ -432,6 +573,9 @@ public class InteractableDoor : RatInteractable
                 audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.spatialBlend = 1f;
             audioSource.playOnAwake = false;
+            audioSource.maxDistance = audioMaxDistance;
+            audioSource.rolloffMode = AudioRolloffMode.Linear;
+            audioSource.minDistance = 1f;
         }
     }
 

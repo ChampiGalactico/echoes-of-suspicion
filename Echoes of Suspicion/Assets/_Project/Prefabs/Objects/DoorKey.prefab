@@ -79,19 +79,11 @@ PrefabInstance:
       addedObject: {fileID: 7285949277395090222}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c4b88af8a5b21c046b27024486d9301d, type: 3}
       insertIndex: -1
-      addedObject: {fileID: -9004527044468709831}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c4b88af8a5b21c046b27024486d9301d, type: 3}
-      insertIndex: -1
       addedObject: {fileID: -7895346443317568845}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c4b88af8a5b21c046b27024486d9301d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4108374262669247951}
   m_SourcePrefab: {fileID: 100100000, guid: c4b88af8a5b21c046b27024486d9301d, type: 3}
---- !u!4 &8197946724210987528 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: c4b88af8a5b21c046b27024486d9301d, type: 3}
-  m_PrefabInstance: {fileID: 8524835124398863843}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &8831318836077398194 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: c4b88af8a5b21c046b27024486d9301d, type: 3}
@@ -162,40 +154,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &-9004527044468709831
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8831318836077398194}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ff3ba0becae47b8b9381191598957c8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Mirror.Components::Mirror.NetworkTransformReliable
-  syncDirection: 1
-  syncMode: 0
-  syncInterval: 0
-  target: {fileID: 8197946724210987528}
-  syncPosition: 1
-  syncRotation: 1
-  syncScale: 0
-  onlySyncOnChange: 1
-  compressRotation: 1
-  interpolatePosition: 1
-  interpolateRotation: 1
-  interpolateScale: 1
-  coordinateSpace: 0
-  timelineOffset: 1
-  showGizmos: 0
-  showOverlay: 0
-  overlayColor: {r: 0, g: 0, b: 0, a: 0.5}
-  onlySyncOnChangeCorrectionMultiplier: 2
-  useFixedUpdate: 0
-  rotationSensitivity: 0.01
-  positionPrecision: 0.01
-  scalePrecision: 0.01
 --- !u!114 &-7895346443317568845
 MonoBehaviour:
   m_ObjectHideFlags: 0

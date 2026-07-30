@@ -663,8 +663,10 @@ namespace EOS.Puzzles
             _audioSource.PlayOneShot(_useSound);
         }
 
-        private void OnValidate()
+        protected override void OnValidate()
         {
+            base.OnValidate();
+
             if (_audioSource == null)
             {
                 _audioSource =

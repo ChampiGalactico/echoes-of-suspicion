@@ -31,6 +31,15 @@ public sealed class NetworkRatInteractionHUD : NetworkBehaviour
     [SerializeField]
     private string targetCrosshair = "+";
 
+    [Header("Denied Feedback")]
+    [SerializeField]
+    private TMP_Text deniedFeedbackText;
+
+    [SerializeField]
+    private float deniedFeedbackDuration = 2f;
+
+    private float deniedFeedbackTimer;
+
     private void Awake()
     {
         if (interactor == null)
@@ -66,10 +75,14 @@ public sealed class NetworkRatInteractionHUD : NetworkBehaviour
         base.OnStartLocalPlayer();
         SetHudVisible(true);
         RefreshHud();
+
+        InteractableDoor.OnLocalDeniedFeedback += ShowDeniedFeedback;
     }
 
     public override void OnStopLocalPlayer()
     {
+        InteractableDoor.OnLocalDeniedFeedback -= ShowDeniedFeedback;
+
         SetHudVisible(false);
         base.OnStopLocalPlayer();
     }
@@ -82,6 +95,7 @@ public sealed class NetworkRatInteractionHUD : NetworkBehaviour
             return;
         }
 
+        UpdateDeniedFeedback();
         RefreshHud();
     }
 
@@ -94,7 +108,10 @@ public sealed class NetworkRatInteractionHUD : NetworkBehaviour
             string prompt = ResolvePromptTokens(
                 interactor.CurrentInteractionPrompt);
 
-            SetPrompt($"[E] {prompt}");
+            if (interactor.IsCurrentTargetInteractable)
+                SetPrompt($"[E] {prompt}");
+            else
+                SetPrompt(prompt);
 
             return;
         }
@@ -180,6 +197,36 @@ public sealed class NetworkRatInteractionHUD : NetworkBehaviour
         // Fallback: ItemData.itemName del registro.
         ItemData data = inventory.ActiveItemData;
         return data != null ? data.itemName : null;
+    }
+
+    private void ShowDeniedFeedback(string message)
+    {
+        if (deniedFeedbackText == null)
+        {
+            // Fallback: mostrar en el promptText si no hay
+            // un texto dedicado para feedback.
+            SetPrompt(message);
+            deniedFeedbackTimer = deniedFeedbackDuration;
+            return;
+        }
+
+        deniedFeedbackText.text = message;
+        deniedFeedbackText.gameObject.SetActive(true);
+        deniedFeedbackTimer = deniedFeedbackDuration;
+    }
+
+    private void UpdateDeniedFeedback()
+    {
+        if (deniedFeedbackTimer <= 0f)
+            return;
+
+        deniedFeedbackTimer -= Time.deltaTime;
+
+        if (deniedFeedbackTimer <= 0f)
+        {
+            if (deniedFeedbackText != null)
+                deniedFeedbackText.gameObject.SetActive(false);
+        }
     }
 
     private void SetHudVisible(bool isVisible)
