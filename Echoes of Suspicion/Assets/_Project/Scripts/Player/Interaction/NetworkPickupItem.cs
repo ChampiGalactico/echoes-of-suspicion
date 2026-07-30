@@ -61,19 +61,104 @@ public sealed class NetworkPickupItem : RatInteractable
 
     // ── RatInteractable overrides ─────────────────────────────
 
-    public override string GetInteractionPrompt(GameObject interactor)
-    {
-        string prompt = base.GetInteractionPrompt(interactor);
-
-        if (itemData != null && prompt.Contains("{item}"))
-            return prompt.Replace("{item}", itemData.itemName);
-
-        return prompt;
-    }
-
     public override bool CanPreviewInteraction(GameObject interactor)
     {
         return !isPickedUp && base.CanPreviewInteraction(interactor);
+    }
+
+    /// <summary>
+    /// Nombre contextual mostrado al apuntar al objeto. El HUD antepone "[E]"
+    /// cuando IsInteractableBy es true, así que aquí NO se incluye "[E]".
+    /// Si el inventario está lleno, devuelve "Inventario lleno" (y
+    /// IsInteractableBy será false, de modo que el HUD no añade "[E]").
+    ///
+    /// Prioridad del nombre:
+    ///   1. GuideFolderItem + FolderData → FolderData.DisplayName.
+    ///   2. PickableItem + PuzzleData    → PuzzleData.DisplayName.
+    ///   3. ItemData.itemName.
+    ///   4. "objeto".
+    /// </summary>
+    public override string GetInteractionPrompt(GameObject interactor)
+    {
+        if (interactor != null && !HasInventorySpace(interactor))
+        {
+            return "Inventario lleno";
+        }
+
+        return $"Interactuar con {ResolveDisplayName()}";
+    }
+
+    /// <summary>
+    /// Solo es "interactuable" (con "[E]") si hay hueco en el inventario.
+    /// Si está lleno, el objeto puede seguir resaltándose pero sin "[E]".
+    /// </summary>
+    public override bool IsInteractableBy(GameObject interactor)
+    {
+        if (isPickedUp)
+        {
+            return false;
+        }
+
+        if (interactor != null && !HasInventorySpace(interactor))
+        {
+            return false;
+        }
+
+        return base.IsInteractableBy(interactor);
+    }
+
+    private static bool HasInventorySpace(GameObject interactor)
+    {
+        NetworkInventory inventory =
+            interactor.GetComponent<NetworkInventory>();
+
+        if (inventory == null)
+        {
+            return true; // sin inventario no bloqueamos el prompt
+        }
+
+        for (int i = 0; i < NetworkInventory.SlotCount; i++)
+        {
+            if (inventory.GetSlot(i).IsEmpty)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private string ResolveDisplayName()
+    {
+        // 1. Carpeta del Guía.
+        EOS.GuideRoom.GuideFolderItem folder =
+            GetComponent<EOS.GuideRoom.GuideFolderItem>();
+        if (folder != null &&
+            folder.FolderData != null &&
+            !string.IsNullOrWhiteSpace(folder.FolderData.DisplayName))
+        {
+            return folder.FolderData.DisplayName;
+        }
+
+        // 2. Item de puzzle.
+        EOS.Puzzles.PickableItem pickable =
+            GetComponent<EOS.Puzzles.PickableItem>();
+        if (pickable != null &&
+            pickable.PuzzleData != null &&
+            !string.IsNullOrWhiteSpace(pickable.PuzzleData.DisplayName))
+        {
+            return pickable.PuzzleData.DisplayName;
+        }
+
+        // 3. ItemData.itemName.
+        if (itemData != null &&
+            !string.IsNullOrWhiteSpace(itemData.itemName))
+        {
+            return itemData.itemName;
+        }
+
+        // 4. Genérico.
+        return "objeto";
     }
 
     [Server]
@@ -129,6 +214,11 @@ public sealed class NetworkPickupItem : RatInteractable
             return;
         }
 
+        // Confirmación SOLO al jugador que recogió el objeto.
+        TargetNotifyInventoryAdded(
+            interactor.connectionToClient,
+            ResolveDisplayName());
+
         // Restore durability if this item had one.
         if (currentDurability >= 0f)
         {
@@ -144,6 +234,31 @@ public sealed class NetworkPickupItem : RatInteractable
             EOS.Puzzles.PuzzleEvents.RaiseNoiseGenerated(
                 transform.position,
                 EOS.Puzzles.NoiseLevel.Low);
+        }
+    }
+
+    /// <summary>
+    /// Muestra la notificación "GUARDADO EN EL INVENTARIO" únicamente en el
+    /// cliente del jugador que recogió el objeto. Busca el HUD en el jugador
+    /// local (no FindObjectsByType global): el HUD vive en el prefab del
+    /// jugador, así que se resuelve desde NetworkClient.localPlayer.
+    /// </summary>
+    [TargetRpc]
+    private void TargetNotifyInventoryAdded(
+        NetworkConnectionToClient target, string itemName)
+    {
+        NetworkIdentity localPlayer = NetworkClient.localPlayer;
+        if (localPlayer == null)
+        {
+            return;
+        }
+
+        NetworkRatInteractionHUD hud =
+            localPlayer.GetComponent<NetworkRatInteractionHUD>();
+
+        if (hud != null)
+        {
+            hud.ShowInventoryAdded(itemName);
         }
     }
 

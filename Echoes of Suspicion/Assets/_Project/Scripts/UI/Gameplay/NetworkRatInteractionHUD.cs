@@ -40,6 +40,26 @@ public sealed class NetworkRatInteractionHUD : NetworkBehaviour
 
     private float deniedFeedbackTimer;
 
+    [Header("Inventory Notification")]
+    [Tooltip("Texto dedicado para 'GUARDADO EN EL INVENTARIO'. Separado del " +
+             "feedback rojo de acceso denegado. Puede quedar nulo (se degradan " +
+             "las funciones con seguridad).")]
+    [SerializeField]
+    private TMP_Text inventoryNotificationText;
+
+    [SerializeField]
+    private CanvasGroup inventoryNotificationGroup;
+
+    [Tooltip("Duración total visible (segundos), sin contar el fade.")]
+    [SerializeField]
+    private float inventoryNotificationDuration = 2.1f;
+
+    [Tooltip("Duración del fade de entrada/salida (segundos).")]
+    [SerializeField]
+    private float inventoryNotificationFade = 0.25f;
+
+    private Coroutine inventoryNotificationRoutine;
+
     private void Awake()
     {
         if (interactor == null)
@@ -62,6 +82,13 @@ public sealed class NetworkRatInteractionHUD : NetworkBehaviour
         }
 
         SetHudVisible(false);
+
+        // La notificación de inventario empieza oculta.
+        SetInventoryNotificationAlpha(0f);
+        if (inventoryNotificationText != null)
+        {
+            inventoryNotificationText.gameObject.SetActive(false);
+        }
     }
 
     public override void OnStartClient()
@@ -197,6 +224,81 @@ public sealed class NetworkRatInteractionHUD : NetworkBehaviour
         // Fallback: ItemData.itemName del registro.
         ItemData data = inventory.ActiveItemData;
         return data != null ? data.itemName : null;
+    }
+
+    /// <summary>
+    /// Muestra la notificación local "GUARDADO EN EL INVENTARIO / &lt;item&gt;".
+    /// Método público llamado por NetworkPickupItem vía TargetRpc, solo en el
+    /// cliente del jugador que recogió. Protegido contra referencias nulas.
+    /// </summary>
+    public void ShowInventoryAdded(string itemName)
+    {
+        if (inventoryNotificationText == null)
+        {
+            return; // sin texto dedicado, no reutilizamos el rojo de denegado
+        }
+
+        inventoryNotificationText.text =
+            string.IsNullOrWhiteSpace(itemName)
+                ? "GUARDADO EN EL INVENTARIO"
+                : $"GUARDADO EN EL INVENTARIO\n{itemName}";
+
+        if (inventoryNotificationRoutine != null)
+        {
+            StopCoroutine(inventoryNotificationRoutine);
+        }
+
+        inventoryNotificationRoutine =
+            StartCoroutine(InventoryNotificationRoutine());
+    }
+
+    private System.Collections.IEnumerator InventoryNotificationRoutine()
+    {
+        inventoryNotificationText.gameObject.SetActive(true);
+
+        float fade = Mathf.Max(0.01f, inventoryNotificationFade);
+
+        // Fade in.
+        float t = 0f;
+        while (t < fade)
+        {
+            t += Time.deltaTime;
+            SetInventoryNotificationAlpha(Mathf.Clamp01(t / fade));
+            yield return null;
+        }
+        SetInventoryNotificationAlpha(1f);
+
+        yield return new WaitForSeconds(
+            Mathf.Max(0f, inventoryNotificationDuration));
+
+        // Fade out.
+        t = 0f;
+        while (t < fade)
+        {
+            t += Time.deltaTime;
+            SetInventoryNotificationAlpha(1f - Mathf.Clamp01(t / fade));
+            yield return null;
+        }
+        SetInventoryNotificationAlpha(0f);
+
+        inventoryNotificationText.gameObject.SetActive(false);
+        inventoryNotificationRoutine = null;
+    }
+
+    private void SetInventoryNotificationAlpha(float alpha)
+    {
+        if (inventoryNotificationGroup != null)
+        {
+            inventoryNotificationGroup.alpha = alpha;
+            return;
+        }
+
+        if (inventoryNotificationText != null)
+        {
+            Color c = inventoryNotificationText.color;
+            c.a = alpha;
+            inventoryNotificationText.color = c;
+        }
     }
 
     private void ShowDeniedFeedback(string message)

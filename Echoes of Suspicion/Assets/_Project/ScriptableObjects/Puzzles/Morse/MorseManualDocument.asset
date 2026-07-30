@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a27f7163dab90ef4eb0244c1533660b9, type: 3}
+  m_Name: MorseManualDocument
+  m_EditorClassIdentifier: Assembly-CSharp::DocumentData
+  DefaultFont: {fileID: 0}
+  VerticalAlignment: 0
+  Sections:
+  - Type: 0
+    Text: "PROTOCOLO DE SE\xD1ALES AC\xDASTICAS"
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 0
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 2
+    Text: "MANUAL OPERATIVO // 01 DE 02\n\nLos emisores del corredor transmiten pulsos
+      cortos y largos. El operario debe describir la secuencia completa al Gu\xEDa.\n\nPROCEDIMIENTO\n1.
+      Escuche el patr\xF3n completo.\n2. Distinga pulsos cortos (\xB7) y largos (\u2014).\n3.
+      Consulte la tabla de la p\xE1gina siguiente.\n4. Comunique \xFAnicamente la
+      letra confirmada.\n\nADVERTENCIA: una selecci\xF3n incorrecta repetir\xE1 la
+      emisi\xF3n actual."
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 0
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  ContentImage: {fileID: 0}
+  InteractionPrompt: Leer protocolo

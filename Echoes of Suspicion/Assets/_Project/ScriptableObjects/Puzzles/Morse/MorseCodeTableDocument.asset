@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a27f7163dab90ef4eb0244c1533660b9, type: 3}
+  m_Name: MorseCodeTableDocument
+  m_EditorClassIdentifier: Assembly-CSharp::DocumentData
+  DefaultFont: {fileID: 0}
+  VerticalAlignment: 0
+  Sections:
+  - Type: 0
+    Text: "TABLA DE C\xD3DIGOS MORSE"
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 0
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 2
+    Text: "REFERENCIA OPERATIVA // 02 DE 02\n\nPULSO CORTO = \xB7    PULSO LARGO
+      = \u2014\n\nE   \xB7\nT   \u2014\nA   \xB7 \u2014\nN   \u2014 \xB7\nS   \xB7
+      \xB7 \xB7\nM   \u2014 \u2014\nD   \u2014 \xB7 \xB7\nU   \xB7 \xB7 \u2014\nG  
+      \u2014 \u2014 \xB7\nR   \xB7 \u2014 \xB7\n\nCOMUNIQUE SOLO LA LETRA CONFIRMADA."
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 0
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  ContentImage: {fileID: 0}
+  InteractionPrompt: "Consultar c\xF3digos"

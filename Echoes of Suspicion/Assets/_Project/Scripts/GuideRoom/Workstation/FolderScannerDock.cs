@@ -11,7 +11,8 @@ namespace EOS.GuideRoom
     /// - Con una GuideFolderItem en el slot activo, E inserta.
     /// - El objeto real permanece oculto y se elimina del inventario.
     /// - El lector muestra una representación visual y carga el documento.
-    /// - E nuevamente expulsa el objeto real en EjectPoint.
+    /// - Si la carpeta contiene varias entradas, E avanza a la siguiente.
+    /// - En la última entrada, E expulsa el objeto real en EjectPoint.
     ///
     /// Debe estar en el mismo GameObject que NetworkIdentity,
     /// porque NetworkRatInteractor resuelve el RatInteractable
@@ -42,6 +43,9 @@ namespace EOS.GuideRoom
 
         [SyncVar]
         private bool isScanning;
+
+        [SyncVar]
+        private int currentPageIndex;
 
         private Coroutine serverScanRoutine;
 
@@ -134,6 +138,11 @@ namespace EOS.GuideRoom
 
             if (HasFolder)
             {
+                if (ServerTryShowNextDocument())
+                {
+                    return;
+                }
+
                 ServerEjectFolder();
                 return;
             }
@@ -179,6 +188,8 @@ namespace EOS.GuideRoom
             currentFolderNetId =
                 activeSlot.itemNetId;
 
+            currentPageIndex = 0;
+
             inventory.ServerRemoveItem(
                 inventory.ActiveSlotIndex
             );
@@ -205,6 +216,45 @@ namespace EOS.GuideRoom
                         currentFolderNetId
                     )
                 );
+        }
+
+        [Server]
+        private bool ServerTryShowNextDocument()
+        {
+            GuideFolderItem folderItem =
+                ResolveFolderItem(
+                    currentFolderNetId,
+                    useServerTable: true
+                );
+
+            GuideFolderData folderData =
+                folderItem != null
+                    ? folderItem.FolderData
+                    : null;
+
+            int documentCount =
+                folderData != null
+                    ? folderData.DocumentCount
+                    : 0;
+
+            if (
+                documentCount <= 1 ||
+                currentPageIndex >= documentCount - 1
+            )
+            {
+                return false;
+            }
+
+            currentPageIndex++;
+
+            RefreshInteractionPrompt();
+
+            RpcShowDocumentPage(
+                currentFolderNetId,
+                currentPageIndex
+            );
+
+            return true;
         }
 
         [Server]
@@ -237,6 +287,7 @@ namespace EOS.GuideRoom
             }
 
             currentFolderNetId = 0;
+            currentPageIndex = 0;
             isScanning = false;
 
             RefreshInteractionPrompt();
@@ -275,7 +326,10 @@ namespace EOS.GuideRoom
 
             RefreshInteractionPrompt();
 
-            RpcFinishScan(folderNetId);
+            RpcFinishScan(
+                folderNetId,
+                currentPageIndex
+            );
 
             serverScanRoutine = null;
         }
@@ -313,9 +367,12 @@ namespace EOS.GuideRoom
 
         [ClientRpc]
         private void RpcFinishScan(
-            uint folderNetId
+            uint folderNetId,
+            int pageIndex
         )
         {
+            currentPageIndex = pageIndex;
+
             RefreshInteractionPrompt();
 
             GuideFolderItem folderItem =
@@ -331,12 +388,46 @@ namespace EOS.GuideRoom
 
             visuals?.FinishScan();
 
-            ShowFolderOnTerminal(folderData);
+            ShowFolderOnTerminal(
+                folderData,
+                pageIndex
+            );
+        }
+
+        [ClientRpc]
+        private void RpcShowDocumentPage(
+            uint folderNetId,
+            int pageIndex
+        )
+        {
+            currentPageIndex = pageIndex;
+
+            GuideFolderItem folderItem =
+                ResolveFolderItem(
+                    folderNetId,
+                    useServerTable: false
+                );
+
+            GuideFolderData folderData =
+                folderItem != null
+                    ? folderItem.FolderData
+                    : null;
+
+            RefreshInteractionPrompt();
+
+            ShowFolderOnTerminal(
+                folderData,
+                pageIndex
+            );
         }
 
         [ClientRpc]
         private void RpcEjectFolder()
         {
+            currentFolderNetId = 0;
+            currentPageIndex = 0;
+            isScanning = false;
+
             RefreshInteractionPrompt();
 
             visuals?.EjectFolder();
@@ -386,12 +477,16 @@ namespace EOS.GuideRoom
             else
             {
                 visuals?.FinishScan();
-                ShowFolderOnTerminal(folderData);
+                ShowFolderOnTerminal(
+                    folderData,
+                    currentPageIndex
+                );
             }
         }
 
         private void ShowFolderOnTerminal(
-            GuideFolderData folderData
+            GuideFolderData folderData,
+            int pageIndex
         )
         {
             if (terminalView == null)
@@ -408,8 +503,20 @@ namespace EOS.GuideRoom
                 return;
             }
 
+            int safePageIndex =
+                Mathf.Clamp(
+                    pageIndex,
+                    0,
+                    Mathf.Max(
+                        0,
+                        folderData.DocumentCount - 1
+                    )
+                );
+
             GuideFolderData.FolderDocument entry =
-                folderData.GetDocument(0);
+                folderData.GetDocument(
+                    safePageIndex
+                );
 
             if (entry.IsEmpty)
             {
@@ -444,7 +551,7 @@ namespace EOS.GuideRoom
                 folderData.DisplayName,
                 documentTitle,
                 documentBody,
-                pageIndex: 0,
+                pageIndex: safePageIndex,
                 pageCount:
                     Mathf.Max(
                         1,
@@ -555,14 +662,38 @@ namespace EOS.GuideRoom
 
         private void RefreshInteractionPrompt()
         {
+            if (!HasFolder)
+            {
+                interactionPrompt = "Insertar carpeta";
+                return;
+            }
+
+            if (isScanning)
+            {
+                interactionPrompt = "Escaneando...";
+                return;
+            }
+
+            GuideFolderItem folderItem =
+                ResolveFolderItem(
+                    currentFolderNetId,
+                    useServerTable: NetworkServer.active
+                );
+
+            GuideFolderData folderData =
+                folderItem != null
+                    ? folderItem.FolderData
+                    : null;
+
+            bool hasNextDocument =
+                folderData != null &&
+                currentPageIndex <
+                folderData.DocumentCount - 1;
+
             interactionPrompt =
-                HasFolder
-                    ? (
-                        isScanning
-                            ? "Escaneando..."
-                            : "Retirar carpeta"
-                    )
-                    : "Insertar carpeta";
+                hasNextDocument
+                    ? "Siguiente documento"
+                    : "Retirar carpeta";
         }
 
         private static bool IsGuide(
