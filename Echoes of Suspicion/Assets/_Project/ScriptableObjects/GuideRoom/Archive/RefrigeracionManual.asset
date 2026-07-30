@@ -10,30 +10,37 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a27f7163dab90ef4eb0244c1533660b9, type: 3}
-  m_Name: SampleFolderDocument
+  m_Name: RefrigeracionManual
   m_EditorClassIdentifier: Assembly-CSharp::DocumentData
   DefaultFont: {fileID: 0}
   VerticalAlignment: 0
   Sections:
   - Type: 0
-    Text: REGISTRO DE MANTENIMIENTO
-    Alignment: 257
-    AnchorToBottom: 0
-    ShowDivider: 0
-    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
-    Font: {fileID: 0}
-    FontSizeOverride: -1
-  - Type: 1
-    Text: "SISTEMA DE VENTILACI\xD3N // ARCHIVO 01"
+    Text: "MANUAL DE SISTEMA \u2014 REFRIGERACI\xD3N"
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 1
     DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
     Font: {fileID: 0}
     FontSizeOverride: -1
+  - Type: 1
+    Text: "SIN LECTURA ACTIVA ESTA PARTIDA"
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 0
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
   - Type: 2
-    Text: "Documento de prueba para validar la bandeja-esc\xE1ner. Sustituye este contenido
-      por los archivos reales del puzzle."
+    Text: "OJO: se confunde con \"Motor\" por el tema de temperatura. Solo aplica si la lectura habla de REFRIGERANTE o radiador, no del bloque del motor."
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 1
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 4
+    Text: "Manual t\xE9cnico del Gu\xEDa \xB7 Taller Mec\xE1nico \xB7 Uso interno"
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 0
@@ -41,4 +48,4 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   ContentImage: {fileID: 0}
-  InteractionPrompt: Leer documento
+  InteractionPrompt: Leer manual

@@ -10,15 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 56891ba9ffe35b14da27112523cc1329, type: 3}
-  m_Name: SampleGuideFolderItem
+  m_Name: Item_Folder_Motor
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemId: 17
-  itemName: Carpeta de mantenimiento
-  description: "Carpeta compatible con la terminal del Gu\xEDa."
+  itemId: 30
+  itemName: Carpeta de Motor
+  description: Manual del sistema de motor.
   icon: {fileID: 0}
   isStackable: 0
   maxStack: 1
   startsInInventory: 0
-  worldPrefab: {fileID: 4598078798003620988, guid: b857b668e8ca0c448b915f0e1342492d, type: 3}
-  heldModelPrefab: {fileID: 4598078798003620988, guid: b857b668e8ca0c448b915f0e1342492d, type: 3}
+  worldPrefab: {fileID: 1628945202036749639, guid: 2b57b08115c46fc45a7d05133d276ad7, type: 3}
+  heldModelPrefab: {fileID: 1628945202036749639, guid: 2b57b08115c46fc45a7d05133d276ad7, type: 3}
   heldScale: 0.72
+  heldRotationOffset: {x: 0, y: 0, z: 0}
+  heldPositionOffset: {x: 0, y: 0, z: 0}
