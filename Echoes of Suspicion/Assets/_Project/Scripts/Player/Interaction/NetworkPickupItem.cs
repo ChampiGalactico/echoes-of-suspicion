@@ -385,7 +385,7 @@ public sealed class NetworkPickupItem : RatInteractable
         }
     }
 
-    private void SetVisibility(bool visible)
+    public void SetVisibility(bool visible)
     {
         foreach (Renderer r in GetComponentsInChildren<Renderer>(true))
         {
@@ -395,6 +395,13 @@ public sealed class NetworkPickupItem : RatInteractable
         foreach (Collider c in GetComponentsInChildren<Collider>(true))
         {
             c.enabled = visible;
+        }
+
+        // World Space Canvases (e.g. document text on receipts)
+        // use CanvasRenderer, not Renderer — toggle them too.
+        foreach (Canvas canvas in GetComponentsInChildren<Canvas>(true))
+        {
+            canvas.enabled = visible;
         }
     }
 }
