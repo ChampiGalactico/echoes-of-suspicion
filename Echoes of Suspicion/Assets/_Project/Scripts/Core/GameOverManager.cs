@@ -34,6 +34,9 @@ public sealed class GameOverManager : NetworkBehaviour
     [SerializeField, Tooltip("Fuente para el texto de Game Over (ej. Audiowide_SDF).")]
     private TMP_FontAsset font;
 
+    [SerializeField, Tooltip("Color del texto de Game Over.")]
+    private Color textColor = new Color(0f, 0.9f, 0.7f, 1f);
+
     [SerializeField, Tooltip("Prefab de botón del menú de pausa. Si es null, se crea uno básico.")]
     private GameObject buttonPrefab;
 
@@ -372,7 +375,7 @@ public sealed class GameOverManager : NetworkBehaviour
         _deathText = textObj.AddComponent<TextMeshProUGUI>();
         _deathText.fontSize = 52f;
         _deathText.alignment = TextAlignmentOptions.Center;
-        _deathText.color = Color.white;
+        _deathText.color = textColor;
         _deathText.alpha = 0f;
 
         if (font != null)
@@ -440,10 +443,14 @@ public sealed class GameOverManager : NetworkBehaviour
         var btnImg = btnObj.AddComponent<Image>();
         btnImg.color = new Color(0.08f, 0.08f, 0.08f, 0.95f);
 
-        // Borde usando Outline.
-        var outline = btnObj.AddComponent<Outline>();
-        outline.effectColor = new Color(0f, 0.8f, 0.6f, 0.6f);
-        outline.effectDistance = new Vector2(2f, 2f);
+        // Borde grueso: 2 Outlines apilados para mayor grosor.
+        var outline1 = btnObj.AddComponent<Outline>();
+        outline1.effectColor = new Color(0f, 0.8f, 0.6f, 0.8f);
+        outline1.effectDistance = new Vector2(3f, 3f);
+
+        var outline2 = btnObj.AddComponent<Outline>();
+        outline2.effectColor = new Color(0f, 0.8f, 0.6f, 0.5f);
+        outline2.effectDistance = new Vector2(5f, 5f);
 
         var button = btnObj.AddComponent<Button>();
         button.onClick.AddListener(onClick);
@@ -473,9 +480,6 @@ public sealed class GameOverManager : NetworkBehaviour
 
         if (font != null)
             tmpText.font = font;
-
-        // Flicker sutil.
-        textObj.AddComponent<UITextFlicker>();
     }
 }
 
