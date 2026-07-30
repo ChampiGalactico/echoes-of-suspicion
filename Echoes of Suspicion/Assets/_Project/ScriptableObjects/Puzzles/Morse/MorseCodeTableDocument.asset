@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a27f7163dab90ef4eb0244c1533660b9, type: 3}
-  m_Name: MorseManualDocument
+  m_Name: MorseCodeTableDocument
   m_EditorClassIdentifier: Assembly-CSharp::DocumentData
   DefaultFont: {fileID: 0}
   VerticalAlignment: 0
   Sections:
   - Type: 0
-    Text: "PROTOCOLO DE SE\xD1ALES AC\xDASTICAS"
+    Text: "TABLA DE C\xD3DIGOS MORSE"
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 0
@@ -24,12 +24,10 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 2
-    Text: "MANUAL OPERATIVO // 01 DE 02\n\nLos emisores del corredor transmiten pulsos
-      cortos y largos. El operario debe describir la secuencia completa al Gu\xEDa.\n\nPROCEDIMIENTO\n1.
-      Escuche el patr\xF3n completo.\n2. Distinga pulsos cortos (\xB7) y largos (\u2014).\n3.
-      Consulte la tabla de la p\xE1gina siguiente.\n4. Comunique \xFAnicamente la
-      letra confirmada.\n\nADVERTENCIA: una selecci\xF3n incorrecta repetir\xE1 la
-      emisi\xF3n actual."
+    Text: "REFERENCIA OPERATIVA // 02 DE 02\n\nPULSO CORTO = \xB7    PULSO LARGO
+      = \u2014\n\nE   \xB7\nT   \u2014\nA   \xB7 \u2014\nN   \u2014 \xB7\nS   \xB7
+      \xB7 \xB7\nM   \u2014 \u2014\nD   \u2014 \xB7 \xB7\nU   \xB7 \xB7 \u2014\nG  
+      \u2014 \u2014 \xB7\nR   \xB7 \u2014 \xB7\n\nCOMUNIQUE SOLO LA LETRA CONFIRMADA."
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 0
@@ -37,4 +35,4 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   ContentImage: {fileID: 0}
-  InteractionPrompt: Leer protocolo
+  InteractionPrompt: "Consultar c\xF3digos"

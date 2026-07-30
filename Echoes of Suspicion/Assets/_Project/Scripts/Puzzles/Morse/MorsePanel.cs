@@ -1,4 +1,5 @@
 using Mirror;
+using TMPro;
 using UnityEngine;
 
 namespace EOS.Puzzles.Morse
@@ -48,8 +49,16 @@ namespace EOS.Puzzles.Morse
         [SerializeField]
         private Color failureColor = new(0.85f, 0.20f, 0.20f, 1f);
 
+        [Tooltip("Estado de éxito estable del puzzle resuelto. Verde (no azul).")]
         [SerializeField]
-        private Color solvedColor = new(0.30f, 0.55f, 0.95f, 1f);
+        private Color solvedColor = new(0.16f, 0.62f, 0.30f, 1f);
+
+        [Header("Etiqueta de letra")]
+
+        [Tooltip("TMP 3D que muestra la letra del símbolo (E, T, A, ...). " +
+                 "Solo la letra, nunca el código Morse. Opcional.")]
+        [SerializeField]
+        private TMP_Text symbolLabel;
 
         [Header("Debug")]
 
@@ -77,6 +86,15 @@ namespace EOS.Puzzles.Morse
 
             propertyBlock = new MaterialPropertyBlock();
             ApplyVisualState(PanelVisualState.Idle);
+            RefreshSymbolLabel();
+        }
+
+        private void RefreshSymbolLabel()
+        {
+            if (symbolLabel != null)
+            {
+                symbolLabel.text = symbolId; // solo la letra, nunca el Morse
+            }
         }
 
         // ─── RatInteractable overrides ───
@@ -181,6 +199,11 @@ namespace EOS.Puzzles.Morse
             if (!string.IsNullOrEmpty(symbolId))
             {
                 symbolId = symbolId.Trim().ToUpperInvariant();
+            }
+
+            if (symbolLabel != null)
+            {
+                symbolLabel.text = symbolId;
             }
         }
 #endif

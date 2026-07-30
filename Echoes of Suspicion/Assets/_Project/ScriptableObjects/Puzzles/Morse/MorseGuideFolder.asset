@@ -18,3 +18,5 @@ MonoBehaviour:
   documents:
   - document: {fileID: 11400000, guid: bc48c452442c46638b56e5b022f2c38f, type: 2}
     note: {fileID: 0}
+  - document: {fileID: 11400000, guid: efcaaf92647ee504eaa7a0aa77aa44e8, type: 2}
+    note: {fileID: 0}

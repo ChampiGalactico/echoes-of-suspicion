@@ -14,13 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemId: 36
   itemName: "Manual de Se\xF1ales Ac\xFAsticas Industriales"
-  description: "Carpeta con la tabla de c\xF3digos ac\xFAsticos. Escan\xE9ala en la terminal del Gu\xEDa."
+  description: "Carpeta de dos p\xE1ginas con el protocolo operativo y la tabla de
+    c\xF3digos Morse. Escan\xE9ala en la terminal del Gu\xEDa."
   icon: {fileID: 0}
   isStackable: 0
   maxStack: 1
   startsInInventory: 0
-  worldPrefab: {fileID: 0}
-  heldModelPrefab: {fileID: 0}
+  worldPrefab: {fileID: 1997183258893587302, guid: e06104599c712a240b47920670d6e1ac, type: 3}
+  heldModelPrefab: {fileID: 1997183258893587302, guid: e06104599c712a240b47920670d6e1ac, type: 3}
   heldScale: 0.72
   heldRotationOffset: {x: 0, y: 0, z: 0}
   heldPositionOffset: {x: 0, y: 0, z: 0}
+  useHeldTint: 1
+  heldTint: {r: 0.16, g: 0.28, b: 0.42, a: 1}

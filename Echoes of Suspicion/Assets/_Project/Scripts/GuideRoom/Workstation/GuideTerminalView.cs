@@ -30,6 +30,35 @@ namespace EOS.GuideRoom
         [SerializeField] private TMP_Text footerText;
         [SerializeField] private TMP_Text versionText;
 
+        [Header("Legibilidad")]
+        [Tooltip("Tamaño de fuente del título del documento.")]
+        [SerializeField] private float titleFontSize = 34f;
+
+        [Tooltip("Tamaño de fuente del cuerpo del documento.")]
+        [SerializeField] private float bodyFontSize = 22f;
+
+        [Tooltip("Tamaño mínimo permitido si se usa auto-size.")]
+        [SerializeField] private float minBodyFontSize = 18f;
+
+        [Tooltip("Tamaño máximo permitido si se usa auto-size.")]
+        [SerializeField] private float maxBodyFontSize = 24f;
+
+        [Tooltip("Si true, el cuerpo usa auto-size dentro de [min,max]. Si " +
+                 "false, usa bodyFontSize fijo (recomendado con documentos " +
+                 "compactos).")]
+        [SerializeField] private bool useBodyAutoSize = false;
+
+        [Tooltip("Interlineado del cuerpo (TMP lineSpacing).")]
+        [SerializeField] private float bodyLineSpacing = 6f;
+
+        [Tooltip("Márgenes del cuerpo: x=izq, y=arriba, z=der, w=abajo.")]
+        [SerializeField] private Vector4 bodyMargins = new(8f, 4f, 8f, 4f);
+
+        [Tooltip("Modo de overflow del cuerpo. Truncate evita que el texto " +
+                 "salga del área verde.")]
+        [SerializeField] private TextOverflowModes bodyOverflow =
+            TextOverflowModes.Truncate;
+
         public void Configure(
             TMP_Text header,
             TMP_Text stationId,
@@ -57,12 +86,12 @@ namespace EOS.GuideRoom
             footerText = footer;
             versionText = version;
 
-            ConfigureDocumentBodyLayout();
+            ApplyReadabilitySettings();
         }
 
         private void Awake()
         {
-            ConfigureDocumentBodyLayout();
+            ApplyReadabilitySettings();
             ShowWaiting();
         }
 
@@ -152,23 +181,43 @@ namespace EOS.GuideRoom
             }
         }
 
-        private void ConfigureDocumentBodyLayout()
+        /// <summary>
+        /// Aplica la configuración de legibilidad serializada a los textos de
+        /// título y cuerpo. Pública para que el builder pueda invocarla y
+        /// persistir los ajustes al ejecutar Create or Refresh, sin reconstruir
+        /// la terminal completa. Segura ante referencias nulas.
+        /// </summary>
+        public void ApplyReadabilitySettings()
         {
+            if (documentTitleText != null)
+            {
+                documentTitleText.enableAutoSizing = false;
+                documentTitleText.fontSize = titleFontSize;
+            }
+
             if (documentBodyText == null)
             {
                 return;
             }
 
             documentBodyText.enableWordWrapping = true;
-            documentBodyText.enableAutoSizing = true;
-            documentBodyText.fontSizeMin = 14f;
-            documentBodyText.fontSizeMax =
-                Mathf.Max(
-                    18f,
-                    documentBodyText.fontSize
-                );
-            documentBodyText.overflowMode =
-                TextOverflowModes.Truncate;
+            documentBodyText.richText = true;
+            documentBodyText.lineSpacing = bodyLineSpacing;
+            documentBodyText.margin = bodyMargins;
+            documentBodyText.overflowMode = bodyOverflow;
+
+            if (useBodyAutoSize)
+            {
+                documentBodyText.enableAutoSizing = true;
+                documentBodyText.fontSizeMin = Mathf.Max(1f, minBodyFontSize);
+                documentBodyText.fontSizeMax =
+                    Mathf.Max(minBodyFontSize, maxBodyFontSize);
+            }
+            else
+            {
+                documentBodyText.enableAutoSizing = false;
+                documentBodyText.fontSize = bodyFontSize;
+            }
         }
 
         private static void SetText(TMP_Text target, string value)

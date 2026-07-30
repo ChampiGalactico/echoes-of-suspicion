@@ -149,7 +149,41 @@ public class NetworkHeldItemVisual : NetworkBehaviour
         currentVisualInstance.transform.localRotation = Quaternion.Euler(data.heldRotationOffset);
         currentVisualInstance.transform.localScale = prefab.transform.localScale * data.heldScale;
 
+        // Tinte opcional (p. ej. carpetas que comparten un mismo visual pero
+        // conservan su color). Usa MaterialPropertyBlock; no toca el material
+        // compartido. Sin efecto si useHeldTint es false (default).
+        if (data.useHeldTint)
+        {
+            ApplyHeldTint(currentVisualInstance, data.heldTint);
+        }
+
         localVisualItemId = itemId;
+    }
+
+    private static readonly int BaseColorPropId = Shader.PropertyToID("_BaseColor");
+    private static readonly int ColorPropId = Shader.PropertyToID("_Color");
+
+    private static void ApplyHeldTint(GameObject visual, Color tint)
+    {
+        if (visual == null)
+        {
+            return;
+        }
+
+        MaterialPropertyBlock block = new MaterialPropertyBlock();
+
+        foreach (Renderer renderer in visual.GetComponentsInChildren<Renderer>(true))
+        {
+            if (renderer == null)
+            {
+                continue;
+            }
+
+            renderer.GetPropertyBlock(block);
+            block.SetColor(BaseColorPropId, tint);
+            block.SetColor(ColorPropId, tint);
+            renderer.SetPropertyBlock(block);
+        }
     }
 
     private void DestroyVisual()
