@@ -368,4 +368,29 @@ public sealed class PlayerHealth : NetworkBehaviour
         if (action == GameOverAction.Retry)
             GameOverManager.Instance.ServerRetry();
     }
+
+    // ── Bills puzzle commands ────────────────────────────
+
+    /// <summary>
+    /// El Guía confirma un pago desde la MainScreen.
+    /// Enrutado al BillsPuzzleCoordinator en el servidor.
+    /// </summary>
+    [Command]
+    public void CmdConfirmBillPayment(string itemId)
+    {
+        var coordinator = FindAnyObjectByType<EOS.Puzzles.BillsPuzzleCoordinator>();
+        if (coordinator != null)
+            coordinator.ConfirmPayment(itemId);
+    }
+
+    /// <summary>
+    /// El Guía inicia el puzzle de bills desde el fax receiver.
+    /// </summary>
+    [Command]
+    public void CmdStartBillsPuzzle()
+    {
+        var coordinator = FindAnyObjectByType<EOS.Puzzles.BillsPuzzleCoordinator>();
+        if (coordinator != null)
+            coordinator.StartBillsPuzzle();
+    }
 }

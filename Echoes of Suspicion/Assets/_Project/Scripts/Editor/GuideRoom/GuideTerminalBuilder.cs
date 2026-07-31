@@ -487,7 +487,7 @@ namespace EOS.EditorTools.GuideRoom
                 top: 112f,
                 bottom: 0f);
 
-            documentBodyText.enableWordWrapping = true;
+            documentBodyText.textWrappingMode = TMPro.TextWrappingModes.Normal;
             documentBodyText.overflowMode = TextOverflowModes.Overflow;
             documentPanel.gameObject.SetActive(false);
 

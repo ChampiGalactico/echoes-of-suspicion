@@ -1,4 +1,5 @@
 using System.Collections;
+using EOS.Puzzles;
 using Mirror;
 using UnityEngine;
 
@@ -13,6 +14,12 @@ namespace EOS.GuideRoom
     /// - El lector muestra una representación visual y carga el documento.
     /// - Si la carpeta contiene varias entradas, E avanza a la siguiente.
     /// - En la última entrada, E expulsa el objeto real en EjectPoint.
+    ///
+    /// También acepta recibos (PickableItem con DocumentData):
+    /// - Se escanean igual que las carpetas.
+    /// - Tras el escaneo se dispara OnReceiptScanned para que el
+    ///   controller active el botón PAGAR en la terminal.
+    /// - Al expulsar se dispara OnReceiptEjected.
     ///
     /// Debe estar en el mismo GameObject que NetworkIdentity,
     /// porque NetworkRatInteractor resuelve el RatInteractable
@@ -47,6 +54,13 @@ namespace EOS.GuideRoom
         [SyncVar]
         private int currentPageIndex;
 
+        /// <summary>
+        /// True when the inserted item is a PickableItem (receipt),
+        /// not a GuideFolderItem (folder).
+        /// </summary>
+        [SyncVar]
+        private bool _isReceiptMode;
+
         private Coroutine serverScanRoutine;
 
         public bool HasFolder =>
@@ -54,6 +68,24 @@ namespace EOS.GuideRoom
 
         public bool IsScanning =>
             isScanning;
+
+        public bool IsReceiptMode => _isReceiptMode;
+
+        // ── Receipt events ───────────────────────────────────
+        //
+        // GuideBillsTerminalController se suscribe para activar
+        // el botón PAGAR en la terminal.
+
+        /// <summary>
+        /// Fired on all clients when a receipt finishes scanning.
+        /// Parameter: itemId from PuzzleItemData.
+        /// </summary>
+        public event System.Action<string> OnReceiptScanned;
+
+        /// <summary>
+        /// Fired on all clients when a receipt is ejected.
+        /// </summary>
+        public event System.Action OnReceiptEjected;
 
         private void Awake()
         {
@@ -99,6 +131,10 @@ namespace EOS.GuideRoom
             return ResolveActiveFolderItem(
                 interactor,
                 useServerTable: false
+            ) != null
+            || ResolveActiveReceiptItem(
+                interactor,
+                useServerTable: false
             ) != null;
         }
 
@@ -123,6 +159,10 @@ namespace EOS.GuideRoom
             return ResolveActiveFolderItem(
                 interactor.gameObject,
                 useServerTable: true
+            ) != null
+            || ResolveActiveReceiptItem(
+                interactor.gameObject,
+                useServerTable: true
             ) != null;
         }
 
@@ -138,6 +178,13 @@ namespace EOS.GuideRoom
 
             if (HasFolder)
             {
+                // Receipts have only 1 page — always eject.
+                if (_isReceiptMode)
+                {
+                    ServerEjectFolder();
+                    return;
+                }
+
                 if (ServerTryShowNextDocument())
                 {
                     return;
@@ -147,7 +194,24 @@ namespace EOS.GuideRoom
                 return;
             }
 
-            ServerInsertFolder(interactor);
+            // Try folder first, then receipt.
+            GuideFolderItem folder = ResolveActiveFolderItem(
+                interactor.gameObject, useServerTable: true);
+
+            if (folder != null)
+            {
+                ServerInsertFolder(interactor);
+                return;
+            }
+
+            PickableItem receipt = ResolveActiveReceiptItem(
+                interactor.gameObject, useServerTable: true);
+
+            if (receipt != null)
+            {
+                ServerInsertReceipt(interactor);
+                return;
+            }
         }
 
         [Server]
@@ -218,6 +282,66 @@ namespace EOS.GuideRoom
                 );
         }
 
+        /// <summary>
+        /// Inserta un recibo (PickableItem) en el escáner.
+        /// Mismo flujo que carpeta pero con 1 sola página y receipt mode.
+        /// </summary>
+        [Server]
+        private void ServerInsertReceipt(
+            NetworkIdentity interactor
+        )
+        {
+            NetworkInventory inventory =
+                interactor.GetComponent<NetworkInventory>();
+
+            if (inventory == null)
+                return;
+
+            InventorySlot activeSlot = inventory.ActiveSlot;
+
+            PickableItem receipt = ResolveReceiptItem(
+                activeSlot.itemNetId,
+                useServerTable: true
+            );
+
+            if (receipt == null || receipt.DocumentData == null)
+            {
+                TargetReject(
+                    interactor.connectionToClient,
+                    "OBJETO NO RECONOCIDO"
+                );
+                return;
+            }
+
+            currentFolderNetId = activeSlot.itemNetId;
+            currentPageIndex = 0;
+            _isReceiptMode = true;
+
+            inventory.ServerRemoveItem(
+                inventory.ActiveSlotIndex
+            );
+
+            isScanning = true;
+            RefreshInteractionPrompt();
+
+            string displayName = receipt.PuzzleData != null
+                ? receipt.PuzzleData.DisplayName
+                : "RECIBO";
+
+            RpcBeginReceiptScan(
+                currentFolderNetId,
+                scanDuration,
+                displayName
+            );
+
+            if (serverScanRoutine != null)
+                StopCoroutine(serverScanRoutine);
+
+            serverScanRoutine = StartCoroutine(
+                ServerFinishScanRoutine(currentFolderNetId)
+            );
+        }
+
         [Server]
         private bool ServerTryShowNextDocument()
         {
@@ -265,6 +389,8 @@ namespace EOS.GuideRoom
                 return;
             }
 
+            bool wasReceipt = _isReceiptMode;
+
             uint folderNetId =
                 currentFolderNetId;
 
@@ -289,6 +415,7 @@ namespace EOS.GuideRoom
             currentFolderNetId = 0;
             currentPageIndex = 0;
             isScanning = false;
+            _isReceiptMode = false;
 
             RefreshInteractionPrompt();
 
@@ -301,7 +428,10 @@ namespace EOS.GuideRoom
                 serverScanRoutine = null;
             }
 
-            RpcEjectFolder();
+            if (wasReceipt)
+                RpcEjectReceipt();
+            else
+                RpcEjectFolder();
         }
 
         [Server]
@@ -326,10 +456,29 @@ namespace EOS.GuideRoom
 
             RefreshInteractionPrompt();
 
-            RpcFinishScan(
-                folderNetId,
-                currentPageIndex
-            );
+            if (_isReceiptMode)
+            {
+                // Resolve receipt info for the RPC.
+                PickableItem receipt = ResolveReceiptItem(
+                    folderNetId, useServerTable: true);
+
+                string itemId = receipt != null && receipt.PuzzleData != null
+                    ? receipt.PuzzleData.ItemId
+                    : "";
+
+                string displayName = receipt != null && receipt.PuzzleData != null
+                    ? receipt.PuzzleData.DisplayName
+                    : "RECIBO";
+
+                RpcFinishReceiptScan(folderNetId, itemId, displayName);
+            }
+            else
+            {
+                RpcFinishScan(
+                    folderNetId,
+                    currentPageIndex
+                );
+            }
 
             serverScanRoutine = null;
         }
@@ -434,6 +583,76 @@ namespace EOS.GuideRoom
             terminalView?.ShowWaiting();
         }
 
+        // ── Receipt RPCs ─────────────────────────────────────
+
+        [ClientRpc]
+        private void RpcBeginReceiptScan(
+            uint receiptNetId,
+            float duration,
+            string displayName
+        )
+        {
+            RefreshInteractionPrompt();
+
+            // Visuals: same scan animation, null folderData is fine.
+            visuals?.BeginScan(null, duration);
+            terminalView?.ShowLoading(displayName);
+        }
+
+        [ClientRpc]
+        private void RpcFinishReceiptScan(
+            uint receiptNetId,
+            string itemId,
+            string displayName
+        )
+        {
+            RefreshInteractionPrompt();
+            visuals?.FinishScan();
+
+            // Show receipt document on terminal.
+            PickableItem receipt = ResolveReceiptItem(
+                receiptNetId, useServerTable: false);
+
+            if (receipt != null && receipt.DocumentData != null)
+            {
+                ExtractDocument(
+                    receipt.DocumentData,
+                    out string title,
+                    out string body
+                );
+
+                terminalView?.ShowDocument(
+                    displayName,
+                    title,
+                    body,
+                    pageIndex: 0,
+                    pageCount: 1
+                );
+            }
+            else
+            {
+                terminalView?.ShowError("RECIBO SIN DATOS");
+            }
+
+            OnReceiptScanned?.Invoke(itemId);
+        }
+
+        [ClientRpc]
+        private void RpcEjectReceipt()
+        {
+            currentFolderNetId = 0;
+            currentPageIndex = 0;
+            isScanning = false;
+            _isReceiptMode = false;
+
+            RefreshInteractionPrompt();
+
+            visuals?.EjectFolder();
+            terminalView?.ShowWaiting();
+
+            OnReceiptEjected?.Invoke();
+        }
+
         [TargetRpc]
         private void TargetReject(
             NetworkConnectionToClient target,
@@ -447,6 +666,48 @@ namespace EOS.GuideRoom
         private IEnumerator RestoreClientStateNextFrame()
         {
             yield return null;
+
+            if (_isReceiptMode)
+            {
+                PickableItem receipt = ResolveReceiptItem(
+                    currentFolderNetId, useServerTable: false);
+
+                string displayName = receipt != null && receipt.PuzzleData != null
+                    ? receipt.PuzzleData.DisplayName
+                    : "RECIBO";
+
+                visuals?.ShowFolder(null);
+
+                if (isScanning)
+                {
+                    visuals?.BeginScan(null, scanDuration);
+                    terminalView?.ShowLoading(displayName);
+                }
+                else
+                {
+                    visuals?.FinishScan();
+
+                    if (receipt != null && receipt.DocumentData != null)
+                    {
+                        ExtractDocument(
+                            receipt.DocumentData,
+                            out string title,
+                            out string body
+                        );
+
+                        terminalView?.ShowDocument(
+                            displayName, title, body,
+                            pageIndex: 0, pageCount: 1
+                        );
+
+                        string itemId = receipt.PuzzleData != null
+                            ? receipt.PuzzleData.ItemId : "";
+                        OnReceiptScanned?.Invoke(itemId);
+                    }
+                }
+
+                yield break;
+            }
 
             GuideFolderItem folderItem =
                 ResolveFolderItem(
@@ -664,13 +925,19 @@ namespace EOS.GuideRoom
         {
             if (!HasFolder)
             {
-                interactionPrompt = "Insertar carpeta";
+                interactionPrompt = "Insertar documento";
                 return;
             }
 
             if (isScanning)
             {
                 interactionPrompt = "Escaneando...";
+                return;
+            }
+
+            if (_isReceiptMode)
+            {
+                interactionPrompt = "Retirar recibo";
                 return;
             }
 
@@ -762,6 +1029,71 @@ namespace EOS.GuideRoom
 
             return identity.GetComponent<
                 GuideFolderItem>();
+        }
+
+        /// <summary>
+        /// Checks if the player's active slot has a PickableItem
+        /// with DocumentData (i.e. a receipt that can be scanned).
+        /// </summary>
+        private static PickableItem
+            ResolveActiveReceiptItem(
+                GameObject player,
+                bool useServerTable
+            )
+        {
+            NetworkInventory inventory =
+                player != null
+                    ? player.GetComponent<
+                        NetworkInventory>()
+                    : null;
+
+            if (inventory == null)
+                return null;
+
+            return ResolveReceiptItem(
+                inventory.ActiveSlot.itemNetId,
+                useServerTable
+            );
+        }
+
+        /// <summary>
+        /// Resolves a PickableItem with DocumentData from a netId.
+        /// Returns null if the item doesn't exist or has no document.
+        /// </summary>
+        private static PickableItem
+            ResolveReceiptItem(
+                uint netId,
+                bool useServerTable
+            )
+        {
+            if (netId == 0)
+                return null;
+
+            var spawnedTable =
+                useServerTable
+                    ? NetworkServer.spawned
+                    : NetworkClient.spawned;
+
+            if (!spawnedTable.TryGetValue(
+                    netId,
+                    out NetworkIdentity identity
+                ))
+            {
+                return null;
+            }
+
+            // Only accept if it has DocumentData and is NOT
+            // a GuideFolderItem (those use the folder path).
+            if (identity.GetComponent<GuideFolderItem>() != null)
+                return null;
+
+            PickableItem pickable =
+                identity.GetComponent<PickableItem>();
+
+            if (pickable == null || pickable.DocumentData == null)
+                return null;
+
+            return pickable;
         }
 
         private static NetworkPickupItem

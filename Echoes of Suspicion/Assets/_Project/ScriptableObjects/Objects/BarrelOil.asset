@@ -23,4 +23,6 @@ MonoBehaviour:
   heldModelPrefab: {fileID: 0}
   heldScale: 0.3
   heldRotationOffset: {x: 0, y: 0, z: -50}
-  heldPositionOffset: {x: 0, y: 0, z: 0}
+  heldPositionOffset: {x: 0, y: -0.3, z: 0}
+  useHeldTint: 0
+  heldTint: {r: 1, g: 1, b: 1, a: 1}

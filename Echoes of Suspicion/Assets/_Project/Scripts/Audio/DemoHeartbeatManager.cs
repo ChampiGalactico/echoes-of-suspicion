@@ -30,7 +30,7 @@ namespace EOS.Puzzles
         private AudioClip heartbeatClip;
 
         [SerializeField, Range(0f, 1f)]
-        private float volume = 0.5f;
+        private float volume = 0.75f;
 
         [SerializeField, Tooltip("Pitch multiplier. Increase slightly (1.1-1.2) to sound different from creature heartbeat.")]
         private float pitch = 1.1f;
@@ -47,8 +47,9 @@ namespace EOS.Puzzles
 
         [Header("Puzzles")]
 
-        [SerializeField, Tooltip("Demo puzzles in order. Subscribe to their OnPuzzleSolved events.")]
-        private Puzzle[] demoPuzzles;
+        [SerializeField, Tooltip("Demo puzzle nodes in order. Each must implement IPuzzleNode " +
+                                 "(Puzzle, MorsePuzzleCoordinator, etc.).")]
+        private MonoBehaviour[] demoPuzzleNodes;
 
         // ── State ────────────────────────────────────────────
 
@@ -68,14 +69,23 @@ namespace EOS.Puzzles
         {
             base.OnStartServer();
 
-            if (demoPuzzles == null) return;
+            if (demoPuzzleNodes == null) return;
 
-            for (int i = 0; i < demoPuzzles.Length; i++)
+            for (int i = 0; i < demoPuzzleNodes.Length; i++)
             {
-                if (demoPuzzles[i] == null) continue;
+                if (demoPuzzleNodes[i] == null) continue;
+
+                IPuzzleNode node = demoPuzzleNodes[i] as IPuzzleNode;
+                if (node == null)
+                {
+                    Debug.LogWarning(
+                        $"[DemoHeartbeat] Element {i} ({demoPuzzleNodes[i].name}) " +
+                        $"does not implement IPuzzleNode — skipping.", demoPuzzleNodes[i]);
+                    continue;
+                }
 
                 int stage = i;
-                demoPuzzles[i].OnPuzzleSolved.AddListener(() => OnPuzzleSolved(stage));
+                node.OnSolved += _ => OnPuzzleSolved(stage);
             }
         }
 

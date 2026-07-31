@@ -16,7 +16,7 @@ MonoBehaviour:
   VerticalAlignment: 0
   Sections:
   - Type: 0
-    Text: "MANUAL DE SISTEMA \u2014 BATER\xCDA / EL\xC9CTRICO"
+    Text: "SISTEMA EL\xC9CTRICO / BATER\xCDA"
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 1
@@ -24,7 +24,17 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 1
-    Text: "URGENCIA: AMARILLA \xB7 ATENCI\xD3N PRIORITARIA"
+    Text: "<color=#FF8C00>[!] ALERTA: PRIORIDAD ALTA</color>"
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 1
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 2
+    Text: "Los terminales de la bater\xEDa presentan acumulaci\xF3n severa de \xF3xido
+      en los bornes. La resistencia el\xE9ctrica supera el umbral de arranque. El
+      voltaje medido es de 2.1V cuando el m\xEDnimo operativo es 12V."
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 0
@@ -32,15 +42,27 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 2
-    Text: "Lectura asociada: \"Bater\xEDa: voltaje bajo\". Terminales corro\xEDdos; hay que aflojar y limpiar los bornes antes de reemplazar la bater\xEDa."
+    Text: "El sistema de encendido no recibe corriente suficiente. Los bornes est\xE1n
+      soldados por corrosi\xF3n y deben ser liberados mec\xE1nicamente para restaurar
+      el contacto."
     Alignment: 257
     AnchorToBottom: 0
-    ShowDivider: 0
+    ShowDivider: 1
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 0
+    Text: 'HERRAMIENTA: DESTORNILLADOR'
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 1
     DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 2
-    Text: "HERRAMIENTA CORRECTA: DESTORNILLADOR (Unscrew). Afloja los bornes del sistema el\xE9ctrico."
+    Text: "Aflojar las tuercas de sujeci\xF3n de ambos bornes. Retirar dep\xF3sitos
+      de \xF3xido de las superficies de contacto. Reconectar terminales y verificar
+      continuidad el\xE9ctrica."
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 1

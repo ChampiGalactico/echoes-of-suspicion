@@ -13,17 +13,25 @@ namespace EOS.Puzzles.Morse
         menuName = "EOS/Puzzles/Morse Puzzle Definition")]
     public sealed class MorsePuzzleDefinition : ScriptableObject
     {
-        [Header("Secuencia")]
+        [Header("Palabra objetivo")]
 
-        [Tooltip("Símbolos permitidos. Deben ser un subconjunto del alfabeto " +
-                 "MVP: E T A N S M D U G R.")]
+        [Tooltip("La palabra que el Runner debe deletrear. Cada letra será " +
+                 "un paso del puzzle. Solo letras A-Z y Ñ.")]
+        [SerializeField]
+        private string targetWord = "CLAVE";
+
+        [Header("Modo aleatorio (si targetWord está vacío)")]
+
+        [Tooltip("Símbolos permitidos si no se define targetWord.")]
         [SerializeField]
         private string[] allowedSymbols =
         {
-            "E", "T", "A", "N", "S", "M", "D", "U", "G", "R"
+            "A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
+            "K", "L", "M", "N", "Ñ", "O", "P", "Q", "R", "S",
+            "T", "U", "V", "W", "X", "Y", "Z"
         };
 
-        [Tooltip("Cuántos símbolos distintos tiene la secuencia.")]
+        [Tooltip("Cuántos símbolos distintos tiene la secuencia aleatoria.")]
         [SerializeField, Min(1)]
         private int sequenceLength = 3;
 
@@ -66,6 +74,18 @@ namespace EOS.Puzzles.Morse
         private float interactionCooldown = 0.4f;
 
         // ─── Accessors ───
+
+        /// <summary>
+        /// La palabra objetivo en mayúsculas. Si está vacía, se usa modo
+        /// aleatorio con AllowedSymbols.
+        /// </summary>
+        public string TargetWord =>
+            string.IsNullOrWhiteSpace(targetWord)
+                ? string.Empty
+                : targetWord.Trim().ToUpperInvariant();
+
+        /// <summary>True si se definió una palabra; false = modo aleatorio.</summary>
+        public bool HasTargetWord => !string.IsNullOrWhiteSpace(targetWord);
 
         public string[] AllowedSymbols => allowedSymbols;
         public int SequenceLength => Mathf.Max(1, sequenceLength);

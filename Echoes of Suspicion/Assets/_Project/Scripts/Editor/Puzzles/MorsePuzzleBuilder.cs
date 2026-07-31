@@ -149,25 +149,15 @@ namespace EOS.EditorTools.Puzzles
             MorsePuzzleCoordinator coordinator =
                 coordinatorGo.AddComponent<MorsePuzzleCoordinator>();
 
-            // Emitters
-            GameObject emittersRoot = CreateChild(root.transform, "Emitters");
-            MorseEmitter[] emitters = new MorseEmitter[3];
-            for (int i = 0; i < 3; i++)
-            {
-                GameObject emitterGo = CreateChild(
-                    emittersRoot.transform, $"Emitter_{i + 1:00}");
-                emitterGo.transform.localPosition = new Vector3(i * 2f, 1f, 4f);
-                emitters[i] = emitterGo.AddComponent<MorseEmitter>();
-            }
+            // Emitter (single)
+            GameObject emitterGo = CreateChild(root.transform, "Emitter");
+            emitterGo.transform.localPosition = new Vector3(0f, 1f, 4f);
+            MorseEmitter singleEmitter = emitterGo.AddComponent<MorseEmitter>();
 
-            // Panels
-            GameObject panelsRoot = CreateChild(root.transform, "Panels");
-            MorsePanel[] panels = new MorsePanel[SymbolIds.Length];
-            for (int i = 0; i < SymbolIds.Length; i++)
-            {
-                panels[i] = BuildPanelInstance(
-                    panelsRoot.transform, SymbolIds[i], i, coordinator);
-            }
+            // Keyboard
+            GameObject keyboardGo = CreateChild(root.transform, "Keyboard");
+            keyboardGo.transform.localPosition = new Vector3(-0.7f, 0.8f, 6f);
+            MorseKeyboard keyboard = keyboardGo.AddComponent<MorseKeyboard>();
 
             // StartTrigger
             GameObject triggerGo = CreateChild(root.transform, "StartTrigger");
@@ -185,10 +175,10 @@ namespace EOS.EditorTools.Puzzles
             doorHook.transform.localPosition = new Vector3(0f, 1f, 8f);
 
             // Wire coordinator
-            coordinator.EditorConfigure(definition, emitters, panels);
+            coordinator.EditorConfigure(definition, singleEmitter, keyboard);
             SetSerialized(coordinator, "definition", definition);
-            SetSerializedArray(coordinator, "emitters", emitters);
-            SetSerializedArray(coordinator, "panels", panels);
+            SetSerialized(coordinator, "emitter", (Object)singleEmitter);
+            SetSerialized(coordinator, "keyboard", (Object)keyboard);
 
             EditorSceneManager.MarkSceneDirty(root.scene);
             Selection.activeGameObject = root;
@@ -331,40 +321,11 @@ namespace EOS.EditorTools.Puzzles
             if (so.FindProperty("definition").objectReferenceValue == null)
                 problems.Add($"[{coord.name}] Coordinator sin definición.");
 
-            SerializedProperty emitters = so.FindProperty("emitters");
-            if (emitters == null || emitters.arraySize == 0)
-                problems.Add($"[{coord.name}] Coordinator sin emisores.");
+            if (so.FindProperty("emitter").objectReferenceValue == null)
+                problems.Add($"[{coord.name}] Coordinator sin emisor.");
 
-            SerializedProperty panels = so.FindProperty("panels");
-            if (panels == null || panels.arraySize != 10)
-            {
-                problems.Add($"[{coord.name}] Se esperaban 10 paneles, hay " +
-                             $"{(panels != null ? panels.arraySize : 0)}.");
-            }
-            else
-            {
-                HashSet<string> seen = new();
-                for (int i = 0; i < panels.arraySize; i++)
-                {
-                    MorsePanel panel =
-                        panels.GetArrayElementAtIndex(i).objectReferenceValue
-                            as MorsePanel;
-                    if (panel == null)
-                    {
-                        problems.Add($"[{coord.name}] Panel nulo en índice {i}.");
-                        continue;
-                    }
-                    if (!seen.Add(panel.SymbolId))
-                        problems.Add($"[{coord.name}] Símbolo duplicado: " +
-                                     $"{panel.SymbolId}.");
-                }
-
-                foreach (string sym in SymbolIds)
-                {
-                    if (!seen.Contains(sym))
-                        problems.Add($"[{coord.name}] Falta el panel '{sym}'.");
-                }
-            }
+            if (so.FindProperty("keyboard").objectReferenceValue == null)
+                problems.Add($"[{coord.name}] Coordinator sin teclado (MorseKeyboard).");
 
             // Trigger — busca en el conjunto MorsePuzzle_MVP (padre del coord).
             Transform setupRoot = coord.transform.parent != null

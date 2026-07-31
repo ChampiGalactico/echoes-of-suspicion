@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56891ba9ffe35b14da27112523cc1329, type: 3}
   m_Name: Receipt_Electric
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemId: 36
+  itemId: 44
   itemName: Recibo de luz
   description: "Aviso de corte el\xE9ctrico"
   icon: {fileID: 0}

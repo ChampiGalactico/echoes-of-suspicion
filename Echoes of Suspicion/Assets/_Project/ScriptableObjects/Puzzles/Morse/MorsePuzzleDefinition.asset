@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8491c7b65f8e4f8f912f4e09de278794, type: 3}
   m_Name: MorsePuzzleDefinition
   m_EditorClassIdentifier: Assembly-CSharp::EOS.Puzzles.Morse.MorsePuzzleDefinition
+  targetWord: DESPIERTA
   allowedSymbols:
   - E
   - T
@@ -24,7 +25,7 @@ MonoBehaviour:
   - G
   - R
   sequenceLength: 3
-  damageOnFailure: 12
+  damageOnFailure: 20
   guideHealthPenaltyOnFailure: 0
   failureNoiseLevel: 2
   failureNoiseIntensity: 0.95

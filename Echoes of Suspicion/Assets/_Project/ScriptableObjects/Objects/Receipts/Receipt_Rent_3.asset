@@ -19,8 +19,10 @@ MonoBehaviour:
   isStackable: 0
   maxStack: 1
   startsInInventory: 0
-  worldPrefab: {fileID: 0}
+  worldPrefab: {fileID: 521014168383854290, guid: d037439793b388043b87fd40a97dd76e, type: 3}
   heldModelPrefab: {fileID: 0}
   heldScale: 1
   heldRotationOffset: {x: 0, y: 0, z: 0}
   heldPositionOffset: {x: 0, y: 0, z: 0}
+  useHeldTint: 0
+  heldTint: {r: 1, g: 1, b: 1, a: 1}

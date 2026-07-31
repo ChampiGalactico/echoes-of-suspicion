@@ -3,54 +3,71 @@ using System.Collections.Generic;
 namespace EOS.Puzzles.Morse
 {
     /// <summary>
-    /// Alfabeto Morse del MVP. Diez símbolos fijos, cada uno con su patrón
-    /// de puntos y rayas. Es puramente estático y determinista: el servidor
-    /// elige qué símbolos usar y solo sincroniza sus identificadores (una
-    /// letra por símbolo), nunca el asset ni el patrón completo.
+    /// Alfabeto Morse completo: A-Z + Ñ (27 letras). Cada letra tiene su
+    /// patrón estándar de puntos y rayas. Es puramente estático y
+    /// determinista: el servidor elige qué palabra usar y solo sincroniza
+    /// identificadores pequeños (letras), nunca assets.
     ///
     /// Patrón: '.' = punto (dot), '-' = raya (dash).
     /// </summary>
     public static class MorseAlphabet
     {
-        /// <summary>Los diez identificadores válidos del MVP, en orden fijo.</summary>
+        /// <summary>Todas las letras válidas, en orden alfabético español.</summary>
         public static readonly string[] Symbols =
         {
-            "E", "T", "A", "N", "S", "M", "D", "U", "G", "R"
+            "A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
+            "K", "L", "M", "N", "Ñ", "O", "P", "Q", "R", "S",
+            "T", "U", "V", "W", "X", "Y", "Z"
         };
 
         private static readonly Dictionary<string, string> Patterns =
             new()
             {
-                { "E", "." },
-                { "T", "-" },
                 { "A", ".-" },
-                { "N", "-." },
-                { "S", "..." },
-                { "M", "--" },
+                { "B", "-..." },
+                { "C", "-.-." },
                 { "D", "-.." },
-                { "U", "..-" },
+                { "E", "." },
+                { "F", "..-." },
                 { "G", "--." },
+                { "H", "...." },
+                { "I", ".." },
+                { "J", ".---" },
+                { "K", "-.-" },
+                { "L", ".-.." },
+                { "M", "--" },
+                { "N", "-." },
+                { "Ñ", "--.--" },
+                { "O", "---" },
+                { "P", ".--." },
+                { "Q", "--.-" },
                 { "R", ".-." },
+                { "S", "..." },
+                { "T", "-" },
+                { "U", "..-" },
+                { "V", "...-" },
+                { "W", ".--" },
+                { "X", "-..-" },
+                { "Y", "-.--" },
+                { "Z", "--.." },
             };
 
         /// <summary>Devuelve el patrón ("." / "-") de un símbolo, o "" si no existe.</summary>
         public static string GetPattern(string symbolId)
         {
             if (string.IsNullOrEmpty(symbolId))
-            {
                 return string.Empty;
-            }
 
-            return Patterns.TryGetValue(symbolId, out string pattern)
+            return Patterns.TryGetValue(symbolId.ToUpperInvariant(), out string pattern)
                 ? pattern
                 : string.Empty;
         }
 
-        /// <summary>True si el identificador es uno de los diez símbolos válidos.</summary>
+        /// <summary>True si el identificador es una letra válida del alfabeto.</summary>
         public static bool IsValidSymbol(string symbolId)
         {
             return !string.IsNullOrEmpty(symbolId) &&
-                   Patterns.ContainsKey(symbolId);
+                   Patterns.ContainsKey(symbolId.ToUpperInvariant());
         }
     }
 }

@@ -51,7 +51,7 @@ namespace EOS.Puzzles.Morse
         private float minDistance = 1.5f;
 
         [SerializeField, Min(0.2f)]
-        private float maxDistance = 14f;
+        private float maxDistance = 35f;
 
         [Header("Debug")]
 

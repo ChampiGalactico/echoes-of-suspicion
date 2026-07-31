@@ -37,8 +37,12 @@ namespace EOS.Puzzles
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(NetworkIdentity))]
-    public sealed class BillsPuzzleCoordinator : NetworkBehaviour
+    public sealed class BillsPuzzleCoordinator : NetworkBehaviour, IPuzzleNode
     {
+        [Header("Identity")]
+        [SerializeField]
+        private string nodeId = "bills.carlos";
+
         [Header("Bill Entries (in order)")]
         [SerializeField, Tooltip("Each entry matches a child Puzzle in the root. Order matters.")]
         private BillEntry[] billEntries;
@@ -49,6 +53,11 @@ namespace EOS.Puzzles
 
         [SerializeField, Tooltip("Root puzzle (CompletionRule: InOrder) with one child per bill.")]
         private Puzzle rootPuzzle;
+
+        [Header("Guide Fax Receiver")]
+
+        [SerializeField, Tooltip("Fax receptor del Guía. Los recibos se teleportan a su ReceiptSpawnPoint.")]
+        private EOS.GuideRoom.GuideFaxReceiver guideFaxReceiver;
 
         [Header("Time Pressure (defaults)")]
         [SerializeField, Tooltip("Default time limit when a BillEntry doesn't override. 0 = no timer.")]
@@ -104,6 +113,12 @@ namespace EOS.Puzzles
         /// Listeners should apply damage to both players.
         /// </summary>
         public event System.Action OnPaymentFailed;
+
+        // ── IPuzzleNode ─────────────────────────────────────
+
+        public string NodeId => nodeId;
+        public bool IsSolved => _isComplete;
+        public event System.Action<IPuzzleNode> OnSolved;
 
         // ── Public accessors ────────────────────────────────
 
@@ -173,7 +188,9 @@ namespace EOS.Puzzles
         // ── Receipt handling (server) ────────────────────────
 
         [Server]
-        private void HandleReceiptSent(string itemId, PuzzleItemData puzzleData, DocumentData receiptDocument)
+        private void HandleReceiptSent(
+            string itemId, PuzzleItemData puzzleData,
+            DocumentData receiptDocument, NetworkIdentity receiptObject)
         {
             if (!_started || _isComplete) return;
 
@@ -188,6 +205,9 @@ namespace EOS.Puzzles
 
             OnReceiptArrivedForGuide?.Invoke(itemId, paymentCode);
 
+            // Teleport the original receipt to the Guide's fax receiver.
+            TeleportReceiptToGuide(receiptObject);
+
             // Notify Guide that a receipt arrived.
             var guidePlayer = PlayerUtils.FindPlayerByRole(PlayerRole.Guide);
             if (guidePlayer != null)
@@ -198,6 +218,38 @@ namespace EOS.Puzzles
                     displayName,
                     paymentCode);
             }
+        }
+
+        /// <summary>
+        /// Teleports the receipt from the Runner's fax to the Guide's
+        /// fax receiver so the Guide can pick it up and scan it.
+        /// </summary>
+        [Server]
+        private void TeleportReceiptToGuide(NetworkIdentity receiptObject)
+        {
+            if (receiptObject == null)
+            {
+                Debug.LogWarning("[BillsPuzzle] Receipt object is null — can't teleport.");
+                return;
+            }
+
+            Transform spawnPoint = guideFaxReceiver != null
+                ? guideFaxReceiver.ReceiptSpawnPoint
+                : null;
+
+            if (spawnPoint == null)
+            {
+                Debug.LogWarning("[BillsPuzzle] GuideFaxReceiver or ReceiptSpawnPoint not assigned.");
+                return;
+            }
+
+            // Move and make visible/pickable again.
+            receiptObject.transform.position = spawnPoint.position;
+            receiptObject.transform.rotation = spawnPoint.rotation;
+
+            var pickup = receiptObject.GetComponent<NetworkPickupItem>();
+            if (pickup != null)
+                pickup.Drop(spawnPoint.position);
         }
 
         // ── Payment (server) ─────────────────────────────────
@@ -232,6 +284,7 @@ namespace EOS.Puzzles
                     _isComplete = true;
                     _timerActive = false;
                     OnAllBillsPaid?.Invoke();
+                    OnSolved?.Invoke(this);
 
                     ObjectiveManager.SetRunnerObjective("Espera instrucciones del guía");
                     ObjectiveManager.SetGuideObjective("Todos los recibos pagados");
@@ -387,9 +440,37 @@ namespace EOS.Puzzles
                     _currentBillIndex,
                     billEntries.Length,
                     current.receiptDisplayName,
-                    current.guideInstructions);
+                    current.guideInstructions,
+                    _currentTimeLimit);
             }
         }
+
+        // ── Client-side events (Guide) ─────────────────────────
+        //
+        // GuideBillsTerminalController se suscribe a estos para
+        // actualizar la MainScreen del Guía.
+
+        /// <summary>Fired on Guide client when next bill is announced.
+        /// Parameters: billIndex, totalBills, billName, instructions, timeLimit.</summary>
+        public static event System.Action<int, int, string, string, float> OnGuideNextBillAnnounced;
+
+        /// <summary>Fired on Guide client when a receipt arrives via fax.</summary>
+        public static event System.Action<string, string, string> OnGuideReceiptArrived;
+
+        /// <summary>Fired on Guide client when puzzle resets after wrong payment.</summary>
+        public static event System.Action<int> OnGuidePuzzleReset;
+
+        /// <summary>Fired on Guide client when wrong payment is attempted.</summary>
+        public static event System.Action<string> OnGuideWrongPayment;
+
+        /// <summary>Fired on all clients when a bill is paid correctly.</summary>
+        public static event System.Action<int, string> OnClientBillPaid;
+
+        /// <summary>Fired on all clients when time runs out.</summary>
+        public static event System.Action OnClientTimeout;
+
+        /// <summary>Fired on all clients when payment fails.</summary>
+        public static event System.Action<string> OnClientPaymentFailed;
 
         // ── Client RPCs ──────────────────────────────────────
 
@@ -397,18 +478,21 @@ namespace EOS.Puzzles
         private void RpcBillPaidFeedback(int billIndex, string billName)
         {
             Debug.Log($"[BillsPuzzle] Bill paid: {billName} ({billIndex + 1}/{billEntries.Length})");
+            OnClientBillPaid?.Invoke(billIndex, billName);
         }
 
         [ClientRpc]
         private void RpcTimeoutFeedback()
         {
             Debug.Log("[BillsPuzzle] Time's up for current bill!");
+            OnClientTimeout?.Invoke();
         }
 
         [ClientRpc]
         private void RpcPaymentFailedFeedback(string expectedBillName)
         {
             Debug.Log($"[BillsPuzzle] Wrong payment! Expected {expectedBillName}. Puzzle resets.");
+            OnClientPaymentFailed?.Invoke(expectedBillName);
         }
 
         // ── Target RPCs (Guide only) ─────────────────────────
@@ -417,11 +501,13 @@ namespace EOS.Puzzles
         private void TargetAnnounceNextBill(
             NetworkConnectionToClient target,
             int billIndex, int totalBills,
-            string billName, string instructions)
+            string billName, string instructions,
+            float timeLimit)
         {
             Debug.Log($"[BillsPuzzle → Guide] Next bill ({billIndex + 1}/{totalBills}): " +
-                      $"{billName}" +
+                      $"{billName} | Time: {timeLimit:F0}s" +
                       (string.IsNullOrEmpty(instructions) ? "" : $" | {instructions}"));
+            OnGuideNextBillAnnounced?.Invoke(billIndex, totalBills, billName, instructions, timeLimit);
         }
 
         [TargetRpc]
@@ -430,6 +516,7 @@ namespace EOS.Puzzles
             string itemId, string billName, string paymentCode)
         {
             Debug.Log($"[BillsPuzzle → Guide] Receipt arrived: {billName} (id: {itemId}), code: {paymentCode}");
+            OnGuideReceiptArrived?.Invoke(itemId, billName, paymentCode);
         }
 
         [TargetRpc]
@@ -438,6 +525,7 @@ namespace EOS.Puzzles
             int totalBills)
         {
             Debug.Log($"[BillsPuzzle → Guide] Puzzle reset! Must re-pay all {totalBills} bills in order.");
+            OnGuidePuzzleReset?.Invoke(totalBills);
         }
 
         [TargetRpc]
@@ -446,6 +534,7 @@ namespace EOS.Puzzles
             string expectedBillName)
         {
             Debug.Log($"[BillsPuzzle → Guide] Wrong payment! Expected {expectedBillName}.");
+            OnGuideWrongPayment?.Invoke(expectedBillName);
         }
     }
 
