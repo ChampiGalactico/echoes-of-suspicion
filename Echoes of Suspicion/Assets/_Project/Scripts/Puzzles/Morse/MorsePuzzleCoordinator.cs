@@ -32,15 +32,15 @@ namespace EOS.Puzzles.Morse
         [SerializeField]
         private MorsePuzzleDefinition definition;
 
-        [Header("Emisores (uno por paso; se activa solo el actual)")]
+        [Header("Emisor")]
 
-        [SerializeField]
-        private MorseEmitter[] emitters;
+        [SerializeField, Tooltip("Emisor de audio Morse (uno solo, reproduce todos los patrones).")]
+        private MorseEmitter emitter;
 
-        [Header("Paneles (los diez símbolos)")]
+        [Header("Teclado")]
 
-        [SerializeField]
-        private MorsePanel[] panels;
+        [SerializeField, Tooltip("Teclado Morse (contiene los paneles y el display).")]
+        private MorseKeyboard keyboard;
 
         [Header("Eventos de feedback")]
 
@@ -145,7 +145,11 @@ namespace EOS.Puzzles.Morse
                     $"{syncedSequence}", this);
             }
 
-            RpcActivateStepEmitter(syncedCurrentIndex);
+            // Pass the pattern directly — avoids SyncVar timing race.
+            string firstSymbol = serverSequence[0];
+            string firstPattern = MorseAlphabet.GetPattern(firstSymbol);
+            RpcPlayEmitterDirect(firstPattern);
+            RpcUpdateWordDisplay(0); // Show all underscores.
         }
 
         [Server]
@@ -153,23 +157,45 @@ namespace EOS.Puzzles.Morse
         {
             serverSequence.Clear();
 
-            List<string> pool = new();
-            foreach (string candidate in definition.AllowedSymbols)
+            if (definition.HasTargetWord)
             {
-                if (MorseAlphabet.IsValidSymbol(candidate) &&
-                    !pool.Contains(candidate))
+                // Modo palabra: cada letra de la palabra es un paso.
+                string word = definition.TargetWord;
+                foreach (char c in word)
                 {
-                    pool.Add(candidate);
+                    string letter = c.ToString();
+                    if (MorseAlphabet.IsValidSymbol(letter))
+                        serverSequence.Add(letter.ToUpperInvariant());
+                }
+
+                if (serverSequence.Count == 0)
+                {
+                    Debug.LogError(
+                        "[MorsePuzzleCoordinator] targetWord no contiene letras " +
+                        "válidas del alfabeto Morse.", this);
                 }
             }
-
-            int length = Mathf.Min(definition.SequenceLength, pool.Count);
-
-            for (int i = 0; i < length; i++)
+            else
             {
-                int pick = UnityEngine.Random.Range(0, pool.Count);
-                serverSequence.Add(pool[pick]);
-                pool.RemoveAt(pick); // símbolos distintos
+                // Modo aleatorio: elige símbolos distintos del pool.
+                List<string> pool = new();
+                foreach (string candidate in definition.AllowedSymbols)
+                {
+                    if (MorseAlphabet.IsValidSymbol(candidate) &&
+                        !pool.Contains(candidate))
+                    {
+                        pool.Add(candidate);
+                    }
+                }
+
+                int length = Mathf.Min(definition.SequenceLength, pool.Count);
+
+                for (int i = 0; i < length; i++)
+                {
+                    int pick = UnityEngine.Random.Range(0, pool.Count);
+                    serverSequence.Add(pool[pick]);
+                    pool.RemoveAt(pick);
+                }
             }
         }
 
@@ -222,7 +248,7 @@ namespace EOS.Puzzles.Morse
         [Server]
         private void HandleCorrect(MorsePanel panel)
         {
-            RpcStopStepEmitter(syncedCurrentIndex);
+            RpcStopEmitter();
 
             if (panel != null)
             {
@@ -233,7 +259,9 @@ namespace EOS.Puzzles.Morse
 
             RpcOnStepAdvanced();
 
+            // Reveal the letter just solved on the display.
             int nextIndex = syncedCurrentIndex + 1;
+            RpcUpdateWordDisplay(nextIndex);
 
             if (nextIndex >= serverSequence.Count)
             {
@@ -258,7 +286,7 @@ namespace EOS.Puzzles.Morse
             syncedCurrentIndex = nextIndex;
             serverBusy = false;
 
-            RpcActivateStepEmitter(nextIndex);
+            RpcPlayEmitter(nextIndex);
             serverAdvanceRoutine = null;
         }
 
@@ -298,10 +326,11 @@ namespace EOS.Puzzles.Morse
             if (definition.ResetWholeSequenceOnFailure)
             {
                 syncedCurrentIndex = 0;
+                RpcUpdateWordDisplay(0); // Clear all revealed letters.
             }
 
             serverBusy = false;
-            RpcActivateStepEmitter(syncedCurrentIndex);
+            RpcPlayEmitter(syncedCurrentIndex);
             serverAdvanceRoutine = null;
         }
 
@@ -311,7 +340,8 @@ namespace EOS.Puzzles.Morse
             syncedSolved = true;
             serverBusy = false;
 
-            RpcStopAllEmitters();
+            RpcStopEmitter();
+            RpcUpdateWordDisplay(serverSequence.Count); // Reveal full word.
             RpcOnSolved();
 
             OnSolved?.Invoke(this);
@@ -339,7 +369,8 @@ namespace EOS.Puzzles.Morse
             syncedSequence = string.Empty;
             serverSequence.Clear();
 
-            RpcStopAllEmitters();
+            RpcStopEmitter();
+            RpcUpdateWordDisplay(0);
             RpcOnReset();
         }
 
@@ -414,25 +445,39 @@ namespace EOS.Puzzles.Morse
         // =====================================================================
 
         [ClientRpc]
-        private void RpcActivateStepEmitter(int index)
+        private void RpcPlayEmitter(int index)
         {
-            ActivateOnlyEmitter(index);
+            PlayEmitterPattern(index);
         }
 
+        /// <summary>
+        /// Plays a morse pattern directly on all clients, bypassing SyncVar lookup.
+        /// Used for the initial puzzle start to avoid SyncVar timing race.
+        /// </summary>
         [ClientRpc]
-        private void RpcStopStepEmitter(int index)
+        private void RpcPlayEmitterDirect(string pattern)
         {
-            if (emitters != null && index >= 0 && index < emitters.Length &&
-                emitters[index] != null)
+            if (emitter == null)
             {
-                emitters[index].StopEmitting();
+                Debug.LogWarning("[MorsePuzzleCoordinator] RpcPlayEmitterDirect: emitter is null!");
+                return;
             }
+
+            if (string.IsNullOrEmpty(pattern))
+            {
+                Debug.LogWarning("[MorsePuzzleCoordinator] RpcPlayEmitterDirect: pattern is empty!");
+                return;
+            }
+
+            Debug.Log($"[MorsePuzzleCoordinator] RpcPlayEmitterDirect: playing pattern '{pattern}'");
+            emitter.PlayPattern(pattern);
         }
 
         [ClientRpc]
-        private void RpcStopAllEmitters()
+        private void RpcStopEmitter()
         {
-            StopAllEmitters();
+            if (emitter != null)
+                emitter.StopEmitting();
         }
 
         [ClientRpc]
@@ -448,6 +493,12 @@ namespace EOS.Puzzles.Morse
             {
                 panel.ApplyVisualState((MorsePanel.PanelVisualState)state);
             }
+        }
+
+        [ClientRpc]
+        private void RpcUpdateWordDisplay(int revealedCount)
+        {
+            UpdateWordDisplay(revealedCount);
         }
 
         [ClientRpc]
@@ -503,55 +554,65 @@ namespace EOS.Puzzles.Morse
 
             if (syncedSolved)
             {
-                StopAllEmitters();
+                StopEmitter();
                 MarkAllPanelsSolved();
+                UpdateWordDisplay(syncedSequence.Length);
                 return;
             }
 
-            ActivateOnlyEmitter(syncedCurrentIndex);
+            PlayEmitterPattern(syncedCurrentIndex);
+            UpdateWordDisplay(syncedCurrentIndex);
         }
 
-        private void ActivateOnlyEmitter(int index)
+        private void PlayEmitterPattern(int index)
         {
-            if (emitters == null)
+            if (emitter == null)
             {
+                Debug.LogWarning($"[MorsePuzzleCoordinator] PlayEmitterPattern({index}): emitter is null!");
                 return;
             }
 
-            for (int i = 0; i < emitters.Length; i++)
+            string symbol = GetSymbolAt(index);
+            if (string.IsNullOrEmpty(symbol))
             {
-                if (emitters[i] == null)
-                {
-                    continue;
-                }
-
-                if (i == index)
-                {
-                    string symbol = GetSymbolAt(index);
-                    string pattern = MorseAlphabet.GetPattern(symbol);
-                    emitters[i].PlayPattern(pattern);
-                }
-                else
-                {
-                    emitters[i].StopEmitting();
-                }
+                Debug.LogWarning(
+                    $"[MorsePuzzleCoordinator] PlayEmitterPattern({index}): " +
+                    $"symbol is empty (syncedSequence='{syncedSequence}')");
+                return;
             }
+
+            string pattern = MorseAlphabet.GetPattern(symbol);
+            Debug.Log($"[MorsePuzzleCoordinator] PlayEmitterPattern({index}): symbol='{symbol}', pattern='{pattern}'");
+            emitter.PlayPattern(pattern);
         }
 
-        private void StopAllEmitters()
+        private void StopEmitter()
         {
-            if (emitters == null)
-            {
-                return;
-            }
+            if (emitter != null)
+                emitter.StopEmitting();
+        }
 
-            foreach (MorseEmitter emitter in emitters)
+        /// <summary>
+        /// Construye el texto del display: letras reveladas + guiones bajos.
+        /// Ej: secuencia "SGE", currentIndex 1 → "S _ _"
+        /// </summary>
+        private string BuildWordDisplayText(int revealedCount)
+        {
+            if (string.IsNullOrEmpty(syncedSequence)) return "";
+
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < syncedSequence.Length; i++)
             {
-                if (emitter != null)
-                {
-                    emitter.StopEmitting();
-                }
+                if (i > 0) sb.Append(' ');
+                sb.Append(i < revealedCount ? syncedSequence[i] : '_');
             }
+            return sb.ToString();
+        }
+
+        private void UpdateWordDisplay(int revealedCount)
+        {
+            if (keyboard != null)
+                keyboard.UpdateWordDisplay(BuildWordDisplayText(revealedCount));
         }
 
         private string GetSymbolAt(int index)
@@ -565,35 +626,32 @@ namespace EOS.Puzzles.Morse
             return syncedSequence[index].ToString();
         }
 
+        private MorsePanel[] GetPanels()
+        {
+            return keyboard != null ? keyboard.GetAllPanels() : null;
+        }
+
         private void MarkAllPanelsSolved()
         {
-            if (panels == null)
-            {
-                return;
-            }
+            MorsePanel[] p = GetPanels();
+            if (p == null) return;
 
-            foreach (MorsePanel panel in panels)
+            foreach (MorsePanel panel in p)
             {
                 if (panel != null)
-                {
                     panel.ApplyVisualState(MorsePanel.PanelVisualState.Solved);
-                }
             }
         }
 
         private void ResetAllPanelVisuals()
         {
-            if (panels == null)
-            {
-                return;
-            }
+            MorsePanel[] p = GetPanels();
+            if (p == null) return;
 
-            foreach (MorsePanel panel in panels)
+            foreach (MorsePanel panel in p)
             {
                 if (panel != null)
-                {
                     panel.ApplyVisualState(MorsePanel.PanelVisualState.Idle);
-                }
             }
         }
 
@@ -603,23 +661,12 @@ namespace EOS.Puzzles.Morse
 
         public void EditorConfigure(
             MorsePuzzleDefinition def,
-            MorseEmitter[] emitterArray,
-            MorsePanel[] panelArray)
+            MorseEmitter singleEmitter,
+            MorseKeyboard morseKeyboard)
         {
             definition = def;
-            emitters = emitterArray;
-            panels = panelArray;
-
-            if (panels != null)
-            {
-                foreach (MorsePanel panel in panels)
-                {
-                    if (panel != null)
-                    {
-                        panel.Coordinator = this;
-                    }
-                }
-            }
+            emitter = singleEmitter;
+            keyboard = morseKeyboard;
         }
     }
 }

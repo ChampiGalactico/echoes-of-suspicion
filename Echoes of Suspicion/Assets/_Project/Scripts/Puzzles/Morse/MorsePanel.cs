@@ -1,3 +1,4 @@
+using System.Collections;
 using Mirror;
 using TMPro;
 using UnityEngine;
@@ -60,6 +61,14 @@ namespace EOS.Puzzles.Morse
         [SerializeField]
         private TMP_Text symbolLabel;
 
+        [Header("Flash Timing")]
+
+        [SerializeField, Tooltip("Duración del flash verde al acertar (segundos).")]
+        private float successFlashDuration = 1.5f;
+
+        [SerializeField, Tooltip("Duración del flash rojo al fallar (segundos).")]
+        private float failureFlashDuration = 1f;
+
         [Header("Debug")]
 
         [SerializeField]
@@ -68,6 +77,7 @@ namespace EOS.Puzzles.Morse
         private MaterialPropertyBlock propertyBlock;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
+        private Coroutine _flashRoutine;
 
         public string SymbolId => symbolId;
 
@@ -182,10 +192,37 @@ namespace EOS.Puzzles.Morse
                 _ => idleColor,
             };
 
-            if (propertyBlock == null)
+            ApplyColor(color);
+
+            // Flash back to idle after a delay for success/failure.
+            if (state is PanelVisualState.CurrentSuccess or PanelVisualState.Failure)
             {
-                propertyBlock = new MaterialPropertyBlock();
+                if (_flashRoutine != null)
+                    StopCoroutine(_flashRoutine);
+
+                float duration = state == PanelVisualState.CurrentSuccess
+                    ? successFlashDuration
+                    : failureFlashDuration;
+
+                _flashRoutine = StartCoroutine(FlashBackToIdle(duration));
             }
+            else
+            {
+                // Cancel any pending flash if we're setting idle/solved directly.
+                if (_flashRoutine != null)
+                {
+                    StopCoroutine(_flashRoutine);
+                    _flashRoutine = null;
+                }
+            }
+        }
+
+        private void ApplyColor(Color color)
+        {
+            if (targetRenderer == null) return;
+
+            if (propertyBlock == null)
+                propertyBlock = new MaterialPropertyBlock();
 
             targetRenderer.GetPropertyBlock(propertyBlock);
             propertyBlock.SetColor(BaseColorId, color);
@@ -193,8 +230,15 @@ namespace EOS.Puzzles.Morse
             targetRenderer.SetPropertyBlock(propertyBlock);
         }
 
+        private IEnumerator FlashBackToIdle(float duration)
+        {
+            yield return new WaitForSeconds(duration);
+            ApplyColor(idleColor);
+            _flashRoutine = null;
+        }
+
 #if UNITY_EDITOR
-        private void OnValidate()
+        private new void OnValidate()
         {
             if (!string.IsNullOrEmpty(symbolId))
             {

@@ -117,10 +117,11 @@ namespace EOS.Puzzles
 
         /// <summary>
         /// Fired on server when a receipt is successfully sent.
-        /// Parameters: itemId, puzzleData, documentData (may be null).
+        /// Parameters: itemId, puzzleData, documentData, receiptObject.
         /// BillsPuzzleCoordinator subscribes to this.
+        /// The subscriber decides what to do with the object (teleport or destroy).
         /// </summary>
-        public event System.Action<string, PuzzleItemData, DocumentData> OnReceiptSent;
+        public event System.Action<string, PuzzleItemData, DocumentData, NetworkIdentity> OnReceiptSent;
 
         /// <summary>
         /// Fired on server when the fax rejects a receipt (wrong tag).
@@ -267,11 +268,9 @@ namespace EOS.Puzzles
             _isSending = false;
             RpcPlaySendComplete();
 
-            // Destroy the receipt — it's been "faxed".
-            if (receiptObject != null)
-                NetworkServer.Destroy(receiptObject.gameObject);
-
-            OnReceiptSent?.Invoke(_lastSentItemId, _lastSentPuzzleData, _lastSentDocumentData);
+            // Pass the receipt to the coordinator. It decides whether
+            // to destroy it or teleport it to the Guide's fax.
+            OnReceiptSent?.Invoke(_lastSentItemId, _lastSentPuzzleData, _lastSentDocumentData, receiptObject);
             ClearCachedData();
             _activeRoutine = null;
         }

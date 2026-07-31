@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a27f7163dab90ef4eb0244c1533660b9, type: 3}
-  m_Name: FrenosManual
+  m_Name: Sujeto07Manual
   m_EditorClassIdentifier: Assembly-CSharp::DocumentData
   DefaultFont: {fileID: 0}
   VerticalAlignment: 0
   Sections:
   - Type: 0
-    Text: SISTEMA DE FRENOS
+    Text: "SUJETO 07 — INFORME DE CONTENCI\xD3N"
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 1
@@ -24,7 +24,7 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 1
-    Text: "<color=#FF3333>[!] ALERTA: PRIORIDAD M\xC1XIMA</color>"
+    Text: "[!] NIVEL DE AMENAZA: EXTREMO \xB7 CLASIFICADO"
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 1
@@ -32,9 +32,7 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 2
-    Text: "El circuito hidr\xE1ulico muestra presi\xF3n irregular en la l\xEDnea
-      del caliper trasero derecho. El pedal responde con retardo y la distancia de
-      frenado se ha incrementado un 40% respecto al valor de f\xE1brica."
+    Text: "Organismo recuperado durante excavaci\xF3n del Sector C-7. Origen desconocido. Tejido muscular an\xF3malo: densidad 4.2x superior a la humana. Ritmo card\xEDaco registrado: 340 BPM en reposo."
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 0
@@ -42,27 +40,31 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 2
-    Text: "Se sospecha de una fuga lenta en la uni\xF3n del flexible con el caliper.
-      El l\xEDquido de frenos est\xE1 por debajo del nivel m\xEDnimo. La tuerca de
-      conexi\xF3n est\xE1 deformada y debe ser reemplazada."
+    Text: "COMPORTAMIENTO: Reacciona a est\xEDmulos sonoros y luminosos. Velocidad de desplazamiento superior a un humano adulto. Actividad incrementada en periodos de oscuridad. No responde a sedantes convencionales desde el d\xEDa 14."
     Alignment: 257
     AnchorToBottom: 0
-    ShowDivider: 1
-    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
-    Font: {fileID: 0}
-    FontSizeOverride: -1
-  - Type: 0
-    Text: 'HERRAMIENTA: LLAVE INGLESA'
-    Alignment: 257
-    AnchorToBottom: 0
-    ShowDivider: 1
+    ShowDivider: 0
     DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 2
-    Text: "Ajustar la tuerca del flexible hidr\xE1ulico con torque controlado. No
-      exceder 35 Nm para evitar da\xF1o en la rosca del caliper. Purgar aire del
-      circuito despu\xE9s del ajuste."
+    Text: "D\xCDA 31 — \xDALTIMA ENTRADA: Contenci\xF3n comprometida en el ala este. Dos t\xE9cnicos no reportados. C\xE1maras del pasillo B muestran actividad a las 03:14. Despu\xE9s de eso... est\xE1tica."
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 0
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 1
+    Text: "PROTOCOLO: NO CONFRONTAR"
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 0
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 2
+    Text: "En caso de avistamiento: permanecer inm\xF3vil. No correr. Evitar contacto visual directo. Si se activa... no hay protocolo documentado que garantice supervivencia."
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 1
@@ -70,7 +72,7 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 4
-    Text: "Manual t\xE9cnico del Gu\xEDa \xB7 Taller Mec\xE1nico \xB7 Uso interno"
+    Text: "Laboratorio de Investigaci\xF3n \xB7 Nivel de Acceso: RESTRINGIDO \xB7 Documento interno"
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 0
@@ -78,4 +80,4 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   ContentImage: {fileID: 0}
-  InteractionPrompt: Leer manual
+  InteractionPrompt: Leer informe

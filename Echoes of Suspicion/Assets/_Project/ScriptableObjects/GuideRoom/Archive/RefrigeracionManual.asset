@@ -16,7 +16,7 @@ MonoBehaviour:
   VerticalAlignment: 0
   Sections:
   - Type: 0
-    Text: "MANUAL DE SISTEMA \u2014 REFRIGERACI\xD3N"
+    Text: "SISTEMA DE REFRIGERACI\xD3N"
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 1
@@ -24,7 +24,15 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 1
-    Text: "SIN LECTURA ACTIVA ESTA PARTIDA"
+    Text: "<color=#FF8C00>[!] ALERTA: PRIORIDAD ALTA</color>"
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 1
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 2
+    Text: "La manguera superior del radiador presenta una fisura longitudinal de aproximadamente 8 cm. Se observa p\xE9rdida de refrigerante en forma de vapor cuando el sistema alcanza temperatura operativa."
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 0
@@ -32,7 +40,23 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 2
-    Text: "OJO: se confunde con \"Motor\" por el tema de temperatura. Solo aplica si la lectura habla de REFRIGERANTE o radiador, no del bloque del motor."
+    Text: "Si no se interviene, el motor alcanzar\xE1 temperatura cr\xEDtica en los primeros minutos de operaci\xF3n. La fisura no permite sellado con adhesivo convencional por la presi\xF3n del circuito."
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 1
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 0
+    Text: "HERRAMIENTA: CINTA AZUL"
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 1
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 2
+    Text: "Envolver la zona fisurada con m\xEDnimo cinco vueltas de cinta azul (baja temperatura). NO usar cinta roja: esta manguera opera por debajo de los 100\xB0C y la cinta roja no adhiere correctamente en superficies h\xFAmedas."
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 1

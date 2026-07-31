@@ -16,7 +16,7 @@ MonoBehaviour:
   VerticalAlignment: 0
   Sections:
   - Type: 0
-    Text: "MANUAL DE SISTEMA \u2014 MOTOR"
+    Text: "BLOQUE DEL MOTOR"
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 1
@@ -24,7 +24,15 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 1
-    Text: "URGENCIA: ROJA \xB7 INTERVENCI\xD3N INMEDIATA"
+    Text: "<color=#FFD700>[!] ALERTA: PRIORIDAD MEDIA</color>"
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 1
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 2
+    Text: "El cableado del sistema de ignici\xF3n presenta da\xF1o por exposici\xF3n. Varios tramos del arn\xE9s principal est\xE1n pelados y hacen contacto intermitente con la carcasa met\xE1lica, generando cortocircuitos espor\xE1dicos."
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 0
@@ -32,15 +40,23 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 2
-    Text: "Lectura asociada: \"Temperatura del motor\" fuera de rango / golpeteo interno. El bloque presenta fallo mec\xE1nico que exige sellado de emergencia antes de volver a arrancar."
+    Text: "El bloque no logra completar el ciclo de ignici\xF3n. La chispa se disipa por los tramos expuestos antes de llegar a la buj\xEDa. Se requiere aislamiento inmediato de las secciones comprometidas."
     Alignment: 257
     AnchorToBottom: 0
-    ShowDivider: 0
+    ShowDivider: 1
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 0
+    Text: "HERRAMIENTA: CINTA AISLANTE ROJA"
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 1
     DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 2
-    Text: "HERRAMIENTA CORRECTA: CINTA AISLANTE ROJA. Sella la fuga/uni\xF3n del m\xFAltiple mientras el motor sigue caliente. No usar cinta azul (esa es para el tanque)."
+    Text: "Envolver cada tramo expuesto del arn\xE9s con m\xEDnimo tres vueltas de cinta. Asegurar que no quede cobre visible. Verificar que la cinta sea la ROJA (alta temperatura). La azul no soporta el calor del bloque."
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 1

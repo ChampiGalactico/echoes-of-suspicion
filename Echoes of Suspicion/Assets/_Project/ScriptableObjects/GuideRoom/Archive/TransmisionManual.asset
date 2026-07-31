@@ -16,7 +16,7 @@ MonoBehaviour:
   VerticalAlignment: 0
   Sections:
   - Type: 0
-    Text: "MANUAL DE SISTEMA \u2014 TRANSMISI\xD3N"
+    Text: "SISTEMA DE TRANSMISI\xD3N"
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 1
@@ -24,7 +24,15 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 1
-    Text: "SIN LECTURA ACTIVA ESTA PARTIDA"
+    Text: "<color=#FFD700>[!] ALERTA: PRIORIDAD MEDIA</color>"
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 1
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 2
+    Text: "El sincronizador de segunda marcha presenta desgaste prematuro. Se escucha un crujido met\xE1lico al intentar el cambio entre primera y segunda. El aceite de transmisi\xF3n muestra part\xEDculas met\xE1licas en suspensi\xF3n."
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 0
@@ -32,7 +40,23 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 2
-    Text: "OJO: se confunde con \"Motor\". Solo aplica si la lectura menciona cambios, caja o embrague. Escucha bien antes de apartarla."
+    Text: "El embrague patina bajo carga y no transmite torque completo a las ruedas. El disco de fricci\xF3n est\xE1 al l\xEDmite de su vida \xFAtil. Se requiere intervenci\xF3n para liberar el mecanismo atascado."
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 1
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 0
+    Text: "HERRAMIENTA: FILO"
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 1
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 2
+    Text: "Cortar la banda de sujeci\xF3n del disco de embrague para liberar el mecanismo. Retirar el disco desgastado y las part\xEDculas atrapadas en el alojamiento. Limpiar superficie de contacto antes de rearmar."
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 1

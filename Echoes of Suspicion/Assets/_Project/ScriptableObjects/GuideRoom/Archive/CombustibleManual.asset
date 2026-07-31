@@ -16,7 +16,7 @@ MonoBehaviour:
   VerticalAlignment: 0
   Sections:
   - Type: 0
-    Text: "MANUAL DE SISTEMA \u2014 COMBUSTIBLE"
+    Text: SISTEMA DE COMBUSTIBLE
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 1
@@ -24,7 +24,18 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 1
-    Text: "URGENCIA: AMARILLA \xB7 ATENCI\xD3N PRIORITARIA"
+    Text: "<color=#FF3333>[!] ALERTA: PRIORIDAD M\xC1XIMA</color>"
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 1
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 2
+    Text: "La l\xEDnea principal de suministro presenta una ca\xEDda total de presi\xF3n.
+      El inyector no recibe flujo y la bomba de combustible gira en vac\xEDo. Sin
+      suministro estable, el motor no alcanza la mezcla aire-combustible necesaria
+      para la ignici\xF3n."
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 0
@@ -32,15 +43,27 @@ MonoBehaviour:
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 2
-    Text: "Lectura asociada: presi\xF3n de combustible baja / olor a gasolina. El tanque debe purgarse y reconectarse antes de intentar el encendido."
+    Text: "Se detect\xF3 residuo de corrosi\xF3n en la v\xE1lvula de retorno. El
+      tanque original est\xE1 comprometido y no admite reparaci\xF3n parcial. Requiere
+      reemplazo completo de la unidad."
     Alignment: 257
     AnchorToBottom: 0
-    ShowDivider: 0
+    ShowDivider: 1
+    DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
+    Font: {fileID: 0}
+    FontSizeOverride: -1
+  - Type: 0
+    Text: 'HERRAMIENTA: TANQUE DE COMBUSTIBLE'
+    Alignment: 257
+    AnchorToBottom: 0
+    ShowDivider: 1
     DividerColor: {r: 0.27, g: 0.27, b: 0.27, a: 1}
     Font: {fileID: 0}
     FontSizeOverride: -1
   - Type: 2
-    Text: "HERRAMIENTA CORRECTA: TANQUE DE COMBUSTIBLE (repuesto). Se instala primero en la secuencia del banco."
+    Text: "Retirar unidad da\xF1ada del soporte inferior. Instalar tanque de reemplazo
+      y asegurar conexi\xF3n a la l\xEDnea de alimentaci\xF3n. Purgar aire del circuito
+      antes de intentar arranque."
     Alignment: 257
     AnchorToBottom: 0
     ShowDivider: 1

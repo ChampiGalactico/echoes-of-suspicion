@@ -79,7 +79,7 @@ namespace EOS.Puzzles
             _subscribedToFax = false;
         }
 
-        private void OnReceiptSent(string itemId, PuzzleItemData data, DocumentData doc)
+        private void OnReceiptSent(string itemId, PuzzleItemData data, DocumentData doc, Mirror.NetworkIdentity receiptObj)
         {
             lastReceivedItemId = itemId;
             Debug.Log($"[BillsDebug] Receipt received: {itemId} ({(data != null ? data.DisplayName : "?")})");
